@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { friendlyAuthError } from "@/lib/auth-errors";
 import { publicEnv } from "@/lib/public-env";
 import { safeNext } from "@/lib/safe-next";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -33,7 +34,7 @@ export function SignInForm() {
         emailRedirectTo: `${publicEnv.siteUrl}/auth/confirm?next=${encodeURIComponent(next)}`,
       },
     });
-    setStatus(error ? { kind: "error", message: error.message } : { kind: "sent" });
+    setStatus(error ? { kind: "error", message: friendlyAuthError(error) } : { kind: "sent" });
   }
 
   async function continueWithGoogle() {
@@ -44,7 +45,7 @@ export function SignInForm() {
         redirectTo: `${publicEnv.siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
-    if (error) setStatus({ kind: "error", message: error.message });
+    if (error) setStatus({ kind: "error", message: friendlyAuthError(error) });
   }
 
   const busy = status.kind === "sending" || status.kind === "redirecting";

@@ -449,6 +449,15 @@ email_sent = 30
 enable_confirmations = true
 max_frequency = "1m0s"
 
+[remotes.production.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "no-reply@auth.brokwise.com"
+sender_name = "Buildwise"
+
 [remotes.production.auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
