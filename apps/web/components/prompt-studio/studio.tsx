@@ -770,6 +770,7 @@ export function PromptStudio({
         </nav>
         <header className="studio-hero studio-hero-single">
           <h1>Turn your ideas into production-grade platforms.</h1>
+          <h2 className="studio-build-subheading">What do you want to build?</h2>
         </header>
         <div className="studio-content">
           {error && (
@@ -786,7 +787,6 @@ export function PromptStudio({
           {
             <div className="studio-welcome">
               <div className="studio-input-panel">
-                <p className="portal-input-label">What do you want to build?</p>
                 <label className="studio-live-toggle">
                   <input
                     type="checkbox"
