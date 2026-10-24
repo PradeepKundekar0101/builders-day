@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ProvnLogo } from "@/components/provn-logo";
 import { WorkspaceNav } from "./workspace-nav";
 import { BuilderOnboarding } from "./onboarding";
@@ -79,6 +79,14 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
   );
 }
 
+const subscribeOnboarding = () => () => {};
+function onboardingWasDismissed() {
+  try {
+    return localStorage.getItem("provn-onboarding-dismissed") === "1";
+  } catch {
+    return false;
+  }
+}
 export function PromptStudio({
   demo = false,
   buildConnection,
@@ -87,6 +95,11 @@ export function PromptStudio({
   buildConnection?: StudioBuildConnection;
 }) {
   const params = useSearchParams();
+  const onboardingDismissed = useSyncExternalStore(
+    subscribeOnboarding,
+    onboardingWasDismissed,
+    () => true,
+  );
   const [live, setLive] = useState(false);
   const [history, setHistory] = useState<StudioVersion[]>([]);
   const pendingSave = useRef<SaveAttempt | null>(null);
@@ -94,7 +107,6 @@ export function PromptStudio({
   const [modelTrace, setModelTrace] = useState("");
   const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
-  const [onboarded, setOnboarded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => demo || !params.get("session"));
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState<PromptStudioDraft | null>(null);
@@ -122,7 +134,6 @@ export function PromptStudio({
         setHistory(StudioVersionSchema.array().parse(data.history));
         setProfile(loaded.onboarding ?? DEFAULT_PROFILE);
         setLive(loaded.adapterMode === "openai");
-        setOnboarded(true);
         setPauseRevision((value) => value + 1);
         setConfirmed(false);
         setModelTrace("");
@@ -143,16 +154,21 @@ export function PromptStudio({
     },
     [],
   );
+  function dismissOnboarding() {
+    setShowOnboarding(false);
+    try {
+      localStorage.setItem("provn-onboarding-dismissed", "1");
+    } catch {
+      /* Keep this session usable. */
+    }
+  }
   function change(next: PromptStudioDraft) {
     setDraft(next);
     setConfirmed(false);
     setNotice("Unsaved changes");
   }
   async function interpret(chosenProfile?: BuilderProfile) {
-    if (!onboarded && !chosenProfile) {
-      setShowOnboarding(true);
-      return;
-    }
+    if (busy || !idea.trim()) return;
     setError("");
     setBusy(true);
     try {
@@ -357,7 +373,7 @@ export function PromptStudio({
         maxLength={2000}
         onChange={(e) => setIdea(e.target.value)}
         onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length >= 50 && !busy) {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length > 0 && !busy) {
             e.preventDefault();
             void interpret();
           }
@@ -380,7 +396,7 @@ export function PromptStudio({
         <button
           className={button}
           onClick={() => interpret()}
-          disabled={busy || idea.trim().length < 50}
+          disabled={busy || idea.trim().length === 0}
         >
           {busy ? "Shaping…" : draft ? "Start new brief" : "Shape my idea"}
           <StudioIcon name="arrow" />
@@ -728,14 +744,13 @@ export function PromptStudio({
         }}
       />
       <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
-        {showOnboarding && (
+        {showOnboarding && !onboardingDismissed && (
           <BuilderOnboarding
-            onClose={() => setShowOnboarding(false)}
+            onClose={dismissOnboarding}
             onComplete={(settings) => {
               setProfile(settings);
-              setOnboarded(true);
-              setShowOnboarding(false);
-              if (idea.trim().length >= 50) void interpret(settings);
+              dismissOnboarding();
+              if (idea.trim().length > 0) void interpret(settings);
             }}
           />
         )}
