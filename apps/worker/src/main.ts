@@ -58,12 +58,25 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   stopping = true;
 });
+const MAX_CLAIM_FAILURES = 8;
 async function checked(result: { error: unknown }) {
   if (result.error) throw new Error("Build storage operation failed");
 }
+let claimFailures = 0;
 while (!stopping) {
   const claimed = await db.rpc("claim_studio_build", { p_worker: worker });
-  if (claimed.error) throw new Error("Worker claim failed. Verify migrations.");
+  if (claimed.error) {
+    // A network or database blip must not take the build service offline; a persistent error does.
+    claimFailures++;
+    console.error(
+      `[worker] claim failed (${claimFailures}/${MAX_CLAIM_FAILURES}): ${claimed.error.message}`,
+    );
+    if (claimFailures >= MAX_CLAIM_FAILURES)
+      throw new Error("Worker claim keeps failing. Verify migrations and database access.");
+    await delay(Math.min(60_000, 2_000 * 2 ** claimFailures));
+    continue;
+  }
+  claimFailures = 0;
   const build = claimed.data;
   if (!build) {
     await delay(5000);
