@@ -8,7 +8,7 @@ import { WorkspaceNav, type WorkspaceView } from "./workspace-nav";
 import { BuildJourney, type JourneyAttack } from "./build-journey";
 import { ProvnLogo } from "@/components/provn-logo";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { PromptStudioDraft } from "@buildwise/shared";
+import { isLiveAdapterMode, type PromptStudioDraft } from "@buildwise/shared";
 import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 import { SitePreview } from "@/components/demo/site-preview";
@@ -155,7 +155,7 @@ export function BuildWorkspace({
     const timer = setTimeout(
       () => {
         const updated = { ...draft, buildStage: buildStage + 1 };
-        if (draft.adapterMode === "openai")
+        if (isLiveAdapterMode(draft.adapterMode))
           void onRefine(
             updated,
             `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`,
@@ -264,7 +264,7 @@ export function BuildWorkspace({
     const text = (answer ?? message).trim();
     if (!text || busy) return;
     setLocalError("");
-    if (draft.adapterMode === "openai") {
+    if (isLiveAdapterMode(draft.adapterMode)) {
       const proposed = next
         ? {
             ...draft,
@@ -335,7 +335,7 @@ export function BuildWorkspace({
           </div>
           <span className="build-mode">
             <i />
-            {draft.adapterMode === "openai" ? "Live intake · draft preview" : "Mock environment"}
+            {isLiveAdapterMode(draft.adapterMode) ? "Live intake · draft preview" : "Mock environment"}
           </span>
           {buildHref && (
             <a className="build-export" href={buildHref}>
@@ -417,7 +417,7 @@ export function BuildWorkspace({
                     <div className="build-message-label">
                       <span className="build-avatar">✦</span>PROVN
                       <span className="build-agent-tag">
-                        {draft.adapterMode === "openai" ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}
+                        {isLiveAdapterMode(draft.adapterMode) ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}
                       </span>
                     </div>
                     <p>
@@ -591,7 +591,7 @@ export function BuildWorkspace({
                 <div className="build-chat-footer">
                   <span>✦ Guided intake</span>
                   <span>
-                    {draft.adapterMode === "openai"
+                    {isLiveAdapterMode(draft.adapterMode)
                       ? "Live AI · provider usage applies"
                       : "No model calls · No credits used"}
                   </span>

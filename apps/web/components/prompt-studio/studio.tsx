@@ -22,6 +22,7 @@ import {
   PromptStudioDraftSchema,
   compileStudioInstructions,
   createStudioReview,
+  isLiveAdapterMode,
   sanitizeStudioDraft,
   type PromptStudioDraft,
 } from "@buildwise/shared";
@@ -197,7 +198,7 @@ export function PromptStudio({
         setDraft(loaded);
         setHistory(StudioVersionSchema.array().parse(data.history));
         setProfile(loaded.onboarding ?? DEFAULT_PROFILE);
-        setLive(loaded.adapterMode === "openai");
+        setLive(isLiveAdapterMode(loaded.adapterMode));
         setOnboarded(true);
         setPauseRevision((value) => value + 1);
         setConfirmed(false);

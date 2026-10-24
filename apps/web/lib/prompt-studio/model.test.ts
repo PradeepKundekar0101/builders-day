@@ -16,29 +16,75 @@ async function fixture() {
     changeSummary: "Defined the booking flow.",
   };
 }
-function provider(value: unknown) {
+function provider(value: unknown, stopReason = "end_turn") {
   return vi.fn(
     async () =>
       new Response(
         JSON.stringify({
-          id: "resp_test",
-          status: "completed",
-          output: [{ content: [{ type: "output_text", text: JSON.stringify(value) }] }],
+          id: "msg_test",
+          type: "message",
+          role: "assistant",
+          model: "configured-model",
+          content: [
+            { type: "thinking", thinking: "", signature: "sig" },
+            { type: "text", text: JSON.stringify(value) },
+          ],
+          stop_reason: stopReason,
+          stop_details: null,
           usage: { input_tokens: 100, output_tokens: 200 },
         }),
+        { headers: { "content-type": "application/json" } },
       ),
   ) as unknown as typeof fetch;
+}
+function sentBody(f: typeof fetch) {
+  return JSON.parse(vi.mocked(f).mock.calls[0][1]?.body as string);
 }
 describe("live intake adapter", () => {
   it("validates output, records usage, and never lets the model choose revision or provenance", async () => {
     const f = provider(await fixture());
     const r = await interpretWithModel({ input }, config, undefined, f);
-    expect(r.draft.adapterMode).toBe("openai");
+    expect(r.draft.adapterMode).toBe("claude");
     expect(r.draft.revision).toBe(1);
+    expect(r.trace.provider).toBe("Anthropic");
+    expect(r.trace.responseId).toBe("msg_test");
     expect(r.trace.usage.output_tokens).toBe(200);
-    const request = JSON.parse(vi.mocked(f).mock.calls[0][1]?.body as string);
-    expect(request.store).toBe(false);
-    expect(request.max_output_tokens).toBe(5000);
+    const request = sentBody(f);
+    expect(request.model).toBe("configured-model");
+    expect(request.system).toBe(r.trace.instructions);
+    expect(request.messages).toEqual([{ role: "user", content: r.trace.input }]);
+    expect(request.output_config.format.type).toBe("json_schema");
+    expect(request.fallbacks).toBe("default");
+    expect(request.tools).toBeUndefined();
+  });
+  it("sends the key only to the Anthropic API and never retries", async () => {
+    const f = vi.fn(
+      async () => new Response("overloaded", { status: 529 }),
+    ) as unknown as typeof fetch;
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(interpretWithModel({ input }, config, undefined, f)).rejects.toThrow(
+      "Your brief is preserved",
+    );
+    log.mockRestore();
+    expect(f).toHaveBeenCalledTimes(1);
+    const [url, init] = vi.mocked(f).mock.calls[0];
+    expect(String(url)).toMatch(/^https:\/\/api\.anthropic\.com\/v1\/messages/);
+    expect([...new Headers(init?.headers).values()].join(" ")).toContain(config.apiKey);
+  });
+  it("treats refusals and truncated responses as failures without replacing the brief", async () => {
+    await expect(
+      interpretWithModel({ input }, config, undefined, provider(await fixture(), "refusal")),
+    ).rejects.toThrow("declined");
+    await expect(
+      interpretWithModel({ input }, config, undefined, provider(await fixture(), "max_tokens")),
+    ).rejects.toThrow("did not complete");
+  });
+  it("reports caller cancellation as an AbortError", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      interpretWithModel({ input }, config, controller.signal, provider(await fixture())),
+    ).rejects.toMatchObject({ name: "AbortError" });
   });
   it("suppresses upfront questions even if the model returns them", async () => {
     const output = {
@@ -120,8 +166,12 @@ describe("live intake adapter", () => {
     const f = vi.fn(
       async () => new Response("sensitive provider error", { status: 429 }),
     ) as unknown as typeof fetch;
-    await expect(interpretWithModel({ input }, config, undefined, f)).rejects.toThrow(
-      "Your brief is preserved",
-    );
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = await interpretWithModel({ input }, config, undefined, f).catch((e) => e);
+    expect(error.status).toBe(429);
+    expect(error.message).toContain("Your brief is preserved");
+    expect(error.message).not.toContain("sensitive");
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/sensitive|test-not-a-real-key/);
+    log.mockRestore();
   });
 });

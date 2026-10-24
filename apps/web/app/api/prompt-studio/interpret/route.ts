@@ -1,4 +1,4 @@
-import { interpretWithModel } from "@/lib/prompt-studio/model";
+import { DEFAULT_PROMPT_STUDIO_MODEL, interpretWithModel } from "@/lib/prompt-studio/model";
 import { readStudioJson, requireStudioOrigin, StudioHttpError } from "@/lib/prompt-studio/request";
 import { studioError, studioUser } from "@/lib/prompt-studio/server";
 import { publicEnv } from "@/lib/public-env";
@@ -9,11 +9,8 @@ export async function POST(request: Request) {
   let acquired = false;
   try {
     requireStudioOrigin(request, publicEnv.siteUrl);
-    if (
-      process.env.PROMPT_STUDIO_LIVE_ENABLED !== "true" ||
-      !process.env.OPENAI_API_KEY ||
-      !process.env.PROMPT_STUDIO_MODEL
-    )
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (process.env.PROMPT_STUDIO_LIVE_ENABLED !== "true" || !apiKey)
       throw new StudioHttpError(
         503,
         "Live Prompt Studio is not configured. Set server-side provider credentials and enable the adapter. Your idea is preserved.",
@@ -34,7 +31,7 @@ export async function POST(request: Request) {
     acquired = true;
     const result = await interpretWithModel(
       await readStudioJson(request),
-      { apiKey: process.env.OPENAI_API_KEY, model: process.env.PROMPT_STUDIO_MODEL },
+      { apiKey, model: process.env.PROMPT_STUDIO_MODEL || DEFAULT_PROMPT_STUDIO_MODEL },
       request.signal,
     );
     return Response.json(result, { headers: { "Cache-Control": "no-store" } });

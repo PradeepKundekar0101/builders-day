@@ -1,6 +1,6 @@
 # PROVN Prompt Studio integration
 
-Native integration for `PradeepKundekar0101/builders-day`, based on commit `39501f2ba9e3794cc703662f71affc28db650b2a`. This module includes mock intake, opt-in server-side OpenAI intake, versioned drafts, and a host build-event connector. It does not generate or deploy applications by itself.
+Native integration for `PradeepKundekar0101/builders-day`, based on commit `39501f2ba9e3794cc703662f71affc28db650b2a`. This module includes mock intake, opt-in server-side Claude intake, versioned drafts, and a host build-event connector. It does not generate or deploy applications by itself.
 
 ## Run
 
@@ -24,7 +24,7 @@ Review requires valid fields, answers to every open question, and an explicit re
 `packages/shared/src/prompt-studio.ts` exports:
 
 - `PromptStudioAdapter.interpret(input, signal)` -> `PromptStudioDraft`.
-- `MockPromptStudioAdapter` for offline demos; the server-side OpenAI adapter is opt-in.
+- `MockPromptStudioAdapter` for offline demos; the server-side Claude adapter is opt-in.
 - Zod input/draft schemas wrapping the existing canonical `SpecSchema`.
 - `compileStudioInstructions`: deterministic visible instruction text, retaining full idea, reference links, decisions, spec and checks.
 - `createStudioReview`: downstream handoff (`status: user_reviewed`), not spending authorization.

@@ -46,7 +46,8 @@ export const PromptStudioDraftSchema = z
     spec: SpecSchema,
     assumptions: z.array(z.string().max(1000)).max(12).optional(),
     acceptanceCriteria: z.array(z.string().trim().min(1).max(1_000)).min(1),
-    adapterMode: z.enum(["mock", "agenticorg", "openai"]),
+    // "openai" stays readable for drafts saved before live intake moved to Claude.
+    adapterMode: z.enum(["mock", "agenticorg", "claude", "openai"]),
   })
   .superRefine((draft, ctx) => {
     const ids = new Set<string>();
@@ -101,8 +102,13 @@ export function createStudioReview(input: PromptStudioDraft) {
   };
 }
 
+/** True when a draft came from a live model adapter rather than the offline mock. */
+export function isLiveAdapterMode(mode: PromptStudioDraft["adapterMode"]): boolean {
+  return mode === "claude" || mode === "openai";
+}
+
 export interface PromptStudioAdapter {
-  mode: "mock" | "agenticorg" | "openai";
+  mode: PromptStudioDraft["adapterMode"];
   interpret(input: PromptStudioInput, signal?: AbortSignal): Promise<PromptStudioDraft>;
 }
 
