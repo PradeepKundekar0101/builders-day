@@ -16,9 +16,11 @@ Secrets live only in `.env.deploy.local` (git-ignored) and in the Vercel and Sup
 3. Push auth settings: `pnpm exec supabase config push --project-ref bxnmselwdjodquzuzglo`.
    Production overrides live under `[remotes.production]` in `supabase/config.toml`.
    Review the printed diff before answering yes.
-4. Custom email templates are refused until a custom SMTP provider is configured (free-tier rule), and the refusal rejects the whole auth push.
-   Until Resend SMTP is configured, push from a temporary copy of `supabase/` with the two `[auth.email.template.*]` sections removed (`--workdir <copy>`).
-   With the default templates, email links return to `/auth/confirm` with a PKCE `code`, which the route also accepts.
+4. Auth email goes through Resend SMTP (`smtp.resend.com`, sender `Buildwise <no-reply@auth.brokwise.com>`).
+   `RESEND_API_KEY` must be in the environment when running `config push`; the config reads it with `env(RESEND_API_KEY)`.
+   With custom SMTP, Supabase allows 30 auth emails per hour by default; raise it in the dashboard (Authentication > Rate Limits) before a large event.
+5. Email templates only work for links the app starts, because they build the URL from `{{ .RedirectTo }}`.
+   Emails sent from the Supabase dashboard have no redirect and produce a broken link; invite users through the app instead.
 
 ## Vercel
 
