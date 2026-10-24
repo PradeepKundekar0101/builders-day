@@ -1,167 +1,560 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Provn Credits</title>
-<style>
-  :root {
-    --ink: #121826; --paper: #F3F1EA; --cobalt: #4F6BFF; --signal: #FF7A45;
-    --card: #FFFFFF; --line: #E2DED3; --muted: #6B7080; --ok: #1F9D6B; --warn: #C98A12; --bad: #D2453B;
-    --soft: #FBFAF6;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Inter, sans-serif; }
-  header { background: var(--ink); color: var(--paper); }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-  .bar { display: flex; align-items: center; gap: 14px; height: 60px; }
-  .logo { font-weight: 800; letter-spacing: -.02em; font-size: 18px; }
-  .logo b { color: var(--cobalt); }
-  .sub { color: #A9AEBC; }
-  .mode { margin-left: auto; font: 600 11px/1 ui-monospace, Menlo, monospace; padding: 6px 9px; border-radius: 999px; letter-spacing: .06em; }
-  .mode.mock { background: #2A3142; color: #C9CEDA; }
-  .mode.uat { background: rgba(79,107,255,.2); color: #AEBBFF; }
-  .mode.live { background: var(--signal); color: var(--ink); }
-  main.wrap { padding-top: 24px; padding-bottom: 60px; }
-  td.act { white-space: nowrap; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .stat .k { color: var(--muted); font-size: 12px; }
-  .stat .v { font-size: 26px; font-weight: 750; letter-spacing: -.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
-  .card h2 { font-size: 14px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
-  .card h2 .hint { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 12px; }
-  form { padding: 16px; display: grid; gap: 12px; }
-  label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
-  select, textarea { font: inherit; color: var(--ink); padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--soft); width: 100%; }
-  textarea { resize: vertical; }
-  pre.out { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, Menlo, monospace; background: var(--paper); border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 320px; overflow: auto; }
-  input { font: inherit; color: var(--ink); padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--soft); }
-  input:focus { outline: 2px solid var(--cobalt); outline-offset: -1px; background: #fff; }
-  .amounts { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chip { border: 1px solid var(--line); background: var(--soft); border-radius: 999px; padding: 5px 11px; cursor: pointer; font: inherit; font-size: 12px; }
-  .chip:hover { border-color: var(--cobalt); }
-  .quote { background: var(--paper); border-radius: 10px; padding: 12px; font-variant-numeric: tabular-nums; }
-  .quote .big { font-size: 22px; font-weight: 750; }
-  .quote .big span { color: var(--cobalt); }
-  .quote .small { color: var(--muted); font-size: 12px; }
-  button.primary { font: 600 14px/1 inherit; font-family: inherit; background: var(--cobalt); color: #fff; border: 0; border-radius: 10px; padding: 12px; cursor: pointer; }
-  button.primary:disabled { opacity: .5; cursor: wait; }
-  .btn { font: inherit; font-size: 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 5px 9px; cursor: pointer; color: var(--ink); text-decoration: none; white-space: nowrap; }
-  .btn:hover { border-color: var(--cobalt); color: var(--cobalt); }
-  .result { margin: 0 16px 16px; padding: 12px; border-radius: 10px; background: rgba(79,107,255,.08); border: 1px solid rgba(79,107,255,.25); display: none; }
-  .result.show { display: block; }
-  .result .url { font: 12px ui-monospace, Menlo, monospace; word-break: break-all; margin: 6px 0 10px; }
-  .err { color: var(--bad); font-size: 13px; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 10px 16px; border-bottom: 1px solid var(--line); }
-  td { padding: 11px 16px; border-bottom: 1px solid #EFECE3; vertical-align: middle; }
-  tr:last-child td { border-bottom: 0; }
-  td.num, th.num { text-align: right; }
-  tr.user { cursor: pointer; }
-  tr.user:hover td { background: var(--soft); }
-  tr.user.sel td { background: rgba(79,107,255,.07); }
-  .who b { display: block; }
-  .who small { color: var(--muted); }
-  .pill { display: inline-block; font: 600 11px/1 ui-monospace, Menlo, monospace; padding: 5px 8px; border-radius: 999px; background: #EEEBE2; color: var(--muted); }
-  .pill.paid { background: rgba(31,157,107,.12); color: var(--ok); }
-  .pill.open { background: rgba(201,138,18,.13); color: var(--warn); }
-  .pill.dead { background: #EEEBE2; color: #9A9EA9; }
-  .pill.problem { background: rgba(210,69,59,.12); color: var(--bad); }
-  .bal { font-weight: 700; }
-  .stack { display: grid; gap: 20px; }
-  .empty { padding: 28px 16px; text-align: center; color: var(--muted); }
-  .tabs { display: flex; gap: 4px; margin-left: auto; }
-  .tab { font: inherit; font-size: 12px; border: 0; background: none; padding: 4px 9px; border-radius: 7px; cursor: pointer; color: var(--muted); }
-  .tab.on { background: var(--paper); color: var(--ink); font-weight: 600; }
-  .scroll { overflow-x: auto; }
-  .mono { font: 12px ui-monospace, Menlo, monospace; color: var(--muted); }
-  .filter { font-size: 12px; color: var(--cobalt); cursor: pointer; font-weight: 500; }
-    .grid > *, .stack > * { min-width: 0; }
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .wrap { padding: 0 16px; } .sub { display: none; } .card h2 { flex-wrap: wrap; } .stat .v { font-size: 22px; } }
-</style>
-</head>
-<body>
-<header>
-  <div class="wrap bar">
-    <div class="logo">Provn <b>Credits</b></div>
-    <div class="sub">Pine Labs top-ups · $1 = 100 credits</div>
-    <div id="mode" class="mode">…</div>
-  </div>
-</header>
-<main class="wrap">
-  <section class="stats">
-    <div class="stat"><div class="k">Paying users</div><div class="v" id="s-users">–</div></div>
-    <div class="stat"><div class="k">Collected</div><div class="v" id="s-paid">–</div></div>
-    <div class="stat"><div class="k">Credits granted</div><div class="v" id="s-credits">–</div></div>
-    <div class="stat"><div class="k">Links awaiting payment</div><div class="v" id="s-open">–</div></div>
-  </section>
-
-  <div class="grid">
-    <div class="stack">
-    <section class="card">
-      <h2>New payment link</h2>
-      <form id="f">
-        <label>User email<input name="email" type="email" required placeholder="builder@company.com"></label>
-        <label>Name <input name="name" placeholder="Optional"></label>
-        <label>Mobile (10 digits)<input name="phone" inputmode="numeric" pattern="\d{10}" placeholder="Optional"></label>
-        <label>Amount (USD)
-          <input name="usd" type="number" step="0.01" min="1" value="5" required>
-        </label>
-        <div class="amounts" id="chips"></div>
-        <div class="quote" id="quote"></div>
-        <button class="primary" id="go">Create payment link</button>
-        <div class="err" id="err"></div>
-      </form>
-      <div class="result" id="result"></div>
-    </section>
-
-    <section class="card">
-      <h2>Run an agent <span class="hint" id="agent-mode">AgenticOrg</span></h2>
-      <form id="af">
-        <label>Agent
-          <select name="agent" id="agent-select"></select>
-        </label>
-        <label>Or paste an agent UUID<input name="uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
-        <label>Charged to
-          <select name="email" id="payer"></select>
-        </label>
-        <label>Task<textarea name="task" rows="3" required placeholder="e.g. share landbank portfolio summary"></textarea></label>
-        <button class="primary" id="run">Run agent</button>
-        <div class="err" id="aerr"></div>
-      </form>
-      <div class="result" id="aresult"></div>
-    </section>
-    </div>
-
-    <div class="stack">
-      <section class="card">
-        <h2>Users <span class="hint">click a user to filter payments</span></h2>
-        <div class="scroll"><table>
-          <thead><tr><th>User</th><th class="num">Paid</th><th class="num">Charged</th><th class="num">Credits granted</th><th class="num">Used</th><th class="num">Balance</th><th>Last paid</th></tr></thead>
-          <tbody id="users"></tbody>
-        </table></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Provn Credits</title>
+    <style>
+      :root {
+        --ink: #121826;
+        --paper: #f3f1ea;
+        --cobalt: #4f6bff;
+        --signal: #ff7a45;
+        --card: #ffffff;
+        --line: #e2ded3;
+        --muted: #6b7080;
+        --ok: #1f9d6b;
+        --warn: #c98a12;
+        --bad: #d2453b;
+        --soft: #fbfaf6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          14px/1.45 ui-sans-serif,
+          -apple-system,
+          "Segoe UI",
+          Inter,
+          sans-serif;
+      }
+      header {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 60px;
+      }
+      .logo {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        font-size: 18px;
+      }
+      .logo b {
+        color: var(--cobalt);
+      }
+      .sub {
+        color: #a9aebc;
+      }
+      .mode {
+        margin-left: auto;
+        font:
+          600 11px/1 ui-monospace,
+          Menlo,
+          monospace;
+        padding: 6px 9px;
+        border-radius: 999px;
+        letter-spacing: 0.06em;
+      }
+      .mode.mock {
+        background: #2a3142;
+        color: #c9ceda;
+      }
+      .mode.uat {
+        background: rgba(79, 107, 255, 0.2);
+        color: #aebbff;
+      }
+      .mode.live {
+        background: var(--signal);
+        color: var(--ink);
+      }
+      main.wrap {
+        padding-top: 24px;
+        padding-bottom: 60px;
+      }
+      td.act {
+        white-space: nowrap;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .stat .k {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .stat .v {
+        font-size: 26px;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      .card h2 {
+        font-size: 14px;
+        margin: 0;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card h2 .hint {
+        margin-left: auto;
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 12px;
+      }
+      form {
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      label {
+        display: grid;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      select,
+      textarea {
+        font: inherit;
+        color: var(--ink);
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--soft);
+        width: 100%;
+      }
+      textarea {
+        resize: vertical;
+      }
+      pre.out {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font:
+          12px/1.5 ui-monospace,
+          Menlo,
+          monospace;
+        background: var(--paper);
+        border-radius: 8px;
+        padding: 10px;
+        margin: 8px 0 0;
+        max-height: 320px;
+        overflow: auto;
+      }
+      input {
+        font: inherit;
+        color: var(--ink);
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--soft);
+      }
+      input:focus {
+        outline: 2px solid var(--cobalt);
+        outline-offset: -1px;
+        background: #fff;
+      }
+      .amounts {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        border: 1px solid var(--line);
+        background: var(--soft);
+        border-radius: 999px;
+        padding: 5px 11px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+      }
+      .chip:hover {
+        border-color: var(--cobalt);
+      }
+      .quote {
+        background: var(--paper);
+        border-radius: 10px;
+        padding: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .quote .big {
+        font-size: 22px;
+        font-weight: 750;
+      }
+      .quote .big span {
+        color: var(--cobalt);
+      }
+      .quote .small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      button.primary {
+        font: 600 14px/1 inherit;
+        font-family: inherit;
+        background: var(--cobalt);
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px;
+        cursor: pointer;
+      }
+      button.primary:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .btn {
+        font: inherit;
+        font-size: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 8px;
+        padding: 5px 9px;
+        cursor: pointer;
+        color: var(--ink);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--cobalt);
+        color: var(--cobalt);
+      }
+      .result {
+        margin: 0 16px 16px;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(79, 107, 255, 0.08);
+        border: 1px solid rgba(79, 107, 255, 0.25);
+        display: none;
+      }
+      .result.show {
+        display: block;
+      }
+      .result .url {
+        font:
+          12px ui-monospace,
+          Menlo,
+          monospace;
+        word-break: break-all;
+        margin: 6px 0 10px;
+      }
+      .err {
+        color: var(--bad);
+        font-size: 13px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 11px 16px;
+        border-bottom: 1px solid #efece3;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+      }
+      tr.user {
+        cursor: pointer;
+      }
+      tr.user:hover td {
+        background: var(--soft);
+      }
+      tr.user.sel td {
+        background: rgba(79, 107, 255, 0.07);
+      }
+      .who b {
+        display: block;
+      }
+      .who small {
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-block;
+        font:
+          600 11px/1 ui-monospace,
+          Menlo,
+          monospace;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #eeebe2;
+        color: var(--muted);
+      }
+      .pill.paid {
+        background: rgba(31, 157, 107, 0.12);
+        color: var(--ok);
+      }
+      .pill.open {
+        background: rgba(201, 138, 18, 0.13);
+        color: var(--warn);
+      }
+      .pill.dead {
+        background: #eeebe2;
+        color: #9a9ea9;
+      }
+      .pill.problem {
+        background: rgba(210, 69, 59, 0.12);
+        color: var(--bad);
+      }
+      .bal {
+        font-weight: 700;
+      }
+      .stack {
+        display: grid;
+        gap: 20px;
+      }
+      .empty {
+        padding: 28px 16px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .tab {
+        font: inherit;
+        font-size: 12px;
+        border: 0;
+        background: none;
+        padding: 4px 9px;
+        border-radius: 7px;
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .tab.on {
+        background: var(--paper);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      .mono {
+        font:
+          12px ui-monospace,
+          Menlo,
+          monospace;
+        color: var(--muted);
+      }
+      .filter {
+        font-size: 12px;
+        color: var(--cobalt);
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .grid > *,
+      .stack > * {
+        min-width: 0;
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .sub {
+          display: none;
+        }
+        .card h2 {
+          flex-wrap: wrap;
+        }
+        .stat .v {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap bar">
+        <div class="logo">Provn <b>Credits</b></div>
+        <div class="sub">Pine Labs top-ups · $1 = 100 credits</div>
+        <div id="mode" class="mode">…</div>
+      </div>
+    </header>
+    <main class="wrap">
+      <section class="stats">
+        <div class="stat">
+          <div class="k">Paying users</div>
+          <div class="v" id="s-users">–</div>
+        </div>
+        <div class="stat">
+          <div class="k">Collected</div>
+          <div class="v" id="s-paid">–</div>
+        </div>
+        <div class="stat">
+          <div class="k">Credits granted</div>
+          <div class="v" id="s-credits">–</div>
+        </div>
+        <div class="stat">
+          <div class="k">Links awaiting payment</div>
+          <div class="v" id="s-open">–</div>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>
-          <span id="links-title">Payment links</span>
-          <span class="filter" id="clear" hidden>· show all</span>
-          <div class="tabs" id="tabs">
-            <button class="tab on" data-v="links">Links</button>
-            <button class="tab" data-v="ledger">Ledger</button>
-            <button class="tab" data-v="runs">Agent runs</button>
-            <button class="tab" data-v="webhooks">Webhooks</button>
-          </div>
-          <button class="btn" id="recheck" title="Ask Pine Labs for the status of every open link">Recheck open</button>
-        </h2>
-        <div class="scroll" id="panel"></div>
-      </section>
-    </div>
-  </div>
-</main>
-<script src="/app.js"></script>
-</body>
+      <div class="grid">
+        <div class="stack">
+          <section class="card">
+            <h2>New payment link</h2>
+            <form id="f">
+              <label
+                >User email<input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="builder@company.com"
+              /></label>
+              <label>Name <input name="name" placeholder="Optional" /></label>
+              <label
+                >Mobile (10 digits)<input
+                  name="phone"
+                  inputmode="numeric"
+                  pattern="\d{10}"
+                  placeholder="Optional"
+              /></label>
+              <label
+                >Amount (USD)
+                <input name="usd" type="number" step="0.01" min="1" value="5" required />
+              </label>
+              <div class="amounts" id="chips"></div>
+              <div class="quote" id="quote"></div>
+              <button class="primary" id="go">Create payment link</button>
+              <div class="err" id="err"></div>
+            </form>
+            <div class="result" id="result"></div>
+          </section>
+
+          <section class="card">
+            <h2>Run an agent <span class="hint" id="agent-mode">AgenticOrg</span></h2>
+            <form id="af">
+              <label
+                >Agent
+                <select name="agent" id="agent-select"></select>
+              </label>
+              <label
+                >Or paste an agent UUID<input
+                  name="uuid"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              /></label>
+              <label
+                >Charged to
+                <select name="email" id="payer"></select>
+              </label>
+              <label
+                >Task<textarea
+                  name="task"
+                  rows="3"
+                  required
+                  placeholder="e.g. share landbank portfolio summary"
+                ></textarea>
+              </label>
+              <button class="primary" id="run">Run agent</button>
+              <div class="err" id="aerr"></div>
+            </form>
+            <div class="result" id="aresult"></div>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="card">
+            <h2>Users <span class="hint">click a user to filter payments</span></h2>
+            <div class="scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th class="num">Paid</th>
+                    <th class="num">Charged</th>
+                    <th class="num">Credits granted</th>
+                    <th class="num">Used</th>
+                    <th class="num">Balance</th>
+                    <th>Last paid</th>
+                  </tr>
+                </thead>
+                <tbody id="users"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>
+              <span id="links-title">Payment links</span>
+              <span class="filter" id="clear" hidden>· show all</span>
+              <div class="tabs" id="tabs">
+                <button class="tab on" data-v="links">Links</button>
+                <button class="tab" data-v="ledger">Ledger</button>
+                <button class="tab" data-v="runs">Agent runs</button>
+                <button class="tab" data-v="webhooks">Webhooks</button>
+              </div>
+              <button
+                class="btn"
+                id="recheck"
+                title="Ask Pine Labs for the status of every open link"
+              >
+                Recheck open
+              </button>
+            </h2>
+            <div class="scroll" id="panel"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <script src="/app.js"></script>
+  </body>
 </html>

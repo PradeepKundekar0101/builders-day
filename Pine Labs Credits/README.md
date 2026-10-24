@@ -45,16 +45,16 @@ is enabled for USD (international/MCC), set `CHARGE_CURRENCY=USD`.
 
 ## Endpoints
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/api/topups` `{email, name?, phone?, usd}` | admin | Create a payment link |
-| GET | `/api/summary` | admin | Per-user totals, links, ledger, webhook log |
-| POST | `/api/links/:id/sync` | admin | Ask Pine Labs for status now; grants if paid |
-| POST | `/api/reconcile` | admin | Re-check every open link |
-| GET | `/api/users/:email/balance` | admin | Credit balance |
-| POST | `/api/credits/spend` `{email, credits, reason, idempotencyKey}` | admin | Debit credits (402 if short) |
-| POST | `/api/webhooks/pinelabs` | signature | Pine Labs webhook |
-| GET | `/thanks?ref=` | public | Payer landing page |
+| Method | Path                                                            | Auth      | Purpose                                      |
+| ------ | --------------------------------------------------------------- | --------- | -------------------------------------------- |
+| POST   | `/api/topups` `{email, name?, phone?, usd}`                     | admin     | Create a payment link                        |
+| GET    | `/api/summary`                                                  | admin     | Per-user totals, links, ledger, webhook log  |
+| POST   | `/api/links/:id/sync`                                           | admin     | Ask Pine Labs for status now; grants if paid |
+| POST   | `/api/reconcile`                                                | admin     | Re-check every open link                     |
+| GET    | `/api/users/:email/balance`                                     | admin     | Credit balance                               |
+| POST   | `/api/credits/spend` `{email, credits, reason, idempotencyKey}` | admin     | Debit credits (402 if short)                 |
+| POST   | `/api/webhooks/pinelabs`                                        | signature | Pine Labs webhook                            |
+| GET    | `/thanks?ref=`                                                  | public    | Payer landing page                           |
 
 "admin" means `Authorization: Bearer $ADMIN_TOKEN` when `ADMIN_TOKEN` is set.
 
