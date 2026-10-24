@@ -87,7 +87,11 @@ const titleCase = (words: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-function appName(idea: string): string {
+function appName(raw: string): string {
+  const idea = raw.replace(
+    /^\s*(?:i\s+(?:want|need|would like)\s+)?(?:to\s+)?(?:build|create|make|develop|design)\s+/i,
+    "",
+  );
   const match =
     /^\s*(?:an?|the)?\s*(?:simple\s+)?([a-z][a-z\s-]{2,40}?)\s+(?:for|where|that|to|which|so|with)\b/i.exec(
       idea,

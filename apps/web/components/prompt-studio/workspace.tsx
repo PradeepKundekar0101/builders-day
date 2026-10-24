@@ -7,10 +7,13 @@ import {
 import { WorkspaceNav, type WorkspaceView } from "./workspace-nav";
 import { JourneyGuide } from "./journey-guide";
 import { ProvnLogo } from "@/components/provn-logo";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
 import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
+import { SitePreview } from "@/components/demo/site-preview";
+import type { AttackResult } from "@/lib/demo/attack";
+import { planFromIdea } from "@/lib/demo/plan";
 
 type Props = {
   pauseRevision?: number;
@@ -68,6 +71,24 @@ export function BuildWorkspace({
   const [page, setPage] = useState(0);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [appPage, setAppPage] = useState("Home");
+  const [attack, setAttack] = useState<
+    | { kind: "idle" }
+    | { kind: "running"; result: AttackResult; shown: number }
+    | { kind: "done"; result: AttackResult }
+  >({ kind: "idle" });
+  const attackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const terminal = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    terminal.current?.scrollTo({ top: terminal.current.scrollHeight });
+  }, [attack, step]);
+  useEffect(() => () => attackTimers.current.forEach(clearTimeout), []);
+  const appPlan = useMemo(() => {
+    const plan = planFromIdea(draft.input.idea);
+    // The mock brief names every product "My product"; the idea gives a better name until edited.
+    return draft.spec.name === "My product" ? plan : { ...plan, name: draft.spec.name };
+  }, [draft.input.idea, draft.spec.name]);
+  const appSlug = appPlan.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const bottom = useRef<HTMLDivElement>(null);
   const buildStage = draft.buildStage ?? 0;
   const [buildState, setBuildState] = useState<StudioBuildState>({
@@ -145,6 +166,42 @@ export function BuildWorkspace({
     buildState.completedStage,
     buildState.error,
   ]);
+  // The simulated build has run to its last stage: show the built app instead of the wireframe.
+  const built = step >= stages.length - 1 && !running;
+  // When a build finishes, show the result instead of the panel that started it.
+  const wasBuilt = useRef(built);
+  useEffect(() => {
+    if (built && !wasBuilt.current) {
+      setRightTab("preview");
+      setPreviewSelected(true);
+      setAppPage("Home");
+      setAttack({ kind: "idle" });
+    }
+    wasBuilt.current = built;
+  }, [built]);
+  const probe = attack.kind === "running" ? attack.result.probes[attack.shown - 1] : undefined;
+  async function runAttack(hardened: boolean) {
+    setConsoleOpen(true);
+    const response = await fetch("/api/demo/attack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ idea: draft.input.idea, hardened }),
+    }).catch(() => null);
+    if (!response?.ok) {
+      setLocalError("The attack simulation did not start. Try again.");
+      return;
+    }
+    const result = (await response.json()) as AttackResult;
+    setAttack({ kind: "running", result, shown: 0 });
+    result.probes.forEach((_, i) =>
+      attackTimers.current.push(
+        setTimeout(() => setAttack({ kind: "running", result, shown: i + 1 }), 650 * (i + 1)),
+      ),
+    );
+    attackTimers.current.push(
+      setTimeout(() => setAttack({ kind: "done", result }), 650 * (result.probes.length + 1)),
+    );
+  }
   const answered = draft.questions.filter((q) => q.answer?.trim()).length;
   const activePage = draft.spec.pages[Math.min(page, draft.spec.pages.length - 1)];
   useEffect(() => {
@@ -505,6 +562,16 @@ export function BuildWorkspace({
                 <button aria-label="Refresh preview" onClick={() => setRefreshKey((v) => v + 1)}>
                   ↻
                 </button>
+                {built && (
+                  <button
+                    className="build-attack"
+                    onClick={() => runAttack(false)}
+                    disabled={attack.kind === "running"}
+                    title="Simulated attack against the built app"
+                  >
+                    ⚠ Attack
+                  </button>
+                )}
                 <button
                   className="build-deploy"
                   disabled
@@ -537,6 +604,43 @@ export function BuildWorkspace({
                 referrerPolicy="no-referrer"
                 style={{ width: "100%", flex: 1, border: 0, background: "white" }}
               />
+            ) : rightTab === "preview" && built ? (
+              <>
+                <div className="build-address">
+                  <span className="build-window-dots">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <span>
+                    https://{appSlug}.provn.app/
+                    {appPage === "Home" ? "" : appPage.toLowerCase().replaceAll(" ", "-")}
+                  </span>
+                  <span className="build-wireframe-tag">SIMULATED BUILD</span>
+                </div>
+                <div className="build-preview-stage">
+                  <div
+                    className={`build-app-surface build-app-built ${mobile ? "is-mobile" : ""} ${attack.kind === "running" ? "is-under-attack" : ""}`}
+                    key={refreshKey}
+                    aria-label="Built app preview"
+                  >
+                    <SitePreview
+                      plan={appPlan}
+                      page={appPage}
+                      onNavigate={setAppPage}
+                      revealed={appPlan.pages.length}
+                    />
+                    {probe && (
+                      <div role="status" className="build-attack-probe">
+                        <p>
+                          ▶ {probe.name} → {probe.target}
+                        </p>
+                        <p>{probe.payload}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             ) : rightTab === "preview" ? (
               <>
                 <div className="build-address">
@@ -654,7 +758,7 @@ export function BuildWorkspace({
                 </button>
               </div>
               {consoleOpen && (
-                <div className="build-terminal-output" role="log" aria-live="polite">
+                <div className="build-terminal-output" role="log" aria-live="polite" ref={terminal}>
                   <p>
                     <span className="terminal-muted">provn / studio</span>{" "}
                     <span className="terminal-green">$</span> preview --mock
@@ -678,6 +782,47 @@ export function BuildWorkspace({
                         {line}
                       </p>
                     ))
+                  )}
+                  {built && (
+                    <p>
+                      <span className="terminal-green">PREVIEW</span> {appSlug}.provn.app ·
+                      simulated app, not deployed
+                    </p>
+                  )}
+                  {attack.kind !== "idle" && (
+                    <div aria-label="Attack results">
+                      {attack.result.probes
+                        .slice(0, attack.kind === "running" ? attack.shown : undefined)
+                        .map((p) => (
+                          <p key={p.id}>
+                            <span
+                              className={p.outcome === "found" ? "terminal-red" : "terminal-green"}
+                            >
+                              [{p.outcome === "found" ? "VULN" : "BLOCK"}]
+                            </span>{" "}
+                            {p.name}: {p.detail}
+                          </p>
+                        ))}
+                      {attack.kind === "done" && (
+                        <p>
+                          <span
+                            className={
+                              attack.result.grade === "A" ? "terminal-green" : "terminal-red"
+                            }
+                          >
+                            GRADE {attack.result.grade}
+                          </span>{" "}
+                          {attack.result.grade === "A"
+                            ? "Every attack blocked. Ready to publish."
+                            : "One issue found. "}
+                          {attack.result.grade !== "A" && (
+                            <button className="build-inline-button" onClick={() => runAttack(true)}>
+                              Apply fix and attack again
+                            </button>
+                          )}
+                        </p>
+                      )}
+                    </div>
                   )}
                   <span className="terminal-cursor">▊</span>
                 </div>
