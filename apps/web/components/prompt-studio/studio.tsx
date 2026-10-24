@@ -6,6 +6,13 @@ import { BuilderOnboarding } from "./onboarding";
 import { DEFAULT_PROFILE, type BuilderProfile } from "@/lib/provn-demo";
 import "./p0-panels.css";
 import "./design-system.css";
+import type { StudioBuildConnection } from "@/lib/prompt-studio/build-events";
+import {
+  StudioVersionSchema,
+  prepareSaveAttempt,
+  type StudioVersion,
+  type SaveAttempt,
+} from "@/lib/prompt-studio/history";
 import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
 import { readHandoff, writeHandoff, handoffKey, studioSignInPath } from "@/lib/studio-handoff";
@@ -72,10 +79,19 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
   );
 }
 
-export function PromptStudio({ demo = false }: { demo?: boolean }) {
+export function PromptStudio({
+  demo = false,
+  buildConnection,
+}: {
+  demo?: boolean;
+  buildConnection?: StudioBuildConnection;
+}) {
   const params = useSearchParams();
   const [live, setLive] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
+  const [history, setHistory] = useState<StudioVersion[]>([]);
+  const pendingSave = useRef<SaveAttempt | null>(null);
+  const [pauseRevision, setPauseRevision] = useState(0);
   const [modelTrace, setModelTrace] = useState("");
   const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
@@ -145,7 +161,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   }
 
   useEffect(() => {
-    if (!loadId || demo || resumeId) return;
+    if (!loadId || demo || resumeId || session?.id === loadId) return;
     const controller = new AbortController();
     fetch(`/api/prompt-studio/sessions/${encodeURIComponent(loadId)}`, {
       signal: controller.signal,
@@ -155,6 +171,13 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         if (!r.ok) throw new Error(data.error);
         const loaded = PromptStudioDraftSchema.parse(data.draft);
         setDraft(loaded);
+        setHistory(StudioVersionSchema.array().parse(data.history));
+        setProfile(loaded.onboarding ?? DEFAULT_PROFILE);
+        setLive(loaded.adapterMode === "openai");
+        setOnboarded(true);
+        setPauseRevision((value) => value + 1);
+        setConfirmed(false);
+        setModelTrace("");
         setIdea(loaded.input.idea);
         setSpecText(JSON.stringify(loaded.spec, null, 2));
         setSession({ id: data.id, revision: data.revision });
@@ -164,7 +187,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [loadId, demo, resumeId]);
+  }, [loadId, demo, resumeId, session?.id]);
   useEffect(
     () => () => {
       speech.current?.stop();
@@ -192,6 +215,9 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       setDraft({ ...next, onboarding: settings });
       setSpecText(JSON.stringify(next.spec, null, 2));
       setSession(null);
+      setHistory([]);
+      pendingSave.current = null;
+      setPauseRevision(0);
       setConfirmed(false);
       if (!live) setNotice("Mock scaffold created. Review all suggestions; no model was called.");
     } catch (e) {
@@ -291,17 +317,18 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         signInToStudio();
         return;
       }
-      const id = session?.id ?? crypto.randomUUID();
+      const attempt = prepareSaveAttempt(
+        pendingSave.current,
+        session,
+        clean,
+        review ? "user_reviewed" : "draft",
+      );
+      pendingSave.current = attempt;
+      const id = attempt.body.id;
       const response = await fetch(`/api/prompt-studio/sessions${session ? `/${id}` : ""}`, {
         method: session ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          mutationId: crypto.randomUUID(),
-          expectedRevision: session?.revision ?? 0,
-          draft: clean,
-          status: review ? "user_reviewed" : "draft",
-        }),
+        body: JSON.stringify(attempt.body),
       });
       if (response.status === 401) {
         signInToStudio();
@@ -309,7 +336,20 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setDraft(PromptStudioDraftSchema.parse(data.draft));
+      const saved = PromptStudioDraftSchema.parse(data.draft);
+      setDraft(saved);
+      pendingSave.current = null;
+      setHistory((old) =>
+        [
+          {
+            revision: data.revision,
+            payload: saved,
+            status: data.status,
+            created_at: new Date().toISOString(),
+          },
+          ...old.filter((v) => v.revision !== data.revision),
+        ].slice(0, 20),
+      );
       setSession({ id, revision: data.revision });
       if (resumeId) {
         try {
@@ -318,7 +358,11 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           /* Saved server copy is authoritative. */
         }
       }
-      window.history.replaceState(null, "", `?session=${id}`);
+      window.history.replaceState(
+        null,
+        "",
+        `?session=${id}${buildConnection ? `&build=${encodeURIComponent(buildConnection.runId)}` : ""}`,
+      );
       setNotice(
         `Version ${data.revision} saved${review ? " and marked user reviewed" : ""}. No build or paid execution started.`,
       );
@@ -344,6 +388,19 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Check the brief before exporting.");
     }
+  }
+  function restoreVersion(version: StudioVersion) {
+    const restored = PromptStudioDraftSchema.parse(version.payload);
+    setDraft(restored);
+    setSpecText(JSON.stringify(restored.spec, null, 2));
+    setIdea(restored.input.idea);
+    setConfirmed(false);
+    setPauseRevision((value) => value + 1);
+    setModelTrace("");
+    setError("");
+    setNotice(
+      `Version ${version.revision} restored as an unsaved draft. Save to create a new version; progression is paused.`,
+    );
   }
   const parsed = draft ? PromptStudioDraftSchema.safeParse(draft) : null;
   let instructionPreview = "Complete the brief fields to preview valid instructions.";
@@ -398,12 +455,21 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       </div>
     </>
   );
+  if (loadId && !demo && session?.id !== loadId && !error)
+    return (
+      <p className="p-8" role="status">
+        Loading your saved workspace…
+      </p>
+    );
   if (draft)
     return (
       <BuildWorkspace
         pauseOnOpen={Boolean(resumeId)}
         message={pendingMessage}
         onMessageChange={setPendingMessage}
+        key={`${session?.id ?? "new"}:${pauseRevision}:${buildConnection?.runId ?? "demo"}`}
+        pauseRevision={pauseRevision}
+        buildConnection={buildConnection}
         onRefine={refine}
         onCancel={() => modelRequest.current?.abort()}
         reviewed={confirmed}
@@ -436,6 +502,39 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
                 </ul>
               </div>
             ) : null}
+            <details>
+              <summary>Saved versions & prompt history ({history.length})</summary>
+              <p>
+                Saving preserves a brief and its compiled instructions. Restoring creates an unsaved
+                copy; existing versions stay intact. Export current edits before restoring if you
+                want to keep them. This is not a log of actual provider requests.
+              </p>
+              {!history.length && (
+                <p>
+                  {demo
+                    ? "Sign in to save and resume versions. You can export this demo brief."
+                    : "Save your first version to start the history."}
+                </p>
+              )}
+              {history.map((version) => (
+                <details key={version.revision}>
+                  <summary>
+                    Version {version.revision} · {version.status} ·{" "}
+                    {new Date(version.created_at).toLocaleString()}
+                  </summary>
+                  <pre className="studio-code">
+                    {compileStudioInstructions(sanitizeStudioDraft(version.payload))}
+                  </pre>
+                  <button
+                    className="studio-button studio-button-secondary"
+                    disabled={busy}
+                    onClick={() => restoreVersion(version)}
+                  >
+                    Restore version {version.revision} as draft
+                  </button>
+                </details>
+              ))}
+            </details>
             {modelTrace && (
               <details>
                 <summary>Last model request · exact instructions and usage</summary>

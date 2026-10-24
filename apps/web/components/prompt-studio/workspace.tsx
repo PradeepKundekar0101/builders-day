@@ -1,4 +1,10 @@
 "use client";
+import {
+  acceptBuildEvent,
+  type StudioBuildConnection,
+  type StudioBuildState,
+} from "@/lib/prompt-studio/build-events";
+import { JourneyGuide } from "./journey-guide";
 import { ProvnLogo } from "@/components/provn-logo";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
@@ -9,6 +15,8 @@ type Props = {
   pauseOnOpen?: boolean;
   message: string;
   onMessageChange: (value: string) => void;
+  pauseRevision?: number;
+  buildConnection?: StudioBuildConnection;
   onRefine: (draft: PromptStudioDraft, message: string) => Promise<boolean>;
   onCancel: () => void;
   reviewed: boolean;
@@ -33,6 +41,8 @@ export function BuildWorkspace({
   pauseOnOpen = false,
   message,
   onMessageChange: setMessage,
+  pauseRevision = 0,
+  buildConnection,
   onRefine,
   onCancel,
   draft,
@@ -52,7 +62,7 @@ export function BuildWorkspace({
   const [rightTab, setRightTab] = useState<"preview" | "live" | "modules">("preview");
   const journey = useProvnDemo(draft, reviewed);
   const [module, setModule] = useState<P0Module>("cost");
-  const [paused, setPaused] = useState(pauseOnOpen);
+  const [paused, setPaused] = useState(pauseOnOpen || pauseRevision > 0);
   const [localError, setLocalError] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [step, setStep] = useState(-1);
@@ -63,28 +73,81 @@ export function BuildWorkspace({
   const [refreshKey, setRefreshKey] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const buildStage = draft.buildStage ?? 0;
+  const [buildState, setBuildState] = useState<StudioBuildState>({
+    sequence: 0,
+    completedStage: null,
+    error: "",
+  });
+  const currentStage = useRef(buildStage);
+  useEffect(() => {
+    currentStage.current = buildStage;
+  }, [buildStage]);
+  useEffect(() => {
+    if (!buildConnection) return;
+    return buildConnection.subscribe(
+      (raw) =>
+        setBuildState((previous) =>
+          acceptBuildEvent(
+            previous,
+            raw,
+            buildConnection.runId,
+            currentStage.current,
+            buildConnection.allowedPreviewOrigins,
+            window.location.origin,
+          ),
+        ),
+      () =>
+        setBuildState((previous) => ({
+          ...previous,
+          completedStage: null,
+          error:
+            "Build connection lost. Progression is paused; reconnect through your build service.",
+        })),
+    );
+  }, [buildConnection]);
   const phaseNames = [
     "Initial layout",
     "Primary user journey",
     "Data and connections",
     "Review and handoff",
   ];
+  useEffect(() => {
+    buildConnection?.onDraftChange?.(draft);
+  }, [buildConnection, draft]);
   const questionStage = (q: PromptStudioDraft["questions"][number]) =>
     q.stage ?? (q.id === "data" ? 2 : 1);
   const next = draft.questions.find((q) => !q.answer?.trim() && questionStage(q) <= buildStage);
   useEffect(() => {
-    if (paused || message.trim() || busy || next || buildStage >= 3 || error) return;
-    const timer = setTimeout(() => {
-      const updated = { ...draft, buildStage: buildStage + 1 };
-      if (draft.adapterMode === "openai")
-        void onRefine(
-          updated,
-          `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`,
-        );
-      else onChange(updated);
-    }, 2200);
+    if (paused || message.trim() || busy || next || buildStage >= 3 || error || buildState.error)
+      return;
+    if (buildConnection && buildState.completedStage !== buildStage) return;
+    const timer = setTimeout(
+      () => {
+        const updated = { ...draft, buildStage: buildStage + 1 };
+        if (draft.adapterMode === "openai")
+          void onRefine(
+            updated,
+            `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`,
+          );
+        else onChange(updated);
+      },
+      buildConnection ? 0 : 2200,
+    );
     return () => clearTimeout(timer);
-  }, [buildStage, paused, message, busy, next, error, draft, onRefine, onChange]);
+  }, [
+    buildStage,
+    paused,
+    message,
+    busy,
+    next,
+    error,
+    draft,
+    onRefine,
+    onChange,
+    buildConnection,
+    buildState.completedStage,
+    buildState.error,
+  ]);
   const answered = draft.questions.filter((q) => q.answer?.trim()).length;
   const activePage = draft.spec.pages[Math.min(page, draft.spec.pages.length - 1)];
   useEffect(() => {
@@ -184,9 +247,9 @@ export function BuildWorkspace({
             </div>
             <span className="build-small-label">{phaseNames[buildStage]}</span>
           </div>
-          {(error || localError) && (
+          {(error || localError || buildState.error) && (
             <p role="alert" className="build-error">
-              {error || localError}
+              {error || localError || buildState.error}
             </p>
           )}
           {notice && notice !== "Unsaved changes" && (
@@ -234,10 +297,16 @@ export function BuildWorkspace({
                       {next
                         ? "This decision is needed for the current stage."
                         : buildStage < 3
-                          ? "Preparing the next part of your simulated preview…"
+                          ? buildConnection
+                            ? "Waiting for the current build stage to complete…"
+                            : "Preparing the next part of your simulated preview…"
                           : "Your staged brief is ready for review."}
                     </p>
-                    <small>Preview simulation · real build engine not connected</small>
+                    <small>
+                      {buildConnection
+                        ? "Progression follows build-engine completion events."
+                        : "Preview simulation · real build engine not connected"}
+                    </small>
                     {buildStage < 3 && (
                       <button className="build-inline-button" onClick={() => setPaused(!paused)}>
                         {paused ? "Resume progression" : "Pause progression"}
@@ -284,25 +353,22 @@ export function BuildWorkspace({
                     </div>
                   );
                 })}
-                {!next && buildStage === 3 && (
-                  <article className="build-message">
-                    <div className="build-message-label">
-                      <span className="build-avatar">✦</span>PROVN
-                      <span>Ready for your review</span>
-                    </div>
-                    <p>
-                      That gives us a clear starting point. Review the product brief and the exact
-                      model instructions before handing this to your builder.
-                    </p>
-                    <button className="build-inline-button" onClick={() => setLeftTab("brief")}>
-                      Review brief & prompts ↗
-                    </button>
-                    <p className="build-message-note">
-                      The right panel is a visual scaffold. The mock does not generate or deploy
-                      working applications.
-                    </p>
-                  </article>
-                )}
+                <JourneyGuide
+                  stage={buildStage}
+                  reviewed={reviewed}
+                  current={journey.current}
+                  state={journey.state}
+                  profile={journey.profile}
+                  quote={journey.quote.total}
+                  busy={busy}
+                  onOpen={(destination) => {
+                    if (destination === "brief") setLeftTab("brief");
+                    else {
+                      setModule(destination);
+                      setRightTab("modules");
+                    }
+                  }}
+                />
                 {notes.map((note, i) => (
                   <article className="build-message build-message-user" key={i}>
                     <div className="build-message-label">
@@ -452,6 +518,14 @@ export function BuildWorkspace({
                 setConsoleOpen(true);
               }}
               running={running}
+            />
+          ) : rightTab === "preview" && buildConnection && buildState.previewUrl ? (
+            <iframe
+              title="Running application preview"
+              src={buildState.previewUrl}
+              sandbox="allow-scripts allow-forms"
+              referrerPolicy="no-referrer"
+              style={{ width: "100%", flex: 1, border: 0, background: "white" }}
             />
           ) : rightTab === "preview" ? (
             <>
