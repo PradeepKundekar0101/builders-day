@@ -27,6 +27,17 @@ export const PromptStudioQuestionSchema = z.object({
 export const PromptStudioDraftSchema = z
   .object({
     schemaVersion: z.literal("1.0"),
+    onboarding: z
+      .object({
+        persona: z.enum(["non-tech", "indie", "team"]),
+        mode: z.enum(["plain", "dev"]),
+        budgetCap: z.number().int().min(1).max(100000),
+        approvalThreshold: z.number().int().min(0).max(100000),
+        privateMode: z.boolean(),
+        plan: z.enum(["free", "builder", "pro", "team"]),
+        byok: z.boolean(),
+      })
+      .optional(),
     revision: z.number().int().positive(),
     input: PromptStudioInputSchema,
     questions: z.array(PromptStudioQuestionSchema).max(4),
@@ -77,6 +88,7 @@ export function createStudioReview(input: PromptStudioDraft) {
     schemaVersion: "1.0" as const,
     revision: draft.revision,
     status: "user_reviewed" as const,
+    onboarding: draft.onboarding,
     adapterMode: draft.adapterMode,
     spec: draft.spec,
     acceptanceCriteria: draft.acceptanceCriteria,

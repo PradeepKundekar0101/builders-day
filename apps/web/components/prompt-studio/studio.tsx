@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BuilderOnboarding } from "./onboarding";
+import { DEFAULT_PROFILE, type BuilderProfile } from "@/lib/provn-demo";
+import "./p0-panels.css";
 import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
 import {
@@ -68,6 +71,9 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
 
 export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const params = useSearchParams();
+  const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
+  const [onboarded, setOnboarded] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState<PromptStudioDraft | null>(null);
   const [specText, setSpecText] = useState("");
@@ -107,14 +113,18 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     setConfirmed(false);
     setNotice("Unsaved changes");
   }
-  async function interpret() {
+  async function interpret(chosenProfile?: BuilderProfile) {
+    if (!onboarded && !chosenProfile) {
+      setShowOnboarding(true);
+      return;
+    }
     setError("");
     setBusy(true);
     try {
       const next = sanitizeStudioDraft(
         await new MockPromptStudioAdapter().interpret({ idea, links: [] }),
       );
-      setDraft(next);
+      setDraft({ ...next, onboarding: chosenProfile ?? profile });
       setSpecText(JSON.stringify(next.spec, null, 2));
       setSession(null);
       setConfirmed(false);
@@ -235,6 +245,12 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         value={idea}
         maxLength={2000}
         onChange={(e) => setIdea(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length >= 50 && !busy) {
+            e.preventDefault();
+            void interpret();
+          }
+        }}
         placeholder="I have an idea for…"
         disabled={busy}
         rows={draft ? 4 : 3}
@@ -250,7 +266,11 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           {listening ? "Stop recording" : "Use voice"}
         </button>
         <span className="studio-count">{idea.length}/2,000</span>
-        <button className={button} onClick={interpret} disabled={busy || idea.trim().length < 50}>
+        <button
+          className={button}
+          onClick={() => interpret()}
+          disabled={busy || idea.trim().length < 50}
+        >
           {busy ? "Shaping…" : draft ? "Start new brief" : "Shape my idea"}
           <StudioIcon name="arrow" />
         </button>
@@ -260,6 +280,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   if (draft)
     return (
       <BuildWorkspace
+        reviewed={confirmed}
         draft={draft}
         onChange={change}
         busy={busy}
@@ -511,8 +532,8 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
                   </button>
                 </div>
                 <p className="mt-3 text-xs text-slate">
-                  Answer all questions to mark reviewed. Estimation, operator approval, and builds
-                  are separate steps and are not connected yet.
+                  Answer all questions and review the brief, then open Cost Guard to approve a
+                  simulated run. Real billing and build services are not connected.
                 </p>
               </div>
             </div>
@@ -522,6 +543,17 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     );
   return (
     <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
+      {showOnboarding && (
+        <BuilderOnboarding
+          onClose={() => setShowOnboarding(false)}
+          onComplete={(settings) => {
+            setProfile(settings);
+            setOnboarded(true);
+            setShowOnboarding(false);
+            void interpret(settings);
+          }}
+        />
+      )}
       <div className="studio-landscape" aria-hidden="true" />
       <nav className="studio-nav" aria-label="Prompt Studio navigation">
         <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
@@ -622,7 +654,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
               </div>
             </div>
             <p className="studio-helper">
-              Start with at least 50 characters. No technical vocabulary needed.
+              Start with at least 50 characters. ⌘ / Ctrl + Enter to shape your idea.
             </p>
             <details className="studio-privacy">
               <summary>Voice & privacy</summary>

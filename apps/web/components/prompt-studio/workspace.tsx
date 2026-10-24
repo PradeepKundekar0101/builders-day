@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
 import "./workspace.css";
+import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 
 type Props = {
+  reviewed: boolean;
   draft: PromptStudioDraft;
   onChange: (draft: PromptStudioDraft) => void;
   busy: boolean;
@@ -23,6 +25,7 @@ const stages = [
 ];
 export function BuildWorkspace({
   draft,
+  reviewed,
   onChange,
   busy,
   error,
@@ -32,8 +35,10 @@ export function BuildWorkspace({
   demo,
   editor,
 }: Props) {
-  const [leftTab, setLeftTab] = useState<"chat" | "brief">("chat");
-  const [rightTab, setRightTab] = useState<"preview" | "live">("preview");
+  const [leftTab, setLeftTab] = useState<"chat" | "brief">(draft.onboarding?.mode === "dev" ? "brief" : "chat");
+  const [rightTab, setRightTab] = useState<"preview" | "live" | "modules">("preview");
+  const journey = useProvnDemo(draft, reviewed);
+  const [module, setModule] = useState<P0Module>("cost");
   const [message, setMessage] = useState("");
   const [localError, setLocalError] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
@@ -329,7 +334,48 @@ export function BuildWorkspace({
               </button>
             </div>
           </div>
-          {rightTab === "preview" ? (
+          <nav className="p0-module-nav" aria-label="P0 product modules">
+            {(
+              [
+                ["cost", "Cost Guard"],
+                ["route", "Route"],
+                ["launch", "Launch"],
+                ["shield", "Shield / Siege"],
+                ["proof", "Proof"],
+                ["wallet", "Wallet"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                aria-pressed={rightTab === "modules" && module === id}
+                onClick={() => {
+                  setModule(id);
+                  setRightTab("modules");
+                }}
+              >
+                {label}
+                {id === "shield" && journey.state.criticalOpen > 0 ? (
+                  <span className="p0-alert-dot" />
+                ) : null}
+              </button>
+            ))}
+          </nav>
+          {rightTab === "modules" ? (
+            <P0Panels
+              module={module}
+              setModule={setModule}
+              controller={journey}
+              draft={draft}
+              onChange={onChange}
+              onReview={() => setLeftTab("brief")}
+              onBuild={() => {
+                setStep(0);
+                setRunning(true);
+                setConsoleOpen(true);
+              }}
+              running={running}
+            />
+          ) : rightTab === "preview" ? (
             <>
               <div className="build-address">
                 <span className="build-window-dots">
@@ -432,13 +478,12 @@ export function BuildWorkspace({
               <button
                 className="build-run"
                 onClick={() => {
-                  setStep(0);
-                  setRunning(true);
-                  setConsoleOpen(true);
+                  setModule("cost");
+                  setRightTab("modules");
                 }}
                 disabled={running}
               >
-                {running ? "Running…" : "▷ Simulate build"}
+                {running ? "Running…" : "Review cost & run"}
               </button>
             </div>
             {consoleOpen && (
