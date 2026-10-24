@@ -63,12 +63,8 @@ test("sign out returns to landing and /apps redirects again", async ({ page }) =
 test("email magic links are the only sign-in option", async ({ page }) => {
   await page.goto("/signin");
   await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Email me a sign-in link" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Continue with Google" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
 
