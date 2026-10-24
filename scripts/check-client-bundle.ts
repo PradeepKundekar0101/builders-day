@@ -6,7 +6,7 @@ import { findServiceRoleJwts } from "@buildwise/shared";
 export type Finding = { file: string; reason: string };
 
 const SCANNED = /\.(js|mjs|cjs|css|html|json|map|txt|rsc)$/;
-const FORBIDDEN_NAMES = ["SUPABASE_SERVICE_ROLE_KEY"];
+const SERVER_SECRETS = ["SUPABASE_SERVICE_ROLE_KEY", "MASK_MAP_KEY", "AGENT_API_TOKEN"];
 
 function* walk(dir: string): Generator<string> {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -27,7 +27,7 @@ export function scanClientBundle(dir: string, forbiddenValues: string[]): Findin
       if (value && text.includes(value))
         findings.push({ file, reason: `forbidden value #${i + 1}` });
     });
-    for (const name of FORBIDDEN_NAMES) {
+    for (const name of SERVER_SECRETS) {
       if (text.includes(name)) findings.push({ file, reason: name });
     }
   }
@@ -36,8 +36,8 @@ export function scanClientBundle(dir: string, forbiddenValues: string[]): Findin
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dir = process.argv[2] ?? join(import.meta.dirname, "../apps/web/.next/static");
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const findings = scanClientBundle(dir, secret ? [secret] : []);
+  const values = SERVER_SECRETS.map((name) => process.env[name] ?? "");
+  const findings = scanClientBundle(dir, values);
   if (findings.length > 0) {
     for (const { file, reason } of findings) console.error(`${file}: ${reason}`);
     process.exit(1);

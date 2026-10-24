@@ -16,6 +16,7 @@ import {
 } from "@/lib/prompt-studio/history";
 import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
+import { readHandoff, writeHandoff, handoffKey, studioSignInPath } from "@/lib/studio-handoff";
 import {
   MockPromptStudioAdapter,
   PromptStudioDraftSchema,
@@ -101,12 +102,14 @@ export function PromptStudio({
     () => true,
   );
   const [live, setLive] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
   const [history, setHistory] = useState<StudioVersion[]>([]);
   const pendingSave = useRef<SaveAttempt | null>(null);
   const [pauseRevision, setPauseRevision] = useState(0);
   const [modelTrace, setModelTrace] = useState("");
   const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
+  const [onboarded, setOnboarded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => demo || !params.get("session"));
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState<PromptStudioDraft | null>(null);
@@ -120,8 +123,62 @@ export function PromptStudio({
   const [listening, setListening] = useState(false);
   const speech = useRef<Speech | null>(null);
   const loadId = params.get("session");
+  const resumeId = params.get("resume");
+  const resumed = useRef<string | null>(null);
   useEffect(() => {
-    if (!loadId || demo || session?.id === loadId) return;
+    if (!resumeId || resumed.current === resumeId) return;
+    resumed.current = resumeId;
+    try {
+      const value = readHandoff(
+        localStorage.getItem(handoffKey(resumeId)) ? localStorage : sessionStorage,
+        resumeId,
+      );
+      // Hydrate tab-local recovery data after mount; storage is unavailable during SSR.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIdea(value.idea);
+      setPendingMessage(value.pendingMessage);
+      setDraft(value.draft);
+      setSpecText(value.specText);
+      setProfile(value.profile);
+      setOnboarded(value.onboarded);
+      setTab(value.tab);
+      setShowOnboarding(false);
+      setConfirmed(false);
+      setLive(false);
+      setNotice(
+        demo
+          ? "Your local draft is restored. Sign in when you are ready to save it. No build has started."
+          : "Your draft is restored. Review it, then save it to your account. No build has started.",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to restore your draft.");
+    }
+  }, [demo, resumeId]);
+  function signInToStudio(event?: { preventDefault(): void }) {
+    event?.preventDefault();
+    try {
+      const id = crypto.randomUUID();
+      writeHandoff(localStorage, id, {
+        version: 1,
+        createdAt: Date.now(),
+        pendingMessage,
+        idea,
+        draft,
+        specText,
+        profile,
+        onboarded,
+        tab,
+      });
+      window.location.assign(studioSignInPath(id));
+    } catch {
+      setError(
+        "Your browser could not preserve this draft. Export or copy your work before signing in.",
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (!loadId || demo || resumeId || session?.id === loadId) return;
     const controller = new AbortController();
     fetch(`/api/prompt-studio/sessions/${encodeURIComponent(loadId)}`, {
       signal: controller.signal,
@@ -134,6 +191,7 @@ export function PromptStudio({
         setHistory(StudioVersionSchema.array().parse(data.history));
         setProfile(loaded.onboarding ?? DEFAULT_PROFILE);
         setLive(loaded.adapterMode === "openai");
+        setOnboarded(true);
         setPauseRevision((value) => value + 1);
         setConfirmed(false);
         setModelTrace("");
@@ -146,7 +204,7 @@ export function PromptStudio({
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [loadId, demo, session?.id]);
+  }, [loadId, demo, resumeId, session?.id]);
   useEffect(
     () => () => {
       speech.current?.stop();
@@ -156,10 +214,11 @@ export function PromptStudio({
   );
   function dismissOnboarding() {
     setShowOnboarding(false);
+    setOnboarded(true);
     try {
       localStorage.setItem("provn-onboarding-dismissed", "1");
     } catch {
-      /* Keep this session usable. */
+      /* Browser storage may be disabled. */
     }
   }
   function change(next: PromptStudioDraft) {
@@ -168,7 +227,10 @@ export function PromptStudio({
     setNotice("Unsaved changes");
   }
   async function interpret(chosenProfile?: BuilderProfile) {
-    if (busy || !idea.trim()) return;
+    if (!onboarded && !onboardingDismissed && !chosenProfile) {
+      setShowOnboarding(true);
+      return;
+    }
     setError("");
     setBusy(true);
     try {
@@ -278,7 +340,7 @@ export function PromptStudio({
       const clean = sanitizeStudioDraft(draft);
       if (review) createStudioReview(clean);
       if (demo) {
-        setNotice("Demo only: use Export JSON to keep this brief. Sign in to save versions.");
+        signInToStudio();
         return;
       }
       const attempt = prepareSaveAttempt(
@@ -294,6 +356,10 @@ export function PromptStudio({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(attempt.body),
       });
+      if (response.status === 401) {
+        signInToStudio();
+        return;
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       const saved = PromptStudioDraftSchema.parse(data.draft);
@@ -311,7 +377,19 @@ export function PromptStudio({
         ].slice(0, 20),
       );
       setSession({ id, revision: data.revision });
-      window.history.replaceState(null, "", `?session=${id}`);
+      if (resumeId) {
+        try {
+          localStorage.removeItem(handoffKey(resumeId));
+          sessionStorage.removeItem(handoffKey(resumeId));
+        } catch {
+          /* Saved server copy is authoritative. */
+        }
+      }
+      window.history.replaceState(
+        null,
+        "",
+        `?session=${id}${buildConnection ? `&build=${encodeURIComponent(buildConnection.runId)}` : ""}`,
+      );
       setNotice(
         `Version ${data.revision} saved${review ? " and marked user reviewed" : ""}. No build or paid execution started.`,
       );
@@ -396,7 +474,7 @@ export function PromptStudio({
         <button
           className={button}
           onClick={() => interpret()}
-          disabled={busy || idea.trim().length === 0}
+          disabled={busy || idea.trim().length < 1}
         >
           {busy ? "Shaping…" : draft ? "Start new brief" : "Shape my idea"}
           <StudioIcon name="arrow" />
@@ -413,6 +491,14 @@ export function PromptStudio({
   if (draft)
     return (
       <BuildWorkspace
+        buildHref={
+          !demo && session
+            ? `/apps/build?session=${session.id}&revision=${session.revision}`
+            : undefined
+        }
+        pauseOnOpen={Boolean(resumeId)}
+        message={pendingMessage}
+        onMessageChange={setPendingMessage}
         key={`${session?.id ?? "new"}:${pauseRevision}:${buildConnection?.runId ?? "demo"}`}
         pauseRevision={pauseRevision}
         buildConnection={buildConnection}
@@ -722,9 +808,17 @@ export function PromptStudio({
                     Export JSON
                   </button>
                 </div>
+                {!demo && session && (
+                  <a
+                    className="studio-button mt-4 inline-block"
+                    href={`/apps/build?session=${session.id}&revision=${session.revision}`}
+                  >
+                    Continue to product build
+                  </a>
+                )}
                 <p className="mt-3 text-xs text-slate">
-                  Answer all questions and review the brief, then open Cost Guard to approve a
-                  simulated run. Real billing and build services are not connected.
+                  Save a reviewed version, then open the build page to estimate and approve a real
+                  product build.
                 </p>
               </div>
             </div>
@@ -760,7 +854,11 @@ export function PromptStudio({
             <ProvnLogo />
           </a>
           <span className="studio-nav-divider" />
-          <a className="studio-nav-label" href="/signin">
+          <a
+            className="studio-nav-label"
+            href="/signin?next=%2Fapps%2Fnew"
+            onClick={signInToStudio}
+          >
             Sign in
           </a>
           <a href="#idea" className="studio-nav-cta">
@@ -832,13 +930,16 @@ export function PromptStudio({
             <span>
               <span className="studio-status-dot" />
               {live
-                ? "Live AI selected · build services still simulated"
+                ? "Live intake · review and approve a build separately"
                 : "Mock adapter · No model charges"}
             </span>
             <span>
               {demo ? (
                 <>
-                  Demo mode · <a href="/apps/new">Sign in to save your work ↗</a>
+                  Demo mode ·{" "}
+                  <a href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
+                    Sign in to save your work ↗
+                  </a>
                 </>
               ) : (
                 "Your idea stays yours."

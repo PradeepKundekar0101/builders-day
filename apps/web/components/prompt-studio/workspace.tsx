@@ -19,6 +19,10 @@ import { planFromIdea } from "@/lib/demo/plan";
 import { questionOptions } from "@/lib/demo/question-options";
 
 type Props = {
+  buildHref?: string;
+  pauseOnOpen?: boolean;
+  message: string;
+  onMessageChange: (value: string) => void;
   pauseRevision?: number;
   buildConnection?: StudioBuildConnection;
   onRefine: (draft: PromptStudioDraft, message: string) => Promise<boolean>;
@@ -48,6 +52,10 @@ const stages = [
 /** Relative length of each build stage after the first; scaffolding, installs and tests take longest. */
 const stageWeights = [1, 1.2, 1.8, 1.2, 1.6, 2, 1, 0.6];
 export function BuildWorkspace({
+  buildHref,
+  pauseOnOpen = false,
+  message,
+  onMessageChange: setMessage,
   pauseRevision = 0,
   buildConnection,
   onRefine,
@@ -70,8 +78,7 @@ export function BuildWorkspace({
   const [previewSelected, setPreviewSelected] = useState(false);
   const journey = useProvnDemo(draft, reviewed);
   const [module, setModule] = useState<P0Module>("cost");
-  const [paused, setPaused] = useState(pauseRevision > 0);
-  const [message, setMessage] = useState("");
+  const [paused, setPaused] = useState(pauseOnOpen || pauseRevision > 0);
   const [localError, setLocalError] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [step, setStep] = useState(-1);
@@ -328,8 +335,13 @@ export function BuildWorkspace({
           </div>
           <span className="build-mode">
             <i />
-            {draft.adapterMode === "openai" ? "Live intake · mock build" : "Mock environment"}
+            {draft.adapterMode === "openai" ? "Live intake · draft preview" : "Mock environment"}
           </span>
+          {buildHref && (
+            <a className="build-export" href={buildHref}>
+              Build product ↗
+            </a>
+          )}
           <button onClick={onSave} disabled={busy} className="build-quiet-button">
             Save draft
           </button>
@@ -428,7 +440,7 @@ export function BuildWorkspace({
                       <small>
                         {buildConnection
                           ? "Progression follows build-engine completion events."
-                          : "Preview simulation · real build engine not connected"}
+                          : "Draft preview · use Build product for a real run"}
                       </small>
                       {buildStage < 3 && (
                         <button className="build-inline-button" onClick={() => setPaused(!paused)}>
