@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { publicEnv } from "@/lib/public-env";
+import { emailReturnUrl } from "@/lib/email-return";
 import { safeNext } from "@/lib/safe-next";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -24,7 +25,7 @@ export function SignInForm() {
     setStatus({ kind: "sending" });
     const { error } = await createSupabaseBrowserClient().auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true, emailRedirectTo: `${publicEnv.siteUrl}${next}` },
+      options: { shouldCreateUser: true, emailRedirectTo: emailReturnUrl(publicEnv.siteUrl, next) },
     });
     setStatus(error ? { kind: "error", message: error.message } : { kind: "sent" });
   }
