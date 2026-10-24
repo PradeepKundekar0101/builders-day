@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { ProvnLogo } from "./provn-logo";
 import {
   catalog,
   estimateSpec as estimate,
@@ -88,27 +89,33 @@ export default function Page() {
     : "Waiting for a quote";
   return (
     <div className="shell">
+      <a href="#cost-workspace" className="skip-link">
+        Skip to cost workspace
+      </a>
       <header>
-        <a href="/" className="brand">
-          <span className="mark">P</span> PROVN<span className="divider">/</span>
-          <span className="muted">Cost workspace</span>
+        <a href="/" className="brand" aria-label="PROVN Cost Guard home">
+          <ProvnLogo />
         </a>
-        <span className="badge">LOCAL DEMO · NO REAL SPEND</span>
+        <nav aria-label="Module navigation">
+          <a href="http://localhost:3100/prompt-studio-demo">Prompt Studio ↗</a>
+          <a href="#cost-workspace" aria-current="page">
+            Cost Guard <span aria-hidden="true">↗</span>
+          </a>
+        </nav>
       </header>
       <main>
         <div className="intro">
-          <p className="eyebrow">BUILD WITH A BUDGET</p>
+          <p className="eyebrow">YOUR VISION. WITHIN REACH.</p>
           <h1>
-            Know the cost.
-            <br />
-            Stay in control.
+            Every credit, <em>accounted for.</em>
           </h1>
-          <p>
-            Choose the scope, inspect the credit estimate, then watch the guard protect a simulated
-            build.
-          </p>
+          <p>Shape your scope, know the cost, and build with a budget you control.</p>
         </div>
-        <div className="workspace">
+        <div className="workspace-bar">
+          <span>PROVN / COST GUARD + ESTIMATOR</span>
+          <span className="badge">● LOCAL DEMO · NO REAL SPEND</span>
+        </div>
+        <div className="workspace" id="cost-workspace">
           <section className="card">
             <div className="section-heading">
               <div>
@@ -256,7 +263,10 @@ export default function Page() {
               <p className="eyebrow">03 / EXECUTION</p>
               <h2>Credit wallet + Cost Guard</h2>
             </div>
-            <span className={`tag ${build?.status.paused ? "warning" : ""}`} data-testid="status">
+            <span
+              className={`tag ${run?.phase === "paused" ? "warning" : ""}`}
+              data-testid="status"
+            >
               {label}
             </span>
           </div>
