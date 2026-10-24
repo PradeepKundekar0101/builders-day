@@ -12,6 +12,7 @@ export default tseslint.config(
       "**/database.types.ts",
       "apps/web/**",
       ".superpowers/**",
+      "Pine Labs Credits/**",
     ],
   },
   js.configs.recommended,
