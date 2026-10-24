@@ -202,3 +202,4 @@ body:has(.conduit-studio.is-welcome) {height:100svh;overflow:hidden}
 /* Restore the original nature-theme headline typography. */
 .conduit-studio.is-welcome .studio-hero h1 {font-weight:400;letter-spacing:-0.065em;line-height:1.09}
 .conduit-studio .studio-hero h1 em {font-weight:400;font-style:italic}
+.studio-live-toggle {display:flex;align-items:flex-start;gap:8px;padding:8px 18px 0;font-size:11px;line-height:1.4;color:#bbc3cc}

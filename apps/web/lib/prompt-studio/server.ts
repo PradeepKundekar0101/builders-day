@@ -42,8 +42,8 @@ export async function saveStudio(request: Request, id?: string) {
   if (id && body.id !== id) throw new StudioHttpError(400, "Session does not match.");
   if ((!id && body.expectedRevision !== 0) || (id && body.expectedRevision === 0))
     throw new StudioHttpError(400, "Invalid save version.");
-  // Only mock intake is wired today. Client input cannot claim live agent provenance.
-  const draft = sanitizeStudioDraft({ ...body.draft, adapterMode: "mock" });
+  // Adapter mode is client-supplied display metadata, not signed model provenance or spend authority.
+  const draft = sanitizeStudioDraft(body.draft);
   if (body.status === "user_reviewed") createStudioReview(draft);
   const db = studioDb();
   const { data, error } = await db.rpc("save_prompt_studio", {

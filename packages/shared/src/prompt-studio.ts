@@ -42,8 +42,9 @@ export const PromptStudioDraftSchema = z
     input: PromptStudioInputSchema,
     questions: z.array(PromptStudioQuestionSchema).max(4),
     spec: SpecSchema,
+    assumptions: z.array(z.string().max(1000)).max(12).optional(),
     acceptanceCriteria: z.array(z.string().trim().min(1).max(1_000)).min(1),
-    adapterMode: z.enum(["mock", "agenticorg"]),
+    adapterMode: z.enum(["mock", "agenticorg", "openai"]),
   })
   .superRefine((draft, ctx) => {
     const ids = new Set<string>();
@@ -73,6 +74,8 @@ export function compileStudioInstructions(input: PromptStudioDraft): string {
     JSON.stringify(draft.spec, null, 2),
     "DECISIONS",
     ...draft.questions.map((q) => `${q.question}\n${q.answer ?? "UNRESOLVED"}`),
+    "ASSUMPTIONS TO REVIEW",
+    ...(draft.assumptions ?? []),
     "ACCEPTANCE CHECKS",
     ...draft.acceptanceCriteria.map((item) => `- ${item}`),
   ].join("\n\n");
@@ -97,7 +100,7 @@ export function createStudioReview(input: PromptStudioDraft) {
 }
 
 export interface PromptStudioAdapter {
-  mode: "mock" | "agenticorg";
+  mode: "mock" | "agenticorg" | "openai";
   interpret(input: PromptStudioInput, signal?: AbortSignal): Promise<PromptStudioDraft>;
 }
 

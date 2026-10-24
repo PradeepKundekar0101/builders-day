@@ -73,6 +73,9 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
 
 export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const params = useSearchParams();
+  const [live, setLive] = useState(false);
+  const [modelTrace, setModelTrace] = useState("");
+  const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
   const [onboarded, setOnboarded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => demo || !params.get("session"));
@@ -109,7 +112,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       });
     return () => controller.abort();
   }, [loadId, demo]);
-  useEffect(() => () => speech.current?.stop(), []);
+  useEffect(() => () => { speech.current?.stop(); modelRequest.current?.abort(); }, []);
   function change(next: PromptStudioDraft) {
     setDraft(next);
     setConfirmed(false);
@@ -123,21 +126,45 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     setError("");
     setBusy(true);
     try {
-      const next = sanitizeStudioDraft(
-        await new MockPromptStudioAdapter().interpret({ idea, links: [] }),
-      );
-      setDraft({ ...next, onboarding: chosenProfile ?? profile });
+      const settings = chosenProfile ?? profile;
+      const next = live
+        ? await requestModel({ input: { idea, links: [] }, profile: settings })
+        : sanitizeStudioDraft(await new MockPromptStudioAdapter().interpret({ idea, links: [] }));
+      setDraft({ ...next, onboarding: settings });
       setSpecText(JSON.stringify(next.spec, null, 2));
       setSession(null);
       setConfirmed(false);
-      setNotice("Mock scaffold created. Review all suggestions; no model was called.");
-    } catch {
-      setError(
-        "Describe your idea in 50–2,000 characters. Remove sensitive details before continuing.",
-      );
+      if (!live) setNotice("Mock scaffold created. Review all suggestions; no model was called.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to interpret your idea. Your input is preserved.");
     } finally {
       setBusy(false);
     }
+  }
+  async function requestModel(payload: unknown): Promise<PromptStudioDraft> {
+    const controller = new AbortController();
+    modelRequest.current = controller;
+    try {
+      const response = await fetch("/api/prompt-studio/interpret", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: controller.signal });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Model request failed. Your input is preserved.");
+      const next = PromptStudioDraftSchema.parse(result.draft);
+      setModelTrace(JSON.stringify(result.trace, null, 2));
+      setNotice(result.changeSummary);
+      return next;
+    } catch (e) {
+      if (controller.signal.aborted) throw new Error("Request cancelled. Your input is preserved. Provider usage may still apply.");
+      throw e;
+    } finally { modelRequest.current = null; }
+  }
+  async function refine(next: PromptStudioDraft, message: string): Promise<boolean> {
+    setBusy(true); setError(""); setConfirmed(false);
+    try {
+      const updated = await requestModel({ input: next.input, draft: next, message });
+      setDraft(updated); setSpecText(JSON.stringify(updated.spec, null, 2));
+      return true;
+    } catch (e) { setError(e instanceof Error ? e.message : "Refinement failed. Your previous brief is preserved."); return false; }
+    finally { setBusy(false); }
   }
   function dictate() {
     const host = window as unknown as {
@@ -282,6 +309,8 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   if (draft)
     return (
       <BuildWorkspace
+        onRefine={refine}
+        onCancel={() => modelRequest.current?.abort()}
         reviewed={confirmed}
         draft={draft}
         onChange={change}
@@ -302,6 +331,8 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
               </span>
             </div>
             <h2>A shared starting point.</h2>
+            {draft.assumptions?.length ? <div className="p0-warning"><strong>Assumptions to review</strong><ul>{draft.assumptions.map((a,i) => <li key={i}>{a}</li>)}</ul></div> : null}
+            {modelTrace && <details><summary>Last model request · exact instructions and usage</summary><pre className="studio-code">{modelTrace}</pre><p>Application-controlled payload; excludes provider-internal instructions. Not release evidence.</p></details>}
             <p className="studio-section-copy">
               Make it yours. Every detail is open for a second thought.
             </p>
@@ -609,6 +640,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           <div className="studio-welcome">
             <div className="studio-input-panel">
               <p className="portal-input-label">What do you want to build?</p>
+              <label className="studio-live-toggle"><input type="checkbox" checked={live} disabled={busy} onChange={e => setLive(e.target.checked)} /> Use live AI · requires sign-in; provider token charges apply to every submission.</label>
               <div className="studio-composer">{composer}</div>
               <div className="studio-examples">
                 <span>Try an example prompt</span>
@@ -627,14 +659,15 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
                 </button>
               </div>
             </div>
-            <p className="studio-helper">Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used</p>
+            {busy && <button className="studio-button" onClick={() => modelRequest.current?.abort()}>Cancel model request</button>}
+            <p className="studio-helper">{live ? "Live intake · each submission calls the configured cloud model" : "Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used"}</p>
           </div>
         }
 
         <footer className="studio-footer">
           <span>
             <span className="studio-status-dot" />
-            Mock adapter · No model charges
+            {live ? "Live AI selected · build services still simulated" : "Mock adapter · No model charges"}
           </span>
           <span>
             {demo ? (

@@ -6,6 +6,8 @@ import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 
 type Props = {
+  onRefine: (draft: PromptStudioDraft, message: string) => Promise<boolean>;
+  onCancel: () => void;
   reviewed: boolean;
   draft: PromptStudioDraft;
   onChange: (draft: PromptStudioDraft) => void;
@@ -25,6 +27,8 @@ const stages = [
   "Simulation complete. No application deployed.",
 ];
 export function BuildWorkspace({
+  onRefine,
+  onCancel,
   draft,
   reviewed,
   onChange,
@@ -69,10 +73,18 @@ export function BuildWorkspace({
     }, 750);
     return () => clearInterval(timer);
   }, [running]);
-  function send() {
+  async function send() {
     const text = message.trim();
     if (!text || busy) return;
     setLocalError("");
+    if (draft.adapterMode === "openai") {
+      const proposed = next ? { ...draft, questions: draft.questions.map(q => q.id === next.id ? { ...q, answer: text } : q) } : draft;
+      if (await onRefine(proposed, text)) {
+        setMessage("");
+        if (!next) setNotes(old => [...old, text]);
+      }
+      return;
+    }
     if (next)
       onChange({
         ...draft,
@@ -107,7 +119,7 @@ export function BuildWorkspace({
         </div>
         <span className="build-mode">
           <i />
-          Mock environment
+          {draft.adapterMode === "openai" ? "Live intake · mock build" : "Mock environment"}
         </span>
         <button onClick={onSave} disabled={busy} className="build-quiet-button">
           Save draft
@@ -145,7 +157,7 @@ export function BuildWorkspace({
             </p>
           )}
           {leftTab === "brief" ? (
-            <div className="build-brief-scroll">{editor}</div>
+            <div className="build-brief-scroll" inert={busy}>{editor}</div>
           ) : (
             <>
               <div
@@ -166,7 +178,7 @@ export function BuildWorkspace({
                 <article className="build-message">
                   <div className="build-message-label">
                     <span className="build-avatar">✦</span>PROVN
-                    <span className="build-agent-tag">GUIDE · MOCK</span>
+                    <span className="build-agent-tag">{draft.adapterMode === "openai" ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}</span>
                   </div>
                   <p>
                     Let’s turn this into something you can build. I’ll help you work through the
@@ -204,6 +216,7 @@ export function BuildWorkspace({
                           <div className="build-message-label">
                             <span className="build-avatar user">Y</span>You
                             <button
+                              disabled={busy}
                               onClick={() => {
                                 setMessage(q.answer ?? "");
                                 onChange({
@@ -289,6 +302,7 @@ export function BuildWorkspace({
                   disabled={busy}
                 />
                 <div className="build-composer-actions">
+                  {busy && <button type="button" onClick={onCancel}>Cancel request</button>}
                   <span>
                     ↵ Send <span>·</span> Shift + Enter for a new line
                   </span>
@@ -303,7 +317,7 @@ export function BuildWorkspace({
               </form>
               <div className="build-chat-footer">
                 <span>✦ Guided intake</span>
-                <span>No model calls · No credits used</span>
+                <span>{draft.adapterMode === "openai" ? "Live AI · provider usage applies" : "No model calls · No credits used"}</span>
               </div>
             </>
           )}
