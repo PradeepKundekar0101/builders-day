@@ -9,7 +9,12 @@ const PublicEnvSchema = z.object({
 export type PublicEnv = { supabaseUrl: string; supabaseAnonKey: string; siteUrl: string };
 
 export function parsePublicEnv(raw: Record<string, string | undefined>): PublicEnv {
-  const result = PublicEnvSchema.safeParse(raw);
+  const branchUrl = raw.NEXT_PUBLIC_VERCEL_BRANCH_URL;
+  const result = PublicEnvSchema.safeParse({
+    ...raw,
+    NEXT_PUBLIC_SITE_URL:
+      raw.NEXT_PUBLIC_SITE_URL || (branchUrl ? `https://${branchUrl}` : undefined),
+  });
   if (!result.success) {
     const names = [...new Set(result.error.issues.map((issue) => String(issue.path[0])))];
     throw new Error(`Missing or invalid environment variables: ${names.join(", ")}`);

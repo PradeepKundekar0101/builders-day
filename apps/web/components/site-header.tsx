@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AnalyticsIdentity } from "./analytics-identity";
 
 export function SiteHeader() {
   return (
@@ -24,15 +25,19 @@ async function HeaderAccount() {
 
   if (!data?.claims?.sub) {
     return (
-      <Link href="/signin" className="text-sm font-medium text-slate hover:text-ink">
-        Sign in
-      </Link>
+      <>
+        <AnalyticsIdentity userId={null} />
+        <Link href="/signin" className="text-sm font-medium text-slate hover:text-ink">
+          Sign in
+        </Link>
+      </>
     );
   }
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      {email && <span className="truncate text-sm text-slate">{email}</span>}
+      <AnalyticsIdentity userId={data.claims.sub} />
+      {email && <span className="ph-no-capture truncate text-sm text-slate">{email}</span>}
       <form action="/auth/signout" method="post">
         <button
           type="submit"
