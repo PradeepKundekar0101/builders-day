@@ -1105,3 +1105,72 @@ body:has(.conduit-studio.is-welcome) {
   line-height: 1.4;
   color: #bbc3cc;
 }
+
+/* Shared navigation frames the home artwork without adding page scrolling. */
+.provn-home-shell {
+  display: flex;
+  height: 100svh;
+  overflow: hidden;
+  background: #10161d;
+  color: #e9e8e2;
+}
+.provn-home-shell > .provn-left-nav {
+  position: relative;
+  z-index: 2;
+  height: 100svh;
+}
+.provn-home-shell > .conduit-studio {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.provn-home-shell .studio-nav .studio-brand,
+.provn-home-shell .studio-nav-divider {
+  display: none;
+}
+.provn-home-shell .studio-nav {
+  justify-content: flex-end;
+}
+@media (max-width: 700px) {
+  .provn-home-shell > .conduit-studio.is-welcome {
+    padding: 12px;
+  }
+  .provn-home-shell .studio-hero h1 {
+    font-size: 32px;
+  }
+}
+
+.conduit-studio.is-welcome .studio-hero-single {
+  padding: 30px 0 24px;
+}
+.conduit-studio.is-welcome .studio-hero-single h1 {
+  max-width: 960px;
+  margin: 0 auto;
+  font-size: clamp(32px, 4vw, 56px);
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.conduit-studio.is-welcome .studio-build-subheading {
+  margin: 30px 0 0;
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.4;
+  color: #e5bd8b;
+}
+.conduit-studio.is-welcome .studio-input-panel .studio-live-toggle {
+  padding-top: 16px;
+}
+@media (max-width: 700px), (max-height: 650px) {
+  .conduit-studio.is-welcome .studio-hero-single {
+    padding: 18px 0;
+  }
+  .conduit-studio.is-welcome .studio-hero-single h1 {
+    font-size: clamp(26px, 4vw, 40px);
+  }
+  .conduit-studio.is-welcome .studio-build-subheading {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+}

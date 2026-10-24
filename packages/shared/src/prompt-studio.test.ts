@@ -26,7 +26,8 @@ const fixture = () => ({
 });
 describe("Prompt Studio integration contract", () => {
   it("matches the intake input limits", () => {
-    expect(PromptStudioInputSchema.safeParse({ idea: "short" }).success).toBe(false);
+    expect(PromptStudioInputSchema.safeParse({ idea: "   " }).success).toBe(false);
+    expect(PromptStudioInputSchema.safeParse({ idea: "short" }).success).toBe(true);
     expect(PromptStudioInputSchema.safeParse({ idea: "a".repeat(2001) }).success).toBe(false);
     expect(
       PromptStudioInputSchema.safeParse({ idea: "a".repeat(50), links: ["javascript:alert(1)"] })
