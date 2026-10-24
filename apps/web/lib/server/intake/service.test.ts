@@ -113,4 +113,115 @@ describe("IntakeService", () => {
       }),
     ).rejects.toMatchObject({ code: "not_found" });
   });
+
+  test("an answer needs an open question", async () => {
+    const { service } = setup();
+    const idea = await service.submitIdea("u1", IDEA, []);
+    await expect(service.answer("u1", idea.id, "Unprompted")).rejects.toMatchObject({
+      code: "wrong_state",
+    });
+    await service.askQuestion(idea.id, "Who orders?");
+    await service.answer("u1", idea.id, "Office workers");
+    await expect(service.answer("u1", idea.id, "Again")).rejects.toMatchObject({
+      code: "wrong_state",
+    });
+  });
+
+  test("the agent reads only answers after its question, still masked", async () => {
+    const { service } = setup();
+    const idea = await service.submitIdea("u1", IDEA, []);
+    await service.askQuestion(idea.id, "Who orders?");
+    await service.answer("u1", idea.id, "Office workers");
+    const second = await service.askQuestion(idea.id, "How do they pay?");
+    expect(await service.answersAfter(idea.id, second.id)).toEqual([]);
+    await service.answer("u1", idea.id, "UPI to asha@x.in");
+    expect(await service.answersAfter(idea.id, second.id)).toEqual([
+      { id: expect.any(String), content: "UPI to {{PII_EMAIL_1}}" },
+    ]);
+  });
+
+  test("the agent sees submitted ideas masked", async () => {
+    const { service } = setup();
+    await service.submitIdea("u1", `${IDEA} Mail asha@x.in.`, ["https://example.com"]);
+    const ideas = await service.listSubmittedIdeas();
+    expect(ideas).toHaveLength(1);
+    expect(ideas[0]!.text).toContain("{{PII_EMAIL_1}}");
+    expect(ideas[0]!.links).toEqual(["https://example.com"]);
+  });
+
+  test("the owner's view unmasks text and shows the estimate", async () => {
+    const { service } = setup();
+    const idea = await service.submitIdea("u1", `${IDEA} Mail asha@x.in.`, []);
+    await service.askQuestion(idea.id, "Is asha@x.in the contact?");
+    let view = await service.ideaView("u1", idea.id);
+    expect(view.text).toContain("asha@x.in");
+    expect(view.messages[0]!.content).toBe("Is asha@x.in the contact?");
+    expect(view.awaitingAnswer).toBe(true);
+    expect(view.estimate).toBeNull();
+
+    await service.answer("u1", idea.id, "Yes");
+    await service.submitSpec(idea.id, spec);
+    view = await service.ideaView("u1", idea.id);
+    expect(view.awaitingAnswer).toBe(false);
+    expect(view.review).toBe("not_needed");
+    expect(view.estimate).toMatchObject({
+      quote: { costUsd: 4 },
+      spec: { name: "Tiffin tracker" },
+    });
+    await expect(service.ideaView("u2", idea.id)).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  test("a held spec hides the price until an operator approves it", async () => {
+    const { repo, service } = setup();
+    const idea = await service.submitIdea("u1", IDEA, []);
+    await service.submitSpec(idea.id, {
+      ...spec,
+      integrations: [{ kind: "payment_pinelabs", mustHave: true }],
+    });
+    let view = await service.ideaView("u1", idea.id);
+    expect(view.review).toBe("pending");
+    expect(view.estimate).toBeNull();
+
+    const [approval] = await service.pendingApprovals();
+    expect(approval).toMatchObject({ ideaId: idea.id, flagReasons: ["payment"] });
+    await service.decide("staff-1", approval!.id, "approved");
+    view = await service.ideaView("u1", idea.id);
+    expect(view.review).toBe("approved");
+    expect(view.estimate).not.toBeNull();
+    await expect(service.decide("staff-1", approval!.id, "rejected")).rejects.toMatchObject({
+      code: "not_found",
+    });
+    expect(repo.approvals[0]!.decision).toBe("approved");
+  });
+
+  test("a rejected spec never shows a price", async () => {
+    const { service } = setup();
+    const idea = await service.submitIdea("u1", IDEA, []);
+    await service.submitSpec(idea.id, {
+      ...spec,
+      integrations: [{ kind: "payment_pinelabs", mustHave: true }],
+    });
+    const [approval] = await service.pendingApprovals();
+    await service.decide("staff-1", approval!.id, "rejected");
+    const view = await service.ideaView("u1", idea.id);
+    expect(view.review).toBe("rejected");
+    expect(view.estimate).toBeNull();
+  });
+
+  test("a held quote cannot be changed until approved", async () => {
+    const { service } = setup();
+    const idea = await service.submitIdea("u1", IDEA, []);
+    const { quote } = await service.submitSpec(idea.id, {
+      ...spec,
+      integrations: [{ kind: "payment_pinelabs", mustHave: true }],
+    });
+    await expect(
+      service.updateSelection("u1", quote.id, {
+        pages: [],
+        entities: [],
+        auth: false,
+        integrations: [],
+      }),
+    ).rejects.toMatchObject({ code: "wrong_state" });
+  });
 });
