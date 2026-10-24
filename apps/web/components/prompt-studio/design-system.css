@@ -1,0 +1,103 @@
+/* PROVN-DESIGN.md — Portal / Horizon / Monolith, 24 October 2026. */
+:root { --provn-bg:#151c24; --provn-surface:#1d2630; --provn-raised:#27323e; --provn-border:#3c4855; --provn-text:#f3f0e9; --provn-muted:#bbc3cc; --provn-accent:#e5bd8b; }
+body:has(.conduit-studio),body:has(.conduit-build-workspace) {background:var(--provn-bg)}
+.conduit-studio.conduit-studio,.conduit-build-workspace.conduit-build-workspace {--color-ink:var(--provn-text);--color-slate:var(--provn-muted);--color-paper:var(--provn-surface);--color-rule:var(--provn-border);--color-go:var(--provn-accent);background:var(--provn-bg);color:var(--provn-text);color-scheme:dark;font-size:16px;font-variant-numeric:tabular-nums}
+.conduit-studio.conduit-studio {padding:28px 56px 0}
+.conduit-studio .studio-nav {width:100%;max-width:1280px;justify-content:flex-end;margin:auto;padding:0;background:none;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;gap:28px;min-height:56px}
+.conduit-studio .studio-brand {margin-right:auto;letter-spacing:2px;font-size:24px;color:var(--provn-text)}
+.conduit-studio .studio-brand svg {color:var(--provn-accent)}
+.conduit-studio .studio-nav-label {font-size:14px;color:var(--provn-muted)}
+.conduit-studio .studio-nav-divider {display:none}
+.conduit-studio .studio-nav-cta,.conduit-studio .studio-button,.conduit-build-workspace .build-export,.conduit-build-workspace .p0-primary {background:var(--provn-accent);color:#171d25;border-color:var(--provn-accent);border-radius:8px;font-size:14px;min-height:44px}
+.conduit-studio .studio-button:hover:not(:disabled),.conduit-studio .studio-nav-cta:hover {background:#f3d3ac}
+.conduit-studio .studio-landscape {height:790px;inset:90px 0 auto 48%;background:radial-gradient(ellipse at 60% 52%,#e5bd8b24,transparent 65%);overflow:hidden}
+.conduit-studio .studio-landscape::after {background:linear-gradient(0deg,#151c24,transparent 45%),linear-gradient(90deg,#151c24,transparent 32%)}
+.portal-arch {position:absolute;width:58%;height:68%;left:24%;top:7%;border-radius:48% 48% 1% 1%;border:36px solid #514b43;border-bottom:0;background:linear-gradient(155deg,#f7dbb1,#b98f66 38%,#433f3a 70%,#1d2630);box-shadow:inset 10px 0 30px #ffe0ad66,-10px 0 60px #e5bd8b18,18px 15px 0 #262b30;transform:perspective(800px) rotateY(-12deg)}
+.portal-reflection {position:absolute;inset:76% 0 0;background:linear-gradient(#e5bd8b22,transparent),repeating-linear-gradient(0deg,transparent 0 9px,#151c2440 10px 12px);filter:blur(3px)}
+.conduit-studio.is-welcome .studio-hero {max-width:1280px;margin:auto;text-align:left;padding:76px 0 24px}
+.conduit-studio .studio-eyebrow {justify-content:flex-start;color:var(--provn-accent);font-size:12px;letter-spacing:1.4px;line-height:1.6}
+.conduit-studio.is-welcome .studio-hero h1 {font-size:clamp(56px,6vw,80px);font-weight:300;line-height:1.08;letter-spacing:-3px;margin:24px 0}
+.conduit-studio .studio-hero h1 em {font-style:normal;color:var(--provn-accent);font-weight:300}
+.conduit-studio .studio-subtitle {max-width:530px;color:var(--provn-muted);font-size:16px;line-height:1.65}
+.conduit-studio .studio-content {max-width:1280px}
+.conduit-studio .studio-welcome {max-width:560px;margin:0}
+.conduit-studio .studio-steps {justify-content:flex-start;gap:20px;margin:0 0 20px}
+.conduit-studio .studio-steps li {font-size:13px;color:var(--provn-muted)}
+.conduit-studio .studio-steps li>span {background:var(--provn-surface);border-color:var(--provn-border);font-size:11px;color:var(--provn-muted)}
+.conduit-studio .studio-steps .is-current>span {background:var(--provn-accent);color:#171d25;border-color:var(--provn-accent)}
+.conduit-studio .studio-input-panel,.conduit-studio .studio-input-panel .studio-composer {background:var(--provn-surface);border-color:var(--provn-border);box-shadow:none;border-radius:12px}
+.portal-input-label {padding:20px 20px 0;font-size:14px;color:var(--provn-text)}
+.conduit-studio .studio-composer>textarea {color:var(--provn-text);font-size:16px}
+.conduit-studio .studio-composer>textarea::placeholder {color:var(--provn-muted)}
+.conduit-studio .studio-input-panel .studio-examples {background:var(--provn-surface);border-color:var(--provn-border)}
+.conduit-studio .studio-input-panel .studio-examples button,.conduit-studio .studio-voice {background:var(--provn-raised);color:var(--provn-text);border-color:var(--provn-border);min-height:44px;font-size:13px;border-radius:8px}
+.conduit-studio .studio-input-panel .studio-examples>span {color:var(--provn-muted)}
+.conduit-studio .studio-count {color:var(--provn-muted);font-size:12px}
+.conduit-studio .studio-helper,.conduit-studio .studio-welcome>.studio-helper,.conduit-studio .studio-privacy,.conduit-studio .studio-privacy>summary,.conduit-studio .studio-assurances,.conduit-studio .studio-footer>span {background:none;color:var(--provn-muted);font-size:13px;box-shadow:none;backdrop-filter:none;border:0;padding:0;line-height:1.6}
+.conduit-studio .studio-welcome>.studio-helper {margin:16px 0;text-align:left}
+.conduit-studio .studio-privacy {text-align:left;margin:12px 0}
+.conduit-studio .studio-privacy p {background:var(--provn-surface)}
+.conduit-studio .studio-assurances {margin:24px 0;gap:20px;flex-wrap:wrap}
+.conduit-studio .studio-assurances>span {font-size:13px}
+.portal-sample-link {display:inline-flex;min-height:44px;align-items:center;color:var(--provn-accent);font-size:14px;margin-top:16px}
+.portal-story {padding:80px 0 56px;margin-top:64px;border-top:1px solid var(--provn-border)}
+.portal-story h2,.portal-proof h2 {font-size:36px;font-weight:400;line-height:1.2;letter-spacing:-1px;margin:16px 0 32px}
+.portal-story-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.portal-story-grid article>span {font-size:13px;color:var(--provn-accent)}
+.portal-story-grid h3 {font-size:22px;font-weight:500;margin:16px 0 12px}
+.portal-story-grid p,.portal-proof p {color:var(--provn-muted);line-height:1.65;font-size:16px}
+.portal-proof {display:grid;grid-template-columns:1fr 1fr;gap:64px;padding:56px 0;border-top:1px solid var(--provn-border)}
+.portal-proof .studio-nav-cta {display:inline-flex;margin-top:28px}
+.portal-proof-record {padding:28px;border:1px solid var(--provn-border);border-radius:12px;background:var(--provn-surface)}
+.portal-proof-record>p {font-size:13px;color:var(--provn-accent);margin-bottom:24px}
+.portal-proof-record dl>div {display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid var(--provn-border);font-size:14px}
+.portal-proof-record dt {color:var(--provn-muted)}
+.portal-proof-record dd {text-align:right}
+.conduit-studio.is-welcome .studio-footer {margin-top:0;padding:32px 0;border-top:1px solid var(--provn-border)}
+.conduit-studio .provn-onboard {background:var(--provn-surface);color:var(--provn-text);border-color:var(--provn-border);border-radius:16px}
+.conduit-studio .provn-onboard-backdrop {background:#10151dcc}
+.conduit-studio .onboard-personas button {background:var(--provn-bg);border-color:var(--provn-border)}
+.conduit-studio .onboard-personas button[aria-pressed=true] {background:var(--provn-raised);border-color:var(--provn-accent)}
+.conduit-studio .onboard-settings input,.conduit-studio .onboard-settings select {background:var(--provn-bg);color:var(--provn-text);border-color:var(--provn-border);min-height:44px;font-size:14px}
+.conduit-studio .provn-onboard p,.conduit-studio .onboard-personas span,.conduit-studio .onboard-settings label,.conduit-studio .onboard-check {color:var(--provn-muted);font-size:13px}
+.conduit-studio .onboard-personas strong {font-size:16px}
+.conduit-studio .onboard-close {min-width:44px;min-height:44px;color:var(--provn-muted)}
+.conduit-studio input[type=checkbox],.conduit-build-workspace input[type=checkbox] {accent-color:var(--provn-accent)}
+.conduit-studio :focus-visible,.conduit-build-workspace :focus-visible {outline:2px solid var(--provn-accent);outline-offset:3px}
+.conduit-build-workspace .p0-panel {background:var(--provn-bg);color:var(--provn-muted);font-size:14px;padding:24px}
+.conduit-build-workspace .p0-panel h2 {color:var(--provn-text);font-size:28px;font-weight:500}
+.conduit-build-workspace .p0-panel h3 {color:var(--provn-text);font-size:18px}
+.conduit-build-workspace .p0-panel p,.conduit-build-workspace .p0-panel label,.conduit-build-workspace .p0-panel small,.conduit-build-workspace .p0-table>div,.conduit-build-workspace .p0-panel button,.conduit-build-workspace .p0-panel input,.conduit-build-workspace .p0-panel select,.conduit-build-workspace .p0-metrics span,.conduit-build-workspace .p0-scope span {font-size:13px}
+.conduit-build-workspace .p0-card,.conduit-build-workspace .p0-metrics>div,.conduit-build-workspace .p0-scope button,.conduit-build-workspace .p0-banner {background:var(--provn-surface);border-color:var(--provn-border)}
+.conduit-build-workspace .p0-scope button[aria-pressed=true] {background:var(--provn-raised);border-color:var(--provn-accent)}
+.conduit-build-workspace .p0-module-nav button {font-size:13px;min-height:44px}
+.conduit-build-workspace .p0-module-nav button[aria-pressed=true],.conduit-build-workspace .build-view-tabs button[aria-pressed=true] {background:var(--provn-raised);color:var(--provn-accent)}
+.conduit-build-workspace .p0-eyebrow,.conduit-build-workspace .p0-scope strong,.conduit-build-workspace .p0-metrics strong,.conduit-build-workspace .build-wordmark {color:var(--provn-accent)}
+.conduit-build-workspace .p0-panel button,.conduit-build-workspace .build-quiet-button {min-height:44px}
+.conduit-build-workspace .build-message p {font-size:15px;line-height:1.65}
+.conduit-build-workspace .studio-field,.conduit-build-workspace .studio-code,.conduit-build-workspace .studio-page-card {background:var(--provn-surface);color:var(--provn-text);border-color:var(--provn-border);font-size:14px}
+.conduit-build-workspace .studio-editor label,.conduit-build-workspace .studio-editor .text-xs {font-size:13px;color:var(--provn-muted)}
+.provn-stage-path {display:flex;gap:24px;padding:16px 24px;border-bottom:1px solid var(--provn-border);overflow:auto;flex-shrink:0;color:var(--provn-accent);font-size:13px;background:var(--provn-surface)}
+.provn-stage-path span {display:flex;gap:10px;white-space:nowrap;align-items:center}
+.provn-stage-path b {color:var(--provn-muted);font-weight:400}.provn-stage-path i {font-style:normal;color:var(--provn-muted);margin-left:10px}
+@media(max-width:760px){
+ .conduit-studio.conduit-studio{padding:20px 22px 0}.conduit-studio .studio-nav{gap:12px}.conduit-studio .studio-nav-label{display:none}.conduit-studio .studio-brand{font-size:20px}
+ .conduit-studio.is-welcome .studio-hero{padding-top:44px}.conduit-studio.is-welcome .studio-hero h1{font-size:44px;letter-spacing:-1.5px}.conduit-studio .studio-subtitle{font-size:16px}
+ .conduit-studio .studio-landscape{inset:100px 0 auto 40%;height:500px;opacity:.2}.conduit-studio .studio-welcome{max-width:none}.conduit-studio .studio-composer-bottom{flex-wrap:wrap}.conduit-studio .studio-button{margin-left:auto}
+ .portal-story{margin-top:40px;padding-top:40px}.portal-story-grid,.portal-proof{grid-template-columns:1fr;gap:28px}.portal-story h2,.portal-proof h2{font-size:28px}.portal-proof-record{padding:20px}
+ .conduit-studio .studio-assurances{gap:12px}.conduit-studio .studio-steps{gap:12px}.conduit-studio .studio-steps li{font-size:12px}.provn-stage-path{gap:16px;padding:12px 16px}
+}
+@media(prefers-reduced-motion:reduce){.conduit-studio *,.conduit-build-workspace *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.conduit-build-workspace .build-app-surface,.conduit-build-workspace .scaffold-nav,.conduit-build-workspace .scaffold-summary,.conduit-build-workspace .scaffold-grid>div {background:var(--provn-surface);color:var(--provn-text);border-color:var(--provn-border);color-scheme:dark}
+.conduit-build-workspace .scaffold-pages {border-color:var(--provn-border)}
+.conduit-build-workspace .scaffold-pages button[aria-current=page] {background:var(--provn-raised);color:var(--provn-accent)}
+.conduit-build-workspace .scaffold-content p,.conduit-build-workspace .scaffold-summary h2,.conduit-build-workspace .scaffold-grid h3 {font-size:14px}
+.conduit-build-workspace .scaffold-nav>span,.conduit-build-workspace .scaffold-eyebrow,.conduit-build-workspace .scaffold-summary>span {font-size:12px}
+.conduit-build-workspace .studio-button {background:var(--provn-accent);color:#171d25;min-height:44px;font-size:13px}
+.conduit-build-workspace .studio-tabs {background:var(--provn-surface);border-color:var(--provn-border)}
+.conduit-build-workspace .studio-tabs>button {font-size:13px;min-height:44px}
+.conduit-build-workspace .studio-tabs>button[aria-selected=true] {background:var(--provn-raised);color:var(--provn-accent)}
+.conduit-build-workspace .p0-error {color:#ef9b99;background:#382b30;border-color:#ef9b99}
+.conduit-build-workspace .p0-warning {color:#e4bd76;background:#302c24;border-color:#e4bd76}
+.conduit-build-workspace .p0-success {color:#9bc8b1;background:#22352e;border-color:#9bc8b1}
+.conduit-build-workspace .terminal-green {color:#9bc8b1}.conduit-build-workspace .terminal-amber {color:#e4bd76}

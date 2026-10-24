@@ -1,22 +1,22 @@
 body:has(.conduit-studio) {
-  background: #fff;
+  background: #F3F0E9;
 }
 body:has(.conduit-studio) > header {
   display: none;
 }
 .conduit-studio {
-  --color-ink: #252820;
-  --color-slate: #74786d;
-  --color-paper: #f5f6f0;
-  --color-rule: #e4e7dc;
-  --color-go: #596925;
-  --color-go-hover: #45531c;
-  --color-danger: #9d4939;
+  --color-ink: #1D2630;
+  --color-slate: #BBC3CC;
+  --color-paper: #F3F0E9;
+  --color-rule: #F3F0E9;
+  --color-go: #BBC3CC;
+  --color-go-hover: #3C4855;
+  --color-danger: #382B30;
   position: relative;
   isolation: isolate;
   min-height: 100svh;
   overflow: clip;
-  background: #fff;
+  background: #F3F0E9;
   color: var(--color-ink);
   font-family: var(--font-studio), Arial, Helvetica, sans-serif;
   padding: 32px 32px 0;
@@ -35,14 +35,14 @@ body:has(.conduit-studio) > header {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #fff0 60%, #fff0 85%, #fff 100%);
+  background: linear-gradient(180deg, #fff0 60%, #fff0 85%, #F3F0E9 100%);
 }
 .has-draft .studio-landscape {
   height: 930px;
   opacity: 0.55;
 }
 .has-draft .studio-landscape::after {
-  background: linear-gradient(180deg, #fff0 20%, #ffffff30 45%, #fff 100%);
+  background: linear-gradient(180deg, #fff0 20%, #F3F0E930 45%, #F3F0E9 100%);
 }
 .studio-nav {
   display: flex;
@@ -52,9 +52,9 @@ body:has(.conduit-studio) > header {
   margin: 0 auto;
   padding: 7px 8px 7px 19px;
   border-radius: 100px;
-  background: #ffffffcf;
-  border: 1px solid #ebede5;
-  box-shadow: 0 3px 18px #30381709;
+  background: #F3F0E9cf;
+  border: 1px solid #F3F0E9;
+  box-shadow: 0 3px 18px #1D263009;
   backdrop-filter: blur(20px);
 }
 .studio-brand {
@@ -66,29 +66,29 @@ body:has(.conduit-studio) > header {
   font-weight: 500;
 }
 .studio-brand svg {
-  color: #262c21;
+  color: #1D2630;
 }
 .studio-nav-divider {
   width: 1px;
   height: 18px;
-  background: #ddd;
+  background: #F3F0E9;
 }
 .studio-nav-label {
   font-size: 12px;
-  color: #7a7c71;
+  color: #BBC3CC;
 }
 .studio-nav-cta {
   display: flex;
   gap: 16px;
   align-items: center;
   padding: 12px 18px;
-  background: #596925;
+  background: #BBC3CC;
   color: white;
   border-radius: 100px;
   font-size: 12px;
 }
 .studio-nav-cta:hover {
-  background: #45531c;
+  background: #3C4855;
 }
 .studio-hero {
   text-align: center;
@@ -102,12 +102,12 @@ body:has(.conduit-studio) > header {
   font-size: 9px;
   letter-spacing: 2px;
   font-weight: 500;
-  color: #7a806c;
+  color: #BBC3CC;
 }
 .studio-eyebrow > span {
   width: 5px;
   height: 5px;
-  background: #6b792e;
+  background: #BBC3CC;
   border-radius: 50%;
 }
 .studio-hero h1 {
@@ -119,11 +119,11 @@ body:has(.conduit-studio) > header {
 }
 .studio-hero h1 em {
   font-weight: 400;
-  color: #627333;
+  color: #BBC3CC;
 }
 .studio-subtitle {
   font-size: 14px;
-  color: #7b7e73;
+  color: #BBC3CC;
   letter-spacing: -0.2px;
 }
 .studio-content {
@@ -144,7 +144,7 @@ body:has(.conduit-studio) > header {
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #979b8f;
+  color: #BBC3CC;
 }
 .studio-steps li > span {
   display: grid;
@@ -152,37 +152,37 @@ body:has(.conduit-studio) > header {
   width: 23px;
   height: 23px;
   border-radius: 50%;
-  background: #f5f6f0;
-  border: 1px solid #e8ebdf;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
   font-size: 8px;
 }
 .studio-steps li > span svg {
   width: 12px;
 }
 .studio-steps .is-current {
-  color: #566627;
+  color: #BBC3CC;
 }
 .studio-steps .is-current > span {
-  background: #60732d;
+  background: #BBC3CC;
   color: white;
-  border-color: #60732d;
+  border-color: #BBC3CC;
 }
 .studio-steps .is-complete > span {
-  background: #edf2e0;
-  color: #566627;
+  background: #F3F0E9;
+  color: #BBC3CC;
 }
 .studio-welcome {
   max-width: 660px;
   margin: auto;
 }
 .studio-composer {
-  border: 1px solid #e3e6d9;
+  border: 1px solid #F3F0E9;
   border-radius: 23px;
   padding: 21px;
-  background: #ffffffec;
+  background: #F3F0E9ec;
   box-shadow:
-    0 5px 10px #2c392904,
-    0 16px 60px #4557320b;
+    0 5px 10px #3C485504,
+    0 16px 60px #BBC3CC0b;
   backdrop-filter: blur(18px);
 }
 .studio-composer > textarea {
@@ -197,16 +197,16 @@ body:has(.conduit-studio) > header {
   font-size: 16px;
   line-height: 1.7;
   outline: none;
-  color: #363c2e;
+  color: #3C4855;
 }
 .studio-composer > textarea::placeholder {
-  color: #a1a495;
+  color: #BBC3CC;
 }
 .studio-composer:focus-within {
-  border-color: #a7b180;
+  border-color: #BBC3CC;
   box-shadow:
-    0 0 0 3px #7e8f3a09,
-    0 16px 60px #4557320b;
+    0 0 0 3px #BBC3CC09,
+    0 16px 60px #BBC3CC0b;
 }
 .studio-composer-bottom {
   display: flex;
@@ -219,21 +219,21 @@ body:has(.conduit-studio) > header {
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  color: #737b62;
-  border: 1px solid #e8ebdf;
+  color: #BBC3CC;
+  border: 1px solid #F3F0E9;
   border-radius: 30px;
   padding: 9px 12px;
 }
 .studio-voice:hover {
-  background: #f4f6ed;
+  background: #F3F0E9;
 }
 .studio-voice.is-listening {
-  background: #e7edda;
-  color: #425317;
+  background: #F3F0E9;
+  color: #3C4855;
 }
 .studio-count {
   font-size: 10px;
-  color: #7d846e;
+  color: #BBC3CC;
   margin-left: auto;
 }
 .studio-button {
@@ -243,8 +243,8 @@ body:has(.conduit-studio) > header {
   gap: 13px;
   border-radius: 100px;
   padding: 12px 19px;
-  background: #596925;
-  color: #fff;
+  background: #BBC3CC;
+  color: #F3F0E9;
   font-size: 12px;
   font-weight: 450;
   border: 1px solid transparent;
@@ -254,7 +254,7 @@ body:has(.conduit-studio) > header {
     transform 0.18s;
 }
 .studio-button:hover:not(:disabled) {
-  background: #45531c;
+  background: #3C4855;
   transform: translateY(-1px);
 }
 .conduit-studio button:disabled {
@@ -262,12 +262,12 @@ body:has(.conduit-studio) > header {
   cursor: not-allowed;
 }
 .studio-button-secondary {
-  background: #fff;
-  border-color: #dfe4d3;
-  color: #596249;
+  background: #F3F0E9;
+  border-color: #F3F0E9;
+  color: #BBC3CC;
 }
 .studio-button-secondary:hover:not(:disabled) {
-  background: #f2f5e9;
+  background: #F3F0E9;
 }
 .studio-examples {
   display: flex;
@@ -278,7 +278,7 @@ body:has(.conduit-studio) > header {
   margin-top: 22px;
 }
 .studio-examples > span {
-  color: #6c745c;
+  color: #BBC3CC;
   font-size: 10px;
 }
 .studio-examples button {
@@ -287,9 +287,9 @@ body:has(.conduit-studio) > header {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 30px;
-  background: #ffffffd9;
-  border: 1px solid #e6e9df;
-  color: #636d53;
+  background: #F3F0E9d9;
+  border: 1px solid #F3F0E9;
+  color: #BBC3CC;
   font-size: 10px;
   backdrop-filter: blur(10px);
 }
@@ -298,12 +298,12 @@ body:has(.conduit-studio) > header {
   height: 13px;
 }
 .studio-examples button:hover {
-  background: #f0f3e7;
+  background: #F3F0E9;
 }
 .studio-helper {
   font-size: 10px;
   line-height: 1.7;
-  color: #7c826e;
+  color: #BBC3CC;
   margin-top: 14px;
 }
 .studio-welcome > .studio-helper {
@@ -314,14 +314,14 @@ body:has(.conduit-studio) > header {
   max-width: 430px;
   text-align: center;
   font-size: 10px;
-  color: #68715a;
+  color: #BBC3CC;
 }
 .studio-privacy summary {
   cursor: pointer;
 }
 .studio-privacy p {
   padding: 12px;
-  background: #fffffff0;
+  background: #F3F0E9f0;
   border-radius: 10px;
   line-height: 1.8;
 }
@@ -332,7 +332,7 @@ body:has(.conduit-studio) > header {
   gap: 34px;
   margin-top: 45px;
   padding: 15px 0;
-  color: #46583f;
+  color: #BBC3CC;
 }
 .studio-assurances > span {
   display: flex;
@@ -352,13 +352,13 @@ body:has(.conduit-studio) > header {
   flex-wrap: wrap;
   padding: 24px 0 22px;
   font-size: 10px;
-  color: #59684e;
+  color: #BBC3CC;
 }
 .is-welcome .studio-footer {
   margin-top: 65px;
-  border-top: 1px solid #ffffff42;
-  color: #fff;
-  text-shadow: 0 1px 4px #152a43;
+  border-top: 1px solid #F3F0E942;
+  color: #F3F0E9;
+  text-shadow: 0 1px 4px #3C4855;
 }
 .studio-footer > span {
   display: flex;
@@ -373,7 +373,7 @@ body:has(.conduit-studio) > header {
   display: inline-block;
   width: 5px;
   height: 5px;
-  background: #84974d;
+  background: #BBC3CC;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -389,14 +389,14 @@ body:has(.conduit-studio) > header {
   border-radius: 13px;
   font-size: 11px;
   line-height: 1.7;
-  background: #ffffffed;
-  border: 1px solid #e1e8d3;
-  color: #5c6a3c;
+  background: #F3F0E9ed;
+  border: 1px solid #F3F0E9;
+  color: #BBC3CC;
 }
 .studio-alert {
-  color: #9d4939;
-  border-color: #e8cfc4;
-  background: #fff7f2;
+  color: #382B30;
+  border-color: #F3F0E9;
+  background: #F3F0E9;
 }
 .studio-notice svg {
   flex-shrink: 0;
@@ -422,9 +422,9 @@ body:has(.conduit-studio) > header {
 .studio-panel {
   padding: 28px;
   border-radius: 24px;
-  background: #fffffff2;
-  border: 1px solid #e4e8dd;
-  box-shadow: 0 6px 30px #4f623306;
+  background: #F3F0E9f2;
+  border: 1px solid #F3F0E9;
+  box-shadow: 0 6px 30px #BBC3CC06;
   backdrop-filter: blur(18px);
   min-width: 0;
 }
@@ -439,7 +439,7 @@ body:has(.conduit-studio) > header {
   font-size: 8px;
   font-weight: 500;
   letter-spacing: 1.7px;
-  color: #838c73;
+  color: #BBC3CC;
 }
 .studio-small-badge {
   display: inline-flex;
@@ -447,8 +447,8 @@ body:has(.conduit-studio) > header {
   gap: 5px;
   padding: 5px 8px;
   font-size: 8px;
-  color: #748058;
-  border: 1px solid #e6ebdc;
+  color: #BBC3CC;
+  border: 1px solid #F3F0E9;
   border-radius: 40px;
   white-space: nowrap;
 }
@@ -461,7 +461,7 @@ body:has(.conduit-studio) > header {
 .studio-section-copy {
   font-size: 11px;
   line-height: 1.7;
-  color: #818776;
+  color: #BBC3CC;
   margin-top: 10px;
 }
 .studio-origin summary {
@@ -469,17 +469,17 @@ body:has(.conduit-studio) > header {
   justify-content: space-between;
   gap: 10px;
   font-size: 10px;
-  color: #75815a;
+  color: #BBC3CC;
   cursor: pointer;
   padding-top: 20px;
 }
 .studio-original-text {
   padding-top: 15px;
   margin-top: 13px;
-  border-top: 1px solid #ebeee5;
+  border-top: 1px solid #F3F0E9;
   font-size: 12px;
   line-height: 1.85;
-  color: #717965;
+  color: #BBC3CC;
   overflow-wrap: anywhere;
 }
 .studio-composer-compact {
@@ -505,39 +505,39 @@ body:has(.conduit-studio) > header {
 .studio-question {
   display: block;
   padding-top: 23px;
-  color: #58624c;
+  color: #BBC3CC;
   font-size: 12px;
   line-height: 1.7;
 }
 .studio-question-number {
   display: block;
   font-size: 9px;
-  color: #a0aa8c;
+  color: #BBC3CC;
   margin-bottom: 6px;
 }
 .studio-field {
   display: block;
   width: 100%;
-  background: #fafbf7;
-  border: 1px solid #e6eadd;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
   border-radius: 12px;
   padding: 12px 14px;
   margin-top: 8px;
   font-size: 12px;
   font-weight: 400;
-  color: #4c5541;
+  color: #BBC3CC;
   line-height: 1.75;
   transition:
     border-color 0.2s,
     background 0.2s;
 }
 .studio-field::placeholder {
-  color: #a0a791;
+  color: #BBC3CC;
 }
 .studio-field:focus {
-  background: #fff;
-  border-color: #9fab7b;
-  outline: 2px solid #b7c39225;
+  background: #F3F0E9;
+  border-color: #BBC3CC;
+  outline: 2px solid #BBC3CC25;
   outline-offset: 1px;
 }
 .conduit-studio textarea.studio-field {
@@ -546,8 +546,8 @@ body:has(.conduit-studio) > header {
 .studio-tabs {
   display: flex;
   gap: 4px;
-  background: #f4f6ef;
-  border: 1px solid #edf0e6;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
   padding: 5px;
   border-radius: 30px;
   margin-top: 24px;
@@ -557,19 +557,19 @@ body:has(.conduit-studio) > header {
   padding: 9px 10px;
   border-radius: 30px;
   font-size: 10px;
-  color: #8a927b;
+  color: #BBC3CC;
   white-space: nowrap;
 }
 .studio-tabs > button[aria-selected="true"] {
   background: white;
-  color: #58662f;
-  box-shadow: 0 2px 6px #4450260b;
+  color: #BBC3CC;
+  box-shadow: 0 2px 6px #3C48550b;
 }
 .studio-editor label,
 .studio-editor h3 {
   font-weight: 400;
   font-size: 12px;
-  color: #647052;
+  color: #BBC3CC;
 }
 .studio-editor .text-sm {
   font-size: 12px;
@@ -581,13 +581,13 @@ body:has(.conduit-studio) > header {
 }
 .studio-page-card {
   margin-top: 12px;
-  background: #f8faf3;
-  border: 1px solid #e9eddf;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
   padding: 15px;
   border-radius: 16px;
 }
 .studio-page-card .studio-field {
-  background: #fff;
+  background: #F3F0E9;
   margin-bottom: 10px;
 }
 .studio-code {
@@ -597,21 +597,21 @@ body:has(.conduit-studio) > header {
   overflow-wrap: anywhere;
   font-size: 11px;
   line-height: 1.9;
-  background: #f6f8f0;
-  border: 1px solid #e4e9d9;
-  color: #55673c;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
+  color: #BBC3CC;
   padding: 20px;
   border-radius: 16px;
 }
 .conduit-studio input[type="checkbox"] {
-  accent-color: #60732d;
+  accent-color: #BBC3CC;
   width: 14px;
   height: 14px;
   flex-shrink: 0;
   margin-top: 3px;
 }
 .conduit-studio :focus-visible {
-  outline: 2px solid #7d8d4d;
+  outline: 2px solid #BBC3CC;
   outline-offset: 4px;
 }
 .conduit-studio button,
@@ -733,10 +733,10 @@ body:has(.conduit-studio) > header {
 .studio-examples > span {
   width: fit-content;
   margin-inline: auto;
-  background: #ffffffe8;
+  background: #F3F0E9e8;
   border-radius: 30px;
   padding: 5px 11px;
-  color: #566447;
+  color: #BBC3CC;
   backdrop-filter: blur(8px);
 }
 .studio-assurances {
@@ -744,19 +744,19 @@ body:has(.conduit-studio) > header {
   max-width: 100%;
   margin-inline: auto;
   padding: 13px 21px;
-  background: #ffffffe8;
-  border: 1px solid #e8ecdf;
+  background: #F3F0E9e8;
+  border: 1px solid #F3F0E9;
   border-radius: 40px;
   backdrop-filter: blur(8px);
 }
 .is-welcome .studio-footer {
-  color: #4e5f3d;
+  color: #BBC3CC;
   text-shadow: none;
   border-top: none;
 }
 .is-welcome .studio-footer > span {
   border-radius: 30px;
-  background: #fffffff0;
+  background: #F3F0E9f0;
   padding: 7px 12px;
 }
 @media (max-width: 760px) {
@@ -783,14 +783,14 @@ body:has(.conduit-studio) > header {
   margin-bottom: 18px;
 }
 .studio-input-panel {
-  background: #fff;
-  border: 1px solid #dce2cf;
+  background: #F3F0E9;
+  border: 1px solid #F3F0E9;
   border-radius: 23px;
-  box-shadow: 0 12px 40px #33482014;
+  box-shadow: 0 12px 40px #3C485514;
   overflow: hidden;
 }
 .studio-input-panel .studio-composer {
-  background: #fff;
+  background: #F3F0E9;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -802,8 +802,8 @@ body:has(.conduit-studio) > header {
 .studio-input-panel .studio-examples {
   margin: 0;
   padding: 15px 20px 18px;
-  background: #f7f9f2;
-  border-top: 1px solid #e3e8d8;
+  background: #F3F0E9;
+  border-top: 1px solid #F3F0E9;
   justify-content: flex-start;
   gap: 10px;
 }
@@ -815,7 +815,7 @@ body:has(.conduit-studio) > header {
   padding: 0 0 3px;
   background: none;
   text-align: left;
-  color: #4f5d38;
+  color: #BBC3CC;
   font-size: 12px;
   font-weight: 500;
   border-radius: 0;
@@ -823,14 +823,14 @@ body:has(.conduit-studio) > header {
 .studio-input-panel .studio-examples button {
   padding: 10px 15px;
   font-size: 13px;
-  color: #35451f;
-  background: #fff;
-  border: 1px solid #cbd5b7;
+  color: #3C4855;
+  background: #F3F0E9;
+  border: 1px solid #BBC3CC;
   gap: 9px;
 }
 .studio-input-panel .studio-examples button:hover {
-  background: #eaf0dd;
-  border-color: #81945b;
+  background: #F3F0E9;
+  border-color: #BBC3CC;
 }
 .studio-input-panel .studio-examples button svg {
   width: 16px;

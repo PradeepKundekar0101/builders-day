@@ -46,7 +46,7 @@ export function BuildWorkspace({
   const [running, setRunning] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [page, setPage] = useState(0);
-  const [consoleOpen, setConsoleOpen] = useState(true);
+  const [consoleOpen, setConsoleOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const next = draft.questions.find((q) => !q.answer?.trim());
@@ -115,6 +115,9 @@ export function BuildWorkspace({
           Export brief ↗
         </button>
       </header>
+      <nav className="provn-stage-path" aria-label="Build stages">
+        {['Brief', 'Estimate', 'Build', 'Deploy', 'Security review', 'Proof'].map((label, i) => <span key={label}>{String(i + 1).padStart(2, '0')} <b>{label}</b>{i < 5 && <i aria-hidden="true">→</i>}</span>)}
+      </nav>
       <div className="build-split">
         <section className="build-conversation" aria-label="Agent conversation">
           <div className="build-panel-toolbar">
