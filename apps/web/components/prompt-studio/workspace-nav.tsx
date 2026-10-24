@@ -99,6 +99,7 @@ export function WorkspaceNav({
         ))}
       </nav>
       <div className="provn-nav-bottom">
+        <a className="provn-nav-item" href="/credits" title="Buy credits"><span className="provn-nav-label">Buy credits</span></a>
         <button
           className="provn-nav-item"
           aria-current={active === "wallet" ? "page" : undefined}

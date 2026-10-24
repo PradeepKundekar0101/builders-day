@@ -32,6 +32,7 @@ async function Approvals() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Approvals</h1>
+      <a href="/admin/payments" className="underline">Verify UPI credit payments</a>
       {approvals.length === 0 ? (
         <p className="mt-8 rounded-xl border border-dashed border-rule bg-surface px-6 py-12 text-center text-slate">
           Nothing waiting for review.

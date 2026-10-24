@@ -37,6 +37,7 @@ async function HeaderAccount() {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <AnalyticsIdentity userId={data.claims.sub} />
+      <Link href="/credits" className="shrink-0 text-sm font-medium">Buy credits</Link>
       {email && <span className="ph-no-capture truncate text-sm text-slate">{email}</span>}
       <form action="/auth/signout" method="post">
         <button

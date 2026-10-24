@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { checkoutUrl, readBuildContext } from "@/lib/payments/build-context";
 type Prepared = {
   availableCredits: number;
   specId: string;
@@ -37,7 +38,9 @@ export default function BuildRun() {
   const params = useSearchParams(),
     session = params.get("session"),
     revision = Number(params.get("revision")),
-    run = params.get("run");
+    run = params.get("run"),
+    resume = params.get("resume") === "1";
+  const context = readBuildContext(params);
   const [prepared, setPrepared] = useState<Prepared | null>(null),
     [status, setStatus] = useState<Status | null>(null),
     [error, setError] = useState(""),
@@ -74,7 +77,7 @@ export default function BuildRun() {
       clearTimeout(timer);
     };
   }, [run]);
-  async function estimate() {
+  const estimate = useCallback(async () => {
     setBusy(true);
     setError("");
     try {
@@ -85,7 +88,37 @@ export default function BuildRun() {
     } finally {
       setBusy(false);
     }
-  }
+  }, [session, revision]);
+  const resumed = useRef("");
+  useEffect(() => {
+    if (!resume || run || !session || !revision) return;
+    const key = `${session}:${revision}`;
+    if (resumed.current === key) return;
+    resumed.current = key;
+    void estimate();
+  }, [resume, run, session, revision, estimate]);
+  useEffect(() => {
+    if (!prepared || run) return;
+    let stopped = false;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/cost/wallet", { cache: "no-store" });
+        if (!response.ok) return;
+        const wallet = await response.json();
+        if (!stopped && Number.isFinite(wallet.availableCredits)) {
+          setPrepared((p) => (p ? { ...p, availableCredits: wallet.availableCredits } : p));
+        }
+      } catch {
+        /* The server checks the balance again before starting. */
+      }
+    };
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      stopped = true;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [!!prepared, run]);
   async function start() {
     if (!prepared || !approved) return;
     setBusy(true);
@@ -153,7 +186,7 @@ export default function BuildRun() {
         </p>
       )}
       {!run && (
-        <section className="mt-8 rounded-2xl border border-rule bg-white p-6">
+        <section className="mt-8 rounded-2xl border border-rule bg-surface p-6">
           <p>
             Build from saved, reviewed version {revision || "not selected"}. Later edits will not
             change this build.
@@ -174,9 +207,35 @@ export default function BuildRun() {
               </p>
               <p>Available balance: {prepared.availableCredits} credits.</p>
               {prepared.availableCredits < prepared.quote.costCredits && (
-                <p role="status">
-                  Ask the team to fund your wallet before starting. No credits have been reserved.
-                </p>
+                <div className="mt-4 rounded-xl border border-rule p-4">
+                  <p role="status">
+                    You need{" "}
+                    {Number((prepared.quote.costCredits - prepared.availableCredits).toFixed(4))}{" "}
+                    more credits to start this build.
+                  </p>
+                  {context && (
+                    <Link
+                      className="studio-button mt-3 inline-block"
+                      href={checkoutUrl(
+                        context,
+                        prepared.quote.costCredits,
+                        prepared.availableCredits,
+                      )}
+                    >
+                      Buy credits
+                    </Link>
+                  )}
+                  <p className="mt-2 text-sm">
+                    ₹1 = 1 credit. Scan the QR and pay. Your build stays saved while payment is
+                    confirmed. Minimum top-up: ₹100.
+                  </p>
+                  {prepared.quote.costCredits - prepared.availableCredits > 10000 && (
+                    <p>
+                      Top-ups are limited to ₹10,000 per payment. Additional credits will still be
+                      needed.
+                    </p>
+                  )}
+                </div>
               )}
               <p className="mt-2 text-sm">
                 Provider budget: ${prepared.quote.modelBudgetUsd}. The quoted credits are charged on
@@ -205,7 +264,7 @@ export default function BuildRun() {
         </section>
       )}
       {run && (
-        <section className="mt-8 rounded-2xl border border-rule bg-white p-6" aria-live="polite">
+        <section className="mt-8 rounded-2xl border border-rule bg-surface p-6" aria-live="polite">
           <h2 className="text-xl">{status?.status ?? "Connecting…"}</h2>
           <p className="mt-3">{status?.message}</p>
           {status && (
