@@ -1,3 +1,4 @@
+import { SavedStudioSessions } from "@/components/prompt-studio/saved-sessions";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -19,6 +20,7 @@ export default function AppsPage() {
           Open Prompt Studio
         </Link>
       </div>
+      <SavedStudioSessions />
     </div>
   );
 }
