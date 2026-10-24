@@ -38,6 +38,6 @@ Live Supabase authentication, phone-to-QR scanning, actual receipt matching and 
 
 The payment page now uses the site's shared dark slate, warm gold and Schibsted design tokens. The release branch includes current `origin/phase-0-foundation`. Existing Pine Labs prototype files from that branch are preserved but are not used by this payment flow. The production build and 204 tests passed after integration.
 
-Web deployment is not confirmed. The saved Vercel CLI token expired. The browser is signed in as `resh68umb@gmail.com`, and the documented `conch-s-team/buildwise` project returns 404; its team switcher lists only the personal Reshma Baskaran team. The owner must restore the deployment account/project access. No replacement Vercel project was created.
+Web deployment is not confirmed. The saved Vercel CLI token expired. The current browser account cannot access the documented `conch-s-team/buildwise` project (404); its team switcher lists only the personal Reshma Baskaran team. The owner must restore the deployment account/project access. No replacement Vercel project was created.
 
 Read-only production inspection also found no `prompt_studio_sessions` table and no admin/operator profiles (seven user profiles). The QR tables can support standalone wallet purchases once web deployment and a designated approver are configured, but the estimate return journey requires reconciling the existing Studio migrations and live-build environment before enabling real purchases there. No roles were elevated and no credits were granted.
