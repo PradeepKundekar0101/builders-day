@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { sessionUser } from "@/lib/server/session-user";
 
-export const metadata = { title: "Billing - Buildwise", robots: { index: false, follow: false } };
+export const metadata = { title: "Billing - Provn", robots: { index: false, follow: false } };
 const receipt = {
   name: "AYAN CHOUDHARY", amount: 100, date: "24 Oct 2026, 5:52 pm",
   bank: "ICICI Bank 5962", reference: "666334321367", googleId: "CICAgPjhoKekUg",
@@ -48,7 +48,7 @@ async function Billing() {
     })),
   ];
   return <main className="mx-auto max-w-7xl space-y-6 px-6 py-12">
-    <header><p className="text-sm uppercase tracking-widest text-go">Buildwise billing</p>
+    <header><p className="text-sm uppercase tracking-widest text-go">Provn billing</p>
       <h1 className="mt-3 text-4xl font-bold">Payment records</h1>
       <p className="mt-3 text-slate">7 records · ₹1 = 1 credit</p>
     </header>
