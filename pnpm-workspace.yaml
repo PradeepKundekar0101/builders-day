@@ -3,6 +3,6 @@ packages:
   - "packages/*"
   - "scripts"
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
   sharp: false
   unrs-resolver: false
