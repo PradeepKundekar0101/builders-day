@@ -1,0 +1,16 @@
+{
+  "spec": {
+    "name": "Example product",
+    "summary": "Template",
+    "pages": [{ "name": "Home", "purpose": "Welcome", "mustHave": true }],
+    "entities": [],
+    "auth": { "enabled": false, "providers": [] },
+    "integrations": []
+  },
+  "design": {
+    "headline": "Your product",
+    "description": "Generated with PROVN",
+    "accent": "blue",
+    "pages": [{ "title": "Home", "body": "Your product starts here." }]
+  }
+}

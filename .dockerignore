@@ -1,0 +1,9 @@
+.git
+**/node_modules
+**/.next
+**/.env*
+artifacts
+**/test-results
+**/playwright-report
+.superpowers
+.vercel
