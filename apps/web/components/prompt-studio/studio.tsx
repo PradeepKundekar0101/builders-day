@@ -89,6 +89,43 @@ function onboardingWasDismissed() {
     return false;
   }
 }
+function OpenQuestion({
+  question,
+  disabled,
+  onAnswer,
+}: {
+  question: string;
+  disabled: boolean;
+  onAnswer: (answer: string) => void;
+}) {
+  const [answer, setAnswer] = useState("");
+  return (
+    <form
+      className="rounded-xl border border-rule p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (answer.trim()) onAnswer(answer.trim());
+      }}
+    >
+      <label className="block">
+        <span className="block">{question}</span>
+        <textarea
+          className={`${field} mt-2`}
+          rows={2}
+          maxLength={2000}
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+        />
+      </label>
+      <button
+        className="studio-button studio-button-secondary mt-2"
+        disabled={disabled || !answer.trim()}
+      >
+        Save answer
+      </button>
+    </form>
+  );
+}
 export function PromptStudio({
   demo = false,
   buildConnection,
@@ -836,6 +873,33 @@ export function PromptStudio({
                 </div>
               )}
               <div className="mt-6 border-t border-rule pt-5">
+                {draft && !parsed?.success && (
+                  <p role="status" className="mb-4 text-sm text-amber-200">
+                    Fix the highlighted brief fields before marking it reviewed.
+                  </p>
+                )}
+                {draft && parsed?.success && !ready && (
+                  <div role="status" className="mb-4 space-y-3 text-sm">
+                    <p>Answer the open questions before marking the brief reviewed:</p>
+                    {draft.questions
+                      .filter((q) => !q.answer?.trim())
+                      .map((q) => (
+                        <OpenQuestion
+                          key={q.id}
+                          question={q.question}
+                          disabled={busy}
+                          onAnswer={(answer) =>
+                            change({
+                              ...draft,
+                              questions: draft.questions.map((item) =>
+                                item.id === q.id ? { ...item, answer } : item,
+                              ),
+                            })
+                          }
+                        />
+                      ))}
+                  </div>
+                )}
                 <label className="flex gap-3 text-sm">
                   <input
                     type="checkbox"

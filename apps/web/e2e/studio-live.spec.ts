@@ -7,7 +7,12 @@ test.skip(remote, "Creates isolated fixtures only against local CI Supabase");
 
 const LIVE = "https://bw-e2etest0001.vercel.app";
 
-async function savedDraft(page: Page, baseURL: string, status: "draft" | "user_reviewed") {
+async function savedDraft(
+  page: Page,
+  baseURL: string,
+  status: "draft" | "user_reviewed",
+  answered = true,
+) {
   const raw = await new MockPromptStudioAdapter().interpret({
     idea: "Build a booking portal for fitness coaches where clients can browse and reserve sessions.",
     links: [],
@@ -15,7 +20,10 @@ async function savedDraft(page: Page, baseURL: string, status: "draft" | "user_r
   // A reviewed version must have every open question answered.
   const draft = {
     ...raw,
-    questions: raw.questions.map((q) => ({ ...q, answer: q.answer ?? "Yes" })),
+    questions: raw.questions.map((q, i) => ({
+      ...q,
+      answer: answered || i > 0 ? (q.answer ?? "Yes") : undefined,
+    })),
   };
   const id = crypto.randomUUID();
   const response = await page.request.post("/api/prompt-studio/sessions", {
@@ -74,4 +82,29 @@ test("a released build shows the live app in the workspace", async ({ page, base
   await expect(page.getByText("Published at bw-e2etest0001.vercel.app")).toBeVisible();
   await expect(page.getByText("SIMULATED OUTPUT")).toHaveCount(0);
   await expect(page.getByText(/provn\.app/)).toHaveCount(0);
+});
+
+test("the brief explains and clears what blocks marking it reviewed", async ({ page, baseURL }) => {
+  await signInViaGeneratedLink(page, freshEmail("live-blocked"));
+  const id = await savedDraft(page, baseURL!, "draft", false);
+  await builds(page, []);
+  await page.goto(`/apps/new?session=${id}`);
+  await page
+    .getByRole("button", { name: /Brief & prompts/ })
+    .first()
+    .click();
+  const review = page.getByRole("checkbox", { name: /I reviewed the requirements/ });
+  await expect(review).toBeDisabled();
+  await expect(
+    page.getByText("Answer the open questions before marking the brief reviewed:"),
+  ).toBeVisible();
+  const open = page
+    .locator("form")
+    .filter({ has: page.getByRole("button", { name: "Save answer" }) });
+  await open.getByRole("textbox").fill("Clients see their own bookings.");
+  await page.getByRole("button", { name: "Save answer" }).click();
+  await expect(review).toBeEnabled();
+  await review.check();
+  await page.getByRole("button", { name: "Mark reviewed" }).click();
+  await expect(page.getByText(/marked user reviewed/)).toBeVisible();
 });
