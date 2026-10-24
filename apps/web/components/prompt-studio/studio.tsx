@@ -14,7 +14,7 @@ import {
   type StudioVersion,
   type SaveAttempt,
 } from "@/lib/prompt-studio/history";
-import { BuildWorkspace } from "./workspace";
+import { BuildWorkspace, type LatestBuild } from "./workspace";
 import { useSearchParams } from "next/navigation";
 import { readHandoff, writeHandoff, handoffKey, studioSignInPath } from "@/lib/studio-handoff";
 import {
@@ -121,6 +121,7 @@ export function PromptStudio({
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"brief" | "prompt" | "schema">("brief");
   const [confirmed, setConfirmed] = useState(false);
+  const [latestBuild, setLatestBuild] = useState<{ sessionId: string; build?: LatestBuild }>();
   const [listening, setListening] = useState(false);
   const speech = useRef<Speech | null>(null);
   const ideaBox = useRef<HTMLTextAreaElement>(null);
@@ -213,6 +214,44 @@ export function PromptStudio({
       });
     return () => controller.abort();
   }, [loadId, demo, resumeId, session?.id]);
+  useEffect(() => {
+    // The most recent real build of this draft drives the workspace's Build and Live views.
+    if (demo || !session) return;
+    const sessionId = session.id;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      try {
+        const response = await fetch("/api/prompt-studio/build-status", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          builds: (LatestBuild & { sessionId: string })[];
+        };
+        const found = data.builds.find((b) => b.sessionId === sessionId);
+        setLatestBuild({
+          sessionId,
+          build: found && {
+            id: found.id,
+            status: found.status,
+            revision: found.revision,
+            liveUrl: found.liveUrl,
+          },
+        });
+        if (found && !["live", "ready", "failed", "needs_review"].includes(found.status))
+          timer = setTimeout(poll, 5000);
+      } catch {
+        /* Build history is optional here; the build page shows full status. */
+      }
+    }
+    void poll();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [demo, session]);
   useEffect(
     () => () => {
       speech.current?.stop();
@@ -504,6 +543,18 @@ export function PromptStudio({
           !demo && session
             ? `/apps/build?session=${session.id}&revision=${session.revision}`
             : undefined
+        }
+        realBuild={
+          demo
+            ? undefined
+            : {
+                reviewedHref:
+                  session &&
+                  history.find((v) => v.revision === session.revision)?.status === "user_reviewed"
+                    ? `/apps/build?session=${session.id}&revision=${session.revision}`
+                    : undefined,
+                latest: latestBuild?.sessionId === session?.id ? latestBuild?.build : undefined,
+              }
         }
         pauseOnOpen={Boolean(resumeId)}
         message={pendingMessage}

@@ -1,6 +1,7 @@
 import { studioUser, studioError } from "@/lib/prompt-studio/server";
 import { costService } from "@/lib/cost/server";
 import { StudioHttpError } from "@/lib/prompt-studio/request";
+import { releasedLiveUrl } from "@/lib/prompt-studio/live-url";
 export async function GET() {
   try {
     const userId = await studioUser(),
@@ -34,7 +35,13 @@ export async function GET() {
         .maybeSingle();
       items.push({
         id: build.id,
-        status: output?.status ?? build.status,
+        status:
+          build.status === "released"
+            ? "live"
+            : build.status === "deploying"
+              ? "deploying"
+              : (output?.status ?? build.status),
+        liveUrl: await releasedLiveUrl(db, build),
         createdAt: build.created_at,
         sessionId: mapping.session_id,
         revision: mapping.revision,
