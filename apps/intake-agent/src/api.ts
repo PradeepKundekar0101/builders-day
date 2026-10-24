@@ -6,7 +6,7 @@ export type SpecResult =
   | { ok: true; costUsd: number; flagged: boolean }
   | { ok: false; issues: { path: (string | number)[]; message: string }[] };
 
-/** The Buildwise agent tool API. AgenticOrg calls the same endpoints. */
+/** The PROVN agent tool API. AgenticOrg calls the same endpoints. */
 export interface AgentApi {
   listSubmittedIdeas(): Promise<SubmittedIdea[]>;
   askQuestion(ideaId: string, question: string): Promise<AskResult>;

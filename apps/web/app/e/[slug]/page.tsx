@@ -23,7 +23,7 @@ async function load(slug: string): Promise<Shared | null> {
 }
 
 export const metadata: Metadata = {
-  title: "Shared estimate - Buildwise",
+  title: "Shared estimate - PROVN",
   robots: { index: false },
 };
 
@@ -42,7 +42,7 @@ async function SharedEstimate({ params }: Pick<PageProps<"/e/[slug]">, "params">
   return (
     <div className="mx-auto w-full max-w-xl px-4 py-12 sm:px-6">
       <div className="rounded-xl border border-rule bg-surface p-6 shadow-[0_1px_0_var(--color-rule),0_12px_32px_-16px_rgb(19_32_58/0.25)]">
-        <p className="text-sm text-slate">Buildwise estimate</p>
+        <p className="text-sm text-slate">PROVN estimate</p>
         <h1 className="mt-1 text-2xl font-bold">{shared.name}</h1>
         <p className="mt-1 text-slate">{shared.summary}</p>
         <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-dashed border-rule pt-5">

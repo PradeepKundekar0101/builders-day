@@ -31,7 +31,7 @@ export function IntakeView({ initial }: { initial: IdeaView }) {
       <p className="mt-2 whitespace-pre-wrap text-lg leading-relaxed">{view.text}</p>
 
       {view.messages.length > 0 && (
-        <ol aria-label="Questions from Buildwise" className="mt-8 space-y-3">
+        <ol aria-label="Questions from PROVN" className="mt-8 space-y-3">
           {view.messages.map((message) => (
             <li
               key={message.id}
@@ -42,7 +42,7 @@ export function IntakeView({ initial }: { initial: IdeaView }) {
               }
             >
               {message.role === "agent" ? (
-                <p className="mb-1 text-xs font-semibold text-go">Buildwise asks</p>
+                <p className="mb-1 text-xs font-semibold text-go">PROVN asks</p>
               ) : (
                 <p className="sr-only">You answered</p>
               )}
@@ -64,8 +64,8 @@ function Status({ view, onAnswered }: { view: IdeaView; onAnswered: (view: IdeaV
   if (view.review === "rejected") {
     return (
       <Notice title="We can't build this one as described.">
-        A Buildwise operator reviewed it and it is outside what we can build safely today. Try a
-        simpler version of the idea.
+        A PROVN operator reviewed it and it is outside what we can build safely today. Try a simpler
+        version of the idea.
       </Notice>
     );
   }

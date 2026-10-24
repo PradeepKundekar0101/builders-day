@@ -17,7 +17,7 @@ test.skip(
 const IDEA =
   "A tiffin order tracker for my home kitchen. Customers pick meals for the week and I see each day's orders.";
 
-const conversation = (page: Page) => page.getByRole("list", { name: "Questions from Buildwise" });
+const conversation = (page: Page) => page.getByRole("list", { name: "Questions from PROVN" });
 
 async function signIn(page: Page, label: string, next = "/new") {
   const email = freshEmail(label);

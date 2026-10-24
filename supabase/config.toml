@@ -245,11 +245,11 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.confirmation]
-subject = "Your Buildwise sign-in link"
+subject = "Your PROVN sign-in link"
 content_path = "./supabase/templates/confirm.html"
 
 [auth.email.template.magic_link]
-subject = "Your Buildwise sign-in link"
+subject = "Your PROVN sign-in link"
 content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize email template
@@ -459,7 +459,7 @@ port = 465
 user = "resend"
 pass = "env(RESEND_API_KEY)"
 admin_email = "no-reply@auth.brokwise.com"
-sender_name = "Buildwise"
+sender_name = "PROVN"
 
 [remotes.production.auth.mfa.totp]
 enroll_enabled = true

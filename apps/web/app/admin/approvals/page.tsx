@@ -7,7 +7,7 @@ import { intakeService } from "@/lib/server/intake/instance";
 import { sessionUser } from "@/lib/server/session-user";
 import { DecisionButtons } from "./decision-buttons";
 
-export const metadata: Metadata = { title: "Approvals - Buildwise", robots: { index: false } };
+export const metadata: Metadata = { title: "Approvals - PROVN", robots: { index: false } };
 
 const REASONS = {
   payment: "Takes payments",

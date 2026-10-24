@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IdeaForm } from "./idea-form";
 
-export const metadata: Metadata = { title: "Describe your idea - Buildwise" };
+export const metadata: Metadata = { title: "Describe your idea - PROVN" };
 
 export default function NewIdeaPage() {
   return (

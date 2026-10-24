@@ -8,7 +8,7 @@ import { IntakeError } from "@/lib/server/intake/service";
 import { sessionUser } from "@/lib/server/session-user";
 import { IntakeView } from "./intake-view";
 
-export const metadata: Metadata = { title: "Your estimate - Buildwise" };
+export const metadata: Metadata = { title: "Your estimate - PROVN" };
 
 export default function IdeaPage({ params }: PageProps<"/ideas/[id]">) {
   return (
