@@ -37,4 +37,12 @@ describe("parsePublicEnv", () => {
       parsePublicEnv({ ...valid, NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "yes" }).googleAuthEnabled,
     ).toBe(false);
   });
+
+  test("falls back to the Vercel branch URL when no site URL is set", () => {
+    const { NEXT_PUBLIC_SITE_URL: _unused, ...rest } = valid;
+    expect(
+      parsePublicEnv({ ...rest, NEXT_PUBLIC_VERCEL_BRANCH_URL: "buildwise-git-x.vercel.app" })
+        .siteUrl,
+    ).toBe("https://buildwise-git-x.vercel.app");
+  });
 });
