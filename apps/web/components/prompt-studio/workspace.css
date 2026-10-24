@@ -1238,3 +1238,28 @@ body:has(.conduit-build-workspace) > header {
   color: #9bc8b1;
   font-weight: 600;
 }
+
+/* Suggested answers for the guide's questions. */
+.build-answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.build-answer-options button {
+  text-align: left;
+  padding: 9px 12px;
+  border: 1px solid #3c4855;
+  border-radius: 10px;
+  background: #1d2630;
+  color: #f3f0e9;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.build-answer-options button:hover:not(:disabled) {
+  border-color: #e5bd8b;
+  background: #232e39;
+}
+.build-answer-options button:disabled {
+  opacity: 0.5;
+}

@@ -75,7 +75,9 @@ const NOUNS: [RegExp, string][] = [
   [/\b(classes|class|sessions?|events?)\b/i, "Classes"],
   [/\b(products?|listings?|items?)\b/i, "Products"],
   [/\b(clients?|customers?)\b/i, "Clients"],
-  [/\b(tasks?|to-?dos?|projects?)\b/i, "Tasks"],
+  [/\bprojects?\b/i, "Projects"],
+  [/\bdesigns?\b/i, "Designs"],
+  [/\b(tasks?|to-?dos?)\b/i, "Tasks"],
   [/\b(invoices?|bills?)\b/i, "Invoices"],
   [/\b(notes?|journal|entries)\b/i, "Notes"],
 ];

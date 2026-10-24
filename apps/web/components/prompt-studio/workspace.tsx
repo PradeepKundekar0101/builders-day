@@ -14,6 +14,7 @@ import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 import { SitePreview } from "@/components/demo/site-preview";
 import type { AttackResult } from "@/lib/demo/attack";
 import { planFromIdea } from "@/lib/demo/plan";
+import { questionOptions } from "@/lib/demo/question-options";
 
 type Props = {
   pauseRevision?: number;
@@ -217,8 +218,9 @@ export function BuildWorkspace({
     }, 750);
     return () => clearInterval(timer);
   }, [running]);
-  async function send() {
-    const text = message.trim();
+  /** Sends the typed message, or a suggested answer the user clicked. */
+  async function send(answer?: string) {
+    const text = (answer ?? message).trim();
     if (!text || busy) return;
     setLocalError("");
     if (draft.adapterMode === "openai") {
@@ -477,6 +479,24 @@ export function BuildWorkspace({
                     send();
                   }}
                 >
+                  {next && (
+                    <div
+                      className="build-answer-options"
+                      role="group"
+                      aria-label="Suggested answers"
+                    >
+                      {questionOptions(next.id, appPlan).map((option) => (
+                        <button
+                          type="button"
+                          key={option}
+                          disabled={busy}
+                          onClick={() => void send(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="build-composer-state">
                     <i />
                     {next
@@ -499,9 +519,7 @@ export function BuildWorkspace({
                         send();
                       }
                     }}
-                    placeholder={
-                      next ? "Tell PROVN what you have in mind…" : "Add another requirement…"
-                    }
+                    placeholder={next ? "Or type your own answer…" : "Add another requirement…"}
                     rows={3}
                     disabled={busy}
                   />
