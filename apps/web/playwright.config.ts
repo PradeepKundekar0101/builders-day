@@ -41,6 +41,9 @@ export default defineConfig({
           NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? "",
           NEXT_PUBLIC_SITE_URL: baseURL,
           NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "true",
+          SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+          MASK_MAP_KEY: process.env.MASK_MAP_KEY ?? "",
+          AGENT_API_TOKEN: process.env.AGENT_API_TOKEN ?? "",
         },
       },
 });
