@@ -40,6 +40,9 @@ export type QuoteRecord = {
   userId: string;
   selection: Selection;
   costUsd: number;
+  costCredits: number;
+  lowCredits: number;
+  highCredits: number;
   lowUsd: number;
   highUsd: number;
   hours: number;

@@ -6,7 +6,7 @@ import "./globals.css";
 const schibsted = Schibsted_Grotesk({ variable: "--font-schibsted", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Buildwise",
+  title: "PROVN",
   description:
     "Tell us your idea, see what it costs before you spend a rupee, approve it, and we build and deploy it securely.",
 };

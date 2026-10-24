@@ -11,7 +11,7 @@ import {
 import {
   defaultSelection,
   estimate,
-  inputFromSelection,
+  validatedInputFromSelection as inputFromSelection,
   type Estimate,
   type Selection,
 } from "@buildwise/estimator";
@@ -50,6 +50,9 @@ const quoteNumbers = (result: Estimate) => ({
   hours: result.hours,
   modelBudgetUsd: result.modelBudgetUsd,
   weightsVersion: result.version,
+  costCredits: Math.round(result.costUsd * 100),
+  lowCredits: Math.round(result.lowUsd * 100),
+  highCredits: Math.round(result.highUsd * 100),
 });
 
 /** The intake flow: idea, up to four agent questions, a validated spec and a draft quote. */

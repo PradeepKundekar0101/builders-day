@@ -96,14 +96,34 @@ describe("IntakeService", () => {
   test("updating the selection recomputes the quote on the server", async () => {
     const { service } = setup();
     const idea = await service.submitIdea("u1", IDEA, []);
-    const { quote } = await service.submitSpec(idea.id, spec);
+    const { quote } = await service.submitSpec(idea.id, {
+      ...spec,
+      pages: spec.pages.map((p, i) => ({ ...p, mustHave: i === 0 })),
+      entities: spec.entities.map((e, i) => ({ ...e, mustHave: i === 0 })),
+    });
     const updated = await service.updateSelection("u1", quote.id, {
       pages: ["Home"],
       entities: ["order"],
-      auth: false,
+      auth: true,
       integrations: [],
     });
-    expect(updated).toMatchObject({ costUsd: 1.9, hours: 1 });
+    expect(updated).toMatchObject({ costUsd: 2.38, costCredits: 238, hours: 1.5 });
+    await expect(
+      service.updateSelection("u1", quote.id, {
+        pages: ["Home"],
+        entities: ["order"],
+        auth: false,
+        integrations: [],
+      }),
+    ).rejects.toThrow();
+    await expect(
+      service.updateSelection("u1", quote.id, {
+        pages: [],
+        entities: ["order"],
+        auth: true,
+        integrations: [],
+      }),
+    ).rejects.toThrow("Required feature");
     await expect(
       service.updateSelection("u2", quote.id, {
         pages: [],

@@ -1,5 +1,6 @@
 {
   "name": "@buildwise/estimator",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -10,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@buildwise/shared": "workspace:*"
+    "@buildwise/shared": "workspace:*",
+    "zod": "^4.6.7"
   }
 }
