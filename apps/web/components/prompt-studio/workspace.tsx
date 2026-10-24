@@ -5,7 +5,7 @@ import {
   type StudioBuildState,
 } from "@/lib/prompt-studio/build-events";
 import { WorkspaceNav, type WorkspaceView } from "./workspace-nav";
-import { JourneyGuide } from "./journey-guide";
+import { BuildJourney, type JourneyAttack } from "./build-journey";
 import { ProvnLogo } from "@/components/provn-logo";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
@@ -72,11 +72,7 @@ export function BuildWorkspace({
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [appPage, setAppPage] = useState("Home");
-  const [attack, setAttack] = useState<
-    | { kind: "idle" }
-    | { kind: "running"; result: AttackResult; shown: number }
-    | { kind: "done"; result: AttackResult }
-  >({ kind: "idle" });
+  const [attack, setAttack] = useState<JourneyAttack>({ kind: "idle" });
   const attackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const terminal = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -179,6 +175,7 @@ export function BuildWorkspace({
     }
     wasBuilt.current = built;
   }, [built]);
+  const needsFix = attack.kind === "done" && attack.result.grade !== "A";
   const probe = attack.kind === "running" ? attack.result.probes[attack.shown - 1] : undefined;
   async function runAttack(hardened: boolean) {
     setConsoleOpen(true);
@@ -443,22 +440,21 @@ export function BuildWorkspace({
                       </div>
                     );
                   })}
-                  <JourneyGuide
-                    stage={buildStage}
-                    reviewed={reviewed}
-                    current={journey.current}
-                    state={journey.state}
-                    profile={journey.profile}
-                    quote={journey.quote.total}
-                    busy={busy}
-                    onOpen={(destination) => {
-                      if (destination === "brief") setLeftTab("brief");
-                      else {
-                        setModule(destination);
-                        setRightTab("modules");
-                      }
-                    }}
-                  />
+                  {draft.questions.length > 0 && draft.questions.every((q) => q.answer?.trim()) && (
+                    <BuildJourney
+                      plan={appPlan}
+                      building={running}
+                      progress={`${Math.max(step, 0) + 1}/${stages.length}`}
+                      built={built}
+                      attack={attack}
+                      onBuild={() => {
+                        setStep(0);
+                        setRunning(true);
+                        setConsoleOpen(true);
+                      }}
+                      onAttack={(hardened) => void runAttack(hardened)}
+                    />
+                  )}
                   {notes.map((note, i) => (
                     <article className="build-message build-message-user" key={i}>
                       <div className="build-message-label">
@@ -565,11 +561,11 @@ export function BuildWorkspace({
                 {built && (
                   <button
                     className="build-attack"
-                    onClick={() => runAttack(false)}
+                    onClick={() => runAttack(needsFix)}
                     disabled={attack.kind === "running"}
                     title="Simulated attack against the built app"
                   >
-                    ⚠ Attack
+                    {needsFix ? "✓ Fix & re-attack" : "⚠ Attack"}
                   </button>
                 )}
                 <button
