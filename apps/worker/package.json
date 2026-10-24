@@ -8,7 +8,8 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "agent:fixture": "node --env-file-if-exists=.env.local --import tsx src/agent-fixture.ts",
-    "deploy:fixture": "node --env-file-if-exists=.env.local --import tsx src/deploy-fixture.ts"
+    "deploy:fixture": "node --env-file-if-exists=.env.local --import tsx src/deploy-fixture.ts",
+    "start:local": "caffeinate -i node --env-file-if-exists=.env.local --import tsx src/main.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.309",

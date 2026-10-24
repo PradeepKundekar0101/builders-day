@@ -58,12 +58,27 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   stopping = true;
 });
+const MAX_CLAIM_FAILURES = 8;
 async function checked(result: { error: unknown }) {
   if (result.error) throw new Error("Build storage operation failed");
 }
+let claimFailures = 0;
 while (!stopping) {
   const claimed = await db.rpc("claim_studio_build", { p_worker: worker });
-  if (claimed.error) throw new Error("Worker claim failed. Verify migrations.");
+  if (claimed.error) {
+    // Network loss (Wi-Fi drop, laptop sleep) is waited out indefinitely; only repeated database
+    // errors, such as a missing migration, stop the worker.
+    const offline = /fetch failed|ECONN|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(claimed.error.message);
+    if (!offline) claimFailures++;
+    console.error(
+      `[worker] claim failed${offline ? " (offline, retrying)" : ` (${claimFailures}/${MAX_CLAIM_FAILURES})`}: ${claimed.error.message}`,
+    );
+    if (claimFailures >= MAX_CLAIM_FAILURES)
+      throw new Error("Worker claim keeps failing. Verify migrations and database access.");
+    await delay(offline ? 30_000 : Math.min(60_000, 2_000 * 2 ** claimFailures));
+    continue;
+  }
+  claimFailures = 0;
   const build = claimed.data;
   if (!build) {
     await delay(5000);

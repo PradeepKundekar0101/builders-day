@@ -103,3 +103,49 @@ it("reserves no more than the approved build budget", () => {
   expect(() => agentBudget(Number("not a number"), 3)).toThrow("no approved provider budget");
   expect(() => agentBudget(0, 3)).toThrow("no approved provider budget");
 });
+
+it("settles the cost the SDK reports before it throws on the budget cap", async () => {
+  const run = vi.fn(async function* () {
+    yield {
+      type: "result",
+      subtype: "error_max_budget_usd",
+      is_error: true,
+      total_cost_usd: 0.0177,
+      modelUsage: {
+        "claude-opus-5-5": {
+          inputTokens: 5,
+          outputTokens: 40,
+          cacheReadInputTokens: 900,
+          cacheCreationInputTokens: 100,
+        },
+      },
+    };
+    throw new Error("Claude Code returned an error result: Reached maximum budget ($0.005)");
+  });
+  const result = await runCodeAgent({
+    spec,
+    directory: dir,
+    config: { apiKey: "test-only", model: "claude-opus-5-5", maxBudgetUsd: 0.005, maxTurns: 5 },
+    signal: new AbortController().signal,
+    run: run as never,
+  });
+  expect(result.value).toMatchObject({ ok: false, subtype: "error_max_budget_usd" });
+  expect(result.actualMicros).toBe(17_700);
+  expect(result.inputTokens).toBe(1005);
+});
+it("still refuses to treat a failure without any result as free", async () => {
+  const run = vi.fn(async function* () {
+    // A connection failure before the SDK yields anything, so there is no cost to settle.
+    yield* [];
+    throw new Error("network down");
+  });
+  await expect(
+    runCodeAgent({
+      spec,
+      directory: dir,
+      config: { apiKey: "k", model: "m", maxBudgetUsd: 1, maxTurns: 1 },
+      signal: new AbortController().signal,
+      run: run as never,
+    }),
+  ).rejects.toThrow("network down");
+});
