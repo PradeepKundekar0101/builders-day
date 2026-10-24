@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@buildwise/shared", "@buildwise/db"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
