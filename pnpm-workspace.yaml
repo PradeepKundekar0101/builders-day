@@ -3,6 +3,7 @@ packages:
   - "packages/*"
   - "scripts"
 allowBuilds:
+  core-js: false
   esbuild: true
   sharp: false
   unrs-resolver: false
