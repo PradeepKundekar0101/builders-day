@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { creditsToUnits } from "@buildwise/cost-guard";
 import { costIdentity, costService, costError, requireSameOrigin } from "@/lib/cost/server";
+import { quoteFromReviewedStudio } from "@/lib/prompt-studio/build-origin";
 const Input = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("approve"),
@@ -29,20 +30,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (input.action === "start") {
       if (process.env.PROVN_LIVE_BUILDS !== "true") throw new Error("Live builds disabled");
       const { db } = costService();
-      const { data: quote } = await db
-        .from("quotes")
-        .select("spec_id,weights_version")
-        .eq("id", runId)
-        .eq("user_id", userId)
-        .maybeSingle();
-      const { data: mapping } = quote
-        ? await db
-            .from("studio_build_specs")
-            .select("spec_id,weights_version")
-            .eq("spec_id", quote.spec_id)
-            .maybeSingle()
-        : { data: null };
-      if (!mapping || quote?.weights_version !== "source-v1")
+      if (!(await quoteFromReviewedStudio(db, runId, userId)))
         return Response.json(
           { error: "Build must originate from a reviewed Prompt Studio version." },
           { status: 409 },
