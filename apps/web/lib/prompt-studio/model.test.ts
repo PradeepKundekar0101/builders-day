@@ -91,7 +91,7 @@ describe("live intake adapter", () => {
   it("suppresses upfront questions even if the model returns them", async () => {
     const output = {
       ...(await fixture()),
-      questions: [{ id: "payment", question: "Which payment provider?" }],
+      questions: [{ id: "payment", question: "Which payment provider?", options: ["Pine Labs"] }],
     };
     const result = await interpretWithModel({ input }, config, undefined, provider(output));
     expect(result.draft.buildStage).toBe(0);
@@ -106,14 +106,24 @@ describe("live intake adapter", () => {
     const output = {
       ...(await fixture()),
       questions: [
-        { id: "storage", question: "What should be saved?" },
-        { id: "later", question: "Where should it deploy?" },
+        {
+          id: "storage",
+          question: "What should be saved?",
+          options: ["Bookings only", "Bookings and notes"],
+        },
+        { id: "later", question: "Where should it deploy?", options: [] },
       ],
     };
     const result = await interpretWithModel({ input, draft }, config, undefined, provider(output));
     expect(result.draft.buildStage).toBe(2);
     expect(result.draft.questions).toEqual([
-      { id: "storage", question: "What should be saved?", stage: 2 },
+      // Suggested answers travel with the question so the chat can offer them as buttons.
+      {
+        id: "storage",
+        question: "What should be saved?",
+        options: ["Bookings only", "Bookings and notes"],
+        stage: 2,
+      },
     ]);
   });
   it("rejects cloud calls for local-only mode before fetching", async () => {

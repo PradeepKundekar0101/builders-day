@@ -21,6 +21,8 @@ export const PromptStudioQuestionSchema = z.object({
   id: z.string().min(1).max(100),
   question: z.string().min(1).max(500),
   stage: z.number().int().min(0).max(3).optional(),
+  /** Clickable answers suggested with the question; the user can still type their own. */
+  options: z.array(z.string().trim().min(1).max(200)).max(4).optional(),
   answer: z.string().trim().min(1).max(2_000).optional(),
 });
 

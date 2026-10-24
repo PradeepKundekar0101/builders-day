@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { MockPromptStudioAdapter } from "@buildwise/shared";
+import { MockPromptStudioAdapter, type PromptStudioDraft } from "@buildwise/shared";
 import { freshEmail, remote, signInViaGeneratedLink } from "./helpers";
 
 test.skip(({ isMobile }) => isMobile, "Desktop workspace");
@@ -13,6 +13,7 @@ async function savedDraft(
   status: "draft" | "user_reviewed",
   answered = true,
   integrations: { kind: "admin_dashboard"; mustHave: boolean; notes?: string }[] = [],
+  extra: Partial<PromptStudioDraft> = {},
 ) {
   const raw = await new MockPromptStudioAdapter().interpret({
     idea: "Build a booking portal for fitness coaches where clients can browse and reserve sessions.",
@@ -26,6 +27,7 @@ async function savedDraft(
       ...q,
       answer: answered || i > 0 ? (q.answer ?? "Yes") : undefined,
     })),
+    ...extra,
   };
   const id = crypto.randomUUID();
   const response = await page.request.post("/api/prompt-studio/sessions", {
@@ -129,4 +131,49 @@ test("an unbuildable brief is flagged before review and can be fixed in one clic
   await expect(page.getByText(/admin or owner dashboard/)).toBeVisible();
   await page.getByRole("button", { name: "Remove unsupported integrations" }).click();
   await expect(page.getByText("This brief can't be built automatically yet:")).toHaveCount(0);
+});
+
+test("a question offers clickable answers", async ({ page, baseURL }) => {
+  await signInViaGeneratedLink(page, freshEmail("live-options"));
+  const id = await savedDraft(page, baseURL!, "draft", false, [], {
+    questions: [
+      {
+        id: "get-started",
+        question: "When a visitor clicks Get started, what should happen?",
+        options: ["Open the sign-up page", "Show a waitlist form"],
+        stage: 0,
+      },
+    ],
+  });
+  await builds(page, []);
+  await page.goto(`/apps/new?session=${id}`);
+  const options = page.getByRole("group", { name: "Suggested answers" });
+  await options.getByRole("button", { name: "Show a waitlist form" }).click();
+  await expect(page.getByText("Show a waitlist form", { exact: true })).toBeVisible();
+  await expect(options).toHaveCount(0);
+});
+
+test("the brief keeps scrolling while Claude is refining it", async ({ page, baseURL }) => {
+  await signInViaGeneratedLink(page, freshEmail("live-scroll"));
+  const id = await savedDraft(page, baseURL!, "draft", true, [], { adapterMode: "claude" });
+  await builds(page, []);
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/prompt-studio/interpret", async (route) => {
+    await held;
+    await route.fulfill({ status: 503, json: { error: "Held for the test" } });
+  });
+  await page.goto(`/apps/new?session=${id}`);
+  await page.getByRole("textbox", { name: "Message PROVN" }).fill("Add a FAQ page.");
+  await page.keyboard.press("Enter");
+  await page
+    .getByRole("button", { name: /Brief & prompts/ })
+    .first()
+    .click();
+  const brief = page.locator(".build-brief-scroll");
+  await expect(brief).toBeVisible();
+  await brief.hover();
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => brief.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  release();
 });

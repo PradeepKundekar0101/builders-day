@@ -425,8 +425,9 @@ export function BuildWorkspace({
               </p>
             )}
             {leftTab === "brief" ? (
-              <div className="build-brief-scroll" inert={busy}>
-                {editor}
+              <div className="build-brief-scroll">
+                {/* Inert on the scroll container itself would also block wheel scrolling while busy. */}
+                <div inert={busy}>{editor}</div>
               </div>
             ) : (
               <>
@@ -560,7 +561,10 @@ export function BuildWorkspace({
                       role="group"
                       aria-label="Suggested answers"
                     >
-                      {questionOptions(next.id, appPlan).map((option) => (
+                      {(next.options?.length
+                        ? next.options
+                        : questionOptions(next.id, appPlan)
+                      ).map((option) => (
                         <button
                           type="button"
                           key={option}
