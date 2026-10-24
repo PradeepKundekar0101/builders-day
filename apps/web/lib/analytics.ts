@@ -28,6 +28,10 @@ export function initializeAnalytics() {
       before_send: (event) => {
         if (!event || window.location.pathname.startsWith("/auth/")) return null;
         event.properties = sanitizeAnalyticsProperties(event.properties);
+        // The public project token is a required SDK transport field, not user data.
+        event.properties.token = token;
+        if (event.$set) event.$set = sanitizeAnalyticsProperties(event.$set);
+        if (event.$set_once) event.$set_once = sanitizeAnalyticsProperties(event.$set_once);
         event.properties.app = "buildwise";
         event.properties.analytics_schema_version = 1;
         return event;

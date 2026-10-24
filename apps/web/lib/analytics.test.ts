@@ -78,4 +78,20 @@ describe("analytics lifecycle", () => {
     analytics.captureAuthenticatedAppVisit();
     expect(sdk.capture).not.toHaveBeenCalled();
   });
+  it("preserves the configured routing token while removing private tokens and person URLs", async () => {
+    const analytics = await import("./analytics");
+    analytics.initializeAnalytics();
+    const beforeSend = sdk.init.mock.calls[0][1].before_send;
+    const event = beforeSend({
+      event: "$pageview",
+      properties: { token: "phc_test_only", access_token: "private", distinct_id: "anon-1" },
+      $set: { email: "private@example.com", role: "builder" },
+      $set_once: { $initial_current_url: "https://getbuildwise.vercel.app/?code=private" },
+    });
+    expect(event.properties.token).toBe("phc_test_only");
+    expect(event.properties.distinct_id).toBe("anon-1");
+    expect(event.properties.access_token).toBeUndefined();
+    expect(event.$set).toEqual({ role: "builder" });
+    expect(event.$set_once.$initial_current_url).toBe("https://getbuildwise.vercel.app/");
+  });
 });
