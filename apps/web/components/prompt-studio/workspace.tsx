@@ -44,6 +44,7 @@ export function BuildWorkspace({
   const [rightTab, setRightTab] = useState<"preview" | "live" | "modules">("preview");
   const journey = useProvnDemo(draft, reviewed);
   const [module, setModule] = useState<P0Module>("cost");
+  const [paused, setPaused] = useState(false);
   const [message, setMessage] = useState("");
   const [localError, setLocalError] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
@@ -54,7 +55,19 @@ export function BuildWorkspace({
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
-  const next = draft.questions.find((q) => !q.answer?.trim());
+  const buildStage = draft.buildStage ?? 0;
+  const phaseNames = ["Initial layout", "Primary user journey", "Data and connections", "Review and handoff"];
+  const questionStage = (q: PromptStudioDraft["questions"][number]) => q.stage ?? (q.id === "data" ? 2 : 1);
+  const next = draft.questions.find((q) => !q.answer?.trim() && questionStage(q) <= buildStage);
+  useEffect(() => {
+    if (paused || message.trim() || busy || next || buildStage >= 3 || error) return;
+    const timer = setTimeout(() => {
+      const updated = { ...draft, buildStage: buildStage + 1 };
+      if (draft.adapterMode === "openai") void onRefine(updated, `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`);
+      else onChange(updated);
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [buildStage, paused, message, busy, next, error, draft, onRefine, onChange]);
   const answered = draft.questions.filter((q) => q.answer?.trim()).length;
   const activePage = draft.spec.pages[Math.min(page, draft.spec.pages.length - 1)];
   useEffect(() => {
@@ -143,7 +156,7 @@ export function BuildWorkspace({
               </button>
             </div>
             <span className="build-small-label">
-              {answered}/{draft.questions.length} decisions
+              {phaseNames[buildStage]}
             </span>
           </div>
           {(error || localError) && (
@@ -181,20 +194,14 @@ export function BuildWorkspace({
                     <span className="build-agent-tag">{draft.adapterMode === "openai" ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}</span>
                   </div>
                   <p>
-                    Let’s turn this into something you can build. I’ll help you work through the
-                    important decisions, one at a time.
+                    I’m preparing your first layout from the idea you shared. I’ll ask for a decision only when the current stage needs it. You can change direction at any time.
                   </p>
-                  <div className="build-plan">
-                    <span>THE PLAN</span>
-                    <div>
-                      <i>01</i>Understand your users
-                    </div>
-                    <div>
-                      <i>02</i>Define the first complete journey
-                    </div>
-                    <div>
-                      <i>03</i>Agree on data and connections
-                    </div>
+                  <div className="build-plan" role="status">
+                    <span>CURRENT STAGE · {buildStage + 1}/4</span>
+                    <div>{phaseNames[buildStage]}</div>
+                    <p>{next ? "This decision is needed for the current stage." : buildStage < 3 ? "Preparing the next part of your simulated preview…" : "Your staged brief is ready for review."}</p>
+                    <small>Preview simulation · real build engine not connected</small>
+                    {buildStage < 3 && <button className="build-inline-button" onClick={() => setPaused(!paused)}>{paused ? "Resume progression" : "Pause progression"}</button>}
                   </div>
                 </article>
                 {draft.questions.map((q, i) => {
@@ -236,7 +243,7 @@ export function BuildWorkspace({
                     </div>
                   );
                 })}
-                {!next && (
+                {!next && buildStage === 3 && (
                   <article className="build-message">
                     <div className="build-message-label">
                       <span className="build-avatar">✦</span>PROVN
@@ -279,7 +286,7 @@ export function BuildWorkspace({
               >
                 <div className="build-composer-state">
                   <i />
-                  {next ? "Agent is waiting for your answer" : "Your brief is ready to refine"}
+                  {next ? "Agent is waiting for your answer" : buildStage < 3 ? "Preview progressing · you can add direction" : "Your brief is ready to refine"}
                 </div>
                 <label htmlFor="agent-message" className="sr-only">
                   Message PROVN
@@ -416,7 +423,7 @@ export function BuildWorkspace({
                     <span>Preview only</span>
                   </div>
                   <nav className="scaffold-pages" aria-label="Preview pages">
-                    {draft.spec.pages.map((p, i) => (
+                    {draft.spec.pages.slice(0, buildStage === 0 ? 1 : undefined).map((p, i) => (
                       <button
                         key={i}
                         onClick={() => setPage(i)}
@@ -435,7 +442,7 @@ export function BuildWorkspace({
                       <h2>{draft.spec.summary}</h2>
                     </div>
                     <div className="scaffold-grid">
-                      {["Primary journey", "Your data", "Connections"].map((title, i) => (
+                      {["Primary journey", "Your data", "Connections"].slice(0, buildStage === 0 ? 0 : buildStage === 1 ? 1 : 3).map((title, i) => (
                         <div key={title}>
                           <span>0{i + 1}</span>
                           <h3>{title}</h3>

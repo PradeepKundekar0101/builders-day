@@ -640,7 +640,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           <div className="studio-welcome">
             <div className="studio-input-panel">
               <p className="portal-input-label">What do you want to build?</p>
-              <label className="studio-live-toggle"><input type="checkbox" checked={live} disabled={busy} onChange={e => setLive(e.target.checked)} /> Use live AI · requires sign-in; provider token charges apply to every submission.</label>
+              <label className="studio-live-toggle"><input type="checkbox" checked={live} disabled={busy} onChange={e => setLive(e.target.checked)} /> Use live AI · requires sign-in; provider charges apply to replies and automatic stage progression.</label>
               <div className="studio-composer">{composer}</div>
               <div className="studio-examples">
                 <span>Try an example prompt</span>

@@ -37,3 +37,10 @@ Configure the existing Supabase public URL/key and site URL for sign-in. Configu
 48 shared/web tests pass, including six model-adapter tests using a fake provider. Coverage includes private-mode blocking, masking, output validation, decision preservation and upstream errors. No live provider call has been made; account credentials and a configured authenticated runtime are required for that final smoke test.
 
 API reference: https://developers.openai.com/api/docs/guides/structured-outputs
+
+
+## Progressive disclosure
+
+The persisted `buildStage` runs from 0 (layout) through 1 (primary journey), 2 (data and connections), and 3 (review). Questions carry an optional stage for backwards compatibility. Initial live intake suppresses questions; subsequent responses introduce at most one new question for the active stage. The model is instructed to defer future concerns and preserve decisions. Relevance remains model-dependent and needs live evaluation.
+
+The workspace advances automatically when its current questions are resolved, pauses while typing or on failure, and offers Pause progression. Live progression makes billable model requests. Preview pages and data cards appear by stage; this is a simulated scaffold, not generated application code. A real builder must supply authoritative stage completion events before replacing the demo timer. No deployment, cost gate or security gate is bypassed.

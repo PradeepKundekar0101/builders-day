@@ -11,6 +11,19 @@ describe('live intake adapter', () => {
   expect(r.draft.adapterMode).toBe('openai'); expect(r.draft.revision).toBe(1); expect(r.trace.usage.output_tokens).toBe(200);
   const request = JSON.parse((vi.mocked(f).mock.calls[0][1]?.body as string)); expect(request.store).toBe(false); expect(request.max_output_tokens).toBe(5000);
  });
+ it('suppresses upfront questions even if the model returns them', async () => {
+  const output = { ...await fixture(), questions: [{ id: 'payment', question: 'Which payment provider?' }] };
+  const result = await interpretWithModel({ input }, config, undefined, provider(output));
+  expect(result.draft.buildStage).toBe(0);
+  expect(result.draft.questions).toEqual([]);
+ });
+ it('reveals at most one new decision tagged to the active stage', async () => {
+  const draft = { ...await new MockPromptStudioAdapter().interpret(input), questions: [], buildStage: 2 };
+  const output = { ...await fixture(), questions: [{ id: 'storage', question: 'What should be saved?' }, { id: 'later', question: 'Where should it deploy?' }] };
+  const result = await interpretWithModel({ input, draft }, config, undefined, provider(output));
+  expect(result.draft.buildStage).toBe(2);
+  expect(result.draft.questions).toEqual([{ id: 'storage', question: 'What should be saved?', stage: 2 }]);
+ });
  it('rejects cloud calls for local-only mode before fetching', async () => {
   const draft = await new MockPromptStudioAdapter().interpret(input); draft.onboarding = { persona:'non-tech',mode:'plain',budgetCap:200,approvalThreshold:50,plan:'free',privateMode:true,byok:false };
   const f=provider(await fixture()); await expect(interpretWithModel({input,draft},config,undefined,f)).rejects.toThrow('Local-only'); expect(f).not.toHaveBeenCalled();

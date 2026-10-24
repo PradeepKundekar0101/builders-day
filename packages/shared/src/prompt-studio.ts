@@ -20,6 +20,7 @@ export const PromptStudioInputSchema = z.object({
 export const PromptStudioQuestionSchema = z.object({
   id: z.string().min(1).max(100),
   question: z.string().min(1).max(500),
+  stage: z.number().int().min(0).max(3).optional(),
   answer: z.string().trim().min(1).max(2_000).optional(),
 });
 
@@ -39,6 +40,7 @@ export const PromptStudioDraftSchema = z
       })
       .optional(),
     revision: z.number().int().positive(),
+    buildStage: z.number().int().min(0).max(3).optional(),
     input: PromptStudioInputSchema,
     questions: z.array(PromptStudioQuestionSchema).max(4),
     spec: SpecSchema,
@@ -117,15 +119,15 @@ export class MockPromptStudioAdapter implements PromptStudioAdapter {
       adapterMode: this.mode,
       questions: [
         {
-          id: "audience",
+          id: "audience", stage: 1,
           question: "Who will use this product, and what should each role be allowed to do?",
         },
         {
-          id: "journey",
+          id: "journey", stage: 1,
           question: "What is the first complete task a user should be able to finish?",
         },
         {
-          id: "data",
+          id: "data", stage: 2,
           question: "What information should be saved, and which services should it connect to?",
         },
       ],
