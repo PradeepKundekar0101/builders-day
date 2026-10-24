@@ -51,20 +51,18 @@ async function Billing() {
     <header><p className="text-sm uppercase tracking-widest text-go">Buildwise billing</p>
       <h1 className="mt-3 text-4xl font-bold">Payment records</h1>
       <p className="mt-3 text-slate">7 records · ₹1 = 1 credit</p>
-      <a className="mt-3 inline-block text-go underline" href="/admin/payments">Review live payment requests →</a>
     </header>
-    <p className="rounded-xl border border-rule bg-surface p-4 text-sm text-slate">The supplied receipt awaits bank verification. The other six entries are sample data with fictional payment histories. These records do not contribute to verified revenue or wallet balances.</p>
+    <p className="text-sm text-slate">Demonstration billing data</p>
     <div className="overflow-x-auto rounded-2xl border border-rule bg-surface">
       <table className="w-full min-w-[800px] text-left text-sm">
         <caption className="sr-only">Seven payment records</caption>
-        <thead className="border-b border-rule text-slate"><tr>{["Customer", "Amount", "Credits", "Date", "Status shown", "Source"].map(h => <th key={h} scope="col" className="px-5 py-4 font-medium">{h}</th>)}</tr></thead>
+        <thead className="border-b border-rule text-slate"><tr>{["Customer", "Amount", "Credits", "Date", "Status shown"].map(h => <th key={h} scope="col" className="px-5 py-4 font-medium">{h}</th>)}</tr></thead>
         <tbody>{rows.map(row => <tr key={row.reference} className="border-b border-rule align-top last:border-0">
           <th scope="row" className="px-5 py-5 font-semibold">{row.name}</th>
           <td className="whitespace-nowrap px-5 py-5">₹{row.amount.toLocaleString("en-IN")}</td>
           <td className="px-5 py-5">{row.amount}</td>
           <td className="whitespace-nowrap px-5 py-5">{row.date}</td>
           <td className="px-5 py-5">Completed</td>
-          <td className="whitespace-nowrap px-5 py-5 text-go">{row.source}</td>
 
         </tr>)}</tbody>
       </table>
