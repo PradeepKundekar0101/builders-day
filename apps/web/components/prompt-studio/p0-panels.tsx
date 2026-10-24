@@ -16,6 +16,7 @@ import {
   type DemoAction,
   type Scope,
 } from "@/lib/provn-demo";
+import { planFromIdea } from "@/lib/demo/plan";
 import "./p0-panels.css";
 export type P0Module = "cost" | "route" | "launch" | "shield" | "proof" | "wallet";
 export function useProvnDemo(draft: PromptStudioDraft, reviewed: boolean) {
@@ -147,6 +148,7 @@ export function P0Panels({
             Approve the scope before running. The hard cap and loop breaker are frontend simulations
             until the billing gateway is connected.
           </p>
+          <AppEstimate idea={draft.input.idea} name={draft.spec.name} />
           <div className="p0-scope">
             {(["lean", "standard", "max"] as const).map((s) => (
               <button aria-pressed={c.scope === s} onClick={() => c.setScope(s)} key={s}>
@@ -682,5 +684,51 @@ export function P0Panels({
         </p>
       </div>
     </div>
+  );
+}
+
+const hoursText = (hours: number) =>
+  hours < 1
+    ? "under an hour"
+    : Number.isInteger(hours)
+      ? `about ${hours} ${hours === 1 ? "hour" : "hours"}`
+      : `about ${Math.floor(hours)} to ${Math.ceil(hours)} hours`;
+
+/** Feature-based cost and time for this idea, from the same mock planner as /demo. */
+function AppEstimate({ idea, name }: { idea: string; name: string }) {
+  const plan = planFromIdea(idea);
+  return (
+    <section aria-label="Your app estimate" className="p0-app-estimate">
+      <div className="p0-metrics">
+        <div>
+          <span>{name === "My product" ? plan.name : name} · cost (approx.)</span>
+          <strong data-testid="studio-cost">${plan.costUsd.toFixed(2)}</strong>
+        </div>
+        <div>
+          <span>Build time</span>
+          <strong data-testid="studio-time">{hoursText(plan.hours)}</strong>
+        </div>
+        <div>
+          <span>Range</span>
+          <strong>
+            ${plan.lowUsd.toFixed(2)}–${plan.highUsd.toFixed(2)}
+          </strong>
+        </div>
+      </div>
+      <div className="p0-table">
+        {plan.features.map((feature) => (
+          <div key={feature.key}>
+            <span>{feature.label}</span>
+            <b>
+              {feature.hours} h · ${feature.usd.toFixed(2)}
+            </b>
+          </div>
+        ))}
+        <div>
+          <span>Deploy and hosting setup</span>
+          <b>${plan.deployUsd.toFixed(2)}</b>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { AttackResult, Probe } from "@/lib/demo/attack";
 import type { Plan } from "@/lib/demo/plan";
-import { SitePreview } from "./site-preview";
+import { SitePreview } from "@/components/demo/site-preview";
 
 type Phase = "idea" | "estimating" | "estimated" | "building" | "built";
 type AttackState =

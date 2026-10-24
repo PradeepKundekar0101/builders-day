@@ -28,6 +28,14 @@ describe("planFromIdea", () => {
     ).toBe("Booking Platform");
   });
 
+  test.each([
+    ["Build a private client portal for a small design agency.", "Private Client Portal"],
+    ["I want to create an invoice tracker for freelancers.", "Invoice Tracker"],
+    ["Make a recipe box that saves my favourite dishes.", "Recipe Box"],
+  ])("skips leading verbs: %s", (idea, name) => {
+    expect(planFromIdea(idea).name).toBe(name);
+  });
+
   test("a plain idea gets pages and data only", () => {
     const plan = planFromIdea(
       "A simple journal where I write short notes about my day and look back at them.",

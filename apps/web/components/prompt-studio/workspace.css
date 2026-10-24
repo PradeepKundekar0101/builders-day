@@ -1111,3 +1111,54 @@ body:has(.conduit-build-workspace) > header {
     padding-inline: 10px;
   }
 }
+
+/* Simulated build: realistic app preview and attack run. */
+.build-preview-actions .build-attack {
+  background: #ef9b99;
+  color: #1d2630;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 13px;
+  margin-left: 6px;
+}
+.build-preview-actions .build-attack:disabled {
+  opacity: 0.6;
+}
+.build-app-surface.build-app-built {
+  position: relative;
+  padding: 0;
+  overflow: auto;
+  background: #ffffff;
+  transition: box-shadow 0.2s;
+}
+.build-app-surface.is-under-attack {
+  box-shadow:
+    0 0 0 2px #ef9b99,
+    0 0 24px rgb(239 155 153 / 0.35);
+}
+.build-attack-probe {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ef9b99;
+  border-radius: 8px;
+  background: rgb(29 38 48 / 0.96);
+  color: #f3f0e9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+.build-attack-probe p:first-child {
+  color: #ef9b99;
+}
+.build-attack-probe p:last-child {
+  margin-top: 4px;
+  color: #bbc3cc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conduit-build-workspace .terminal-red {
+  color: #ef9b99;
+}
