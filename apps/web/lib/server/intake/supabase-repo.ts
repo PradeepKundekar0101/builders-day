@@ -67,6 +67,25 @@ export class SupabaseIntakeRepo implements IntakeRepo {
     };
   }
 
+  /**
+   * An idea whose mask map cannot be opened can never be processed. Lists mark it failed and
+   * leave it out, so it neither breaks the list nor sits in the agent's queue forever.
+   */
+  private async readableIdeas(
+    rows: Parameters<SupabaseIntakeRepo["toIdea"]>[0][],
+  ): Promise<IdeaRecord[]> {
+    const ideas: IdeaRecord[] = [];
+    for (const row of rows) {
+      try {
+        ideas.push(this.toIdea(row));
+      } catch (error) {
+        console.error(`Idea ${row.id} failed: its mask map cannot be opened`, error);
+        check(await this.db.from("ideas").update({ status: "failed" }).eq("id", row.id));
+      }
+    }
+    return ideas;
+  }
+
   private seal(map: MaskMap) {
     return Object.keys(map).length ? encryptJson(map, this.maskMapKey) : "";
   }
@@ -98,10 +117,23 @@ export class SupabaseIntakeRepo implements IntakeRepo {
         .from("ideas")
         .select(IDEA_COLUMNS)
         .eq("status", status)
-        .order("created_at")
+        // Newest first: the founder waiting on the page right now comes before stale ideas.
+        .order("created_at", { ascending: false })
         .limit(50),
     );
-    return rows.map((row) => this.toIdea(row));
+    return await this.readableIdeas(rows);
+  }
+
+  async listIdeasForUser(userId: string) {
+    const rows = must(
+      await this.db
+        .from("ideas")
+        .select(IDEA_COLUMNS)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    );
+    return await this.readableIdeas(rows);
   }
 
   async updateIdea(id: string, patch: Partial<Pick<IdeaRecord, "status" | "maskMap">>) {

@@ -31,7 +31,10 @@ export class MemoryIntakeRepo implements IntakeRepo {
     return this.ideas.get(id) ?? null;
   }
   async listIdeasByStatus(status: IdeaStatus) {
-    return [...this.ideas.values()].filter((idea) => idea.status === status);
+    return [...this.ideas.values()].filter((idea) => idea.status === status).reverse();
+  }
+  async listIdeasForUser(userId: string) {
+    return [...this.ideas.values()].filter((idea) => idea.userId === userId).reverse();
   }
   async updateIdea(id: string, patch: Partial<Pick<IdeaRecord, "status" | "maskMap">>) {
     const idea = this.ideas.get(id);

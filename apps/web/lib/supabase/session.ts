@@ -3,7 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@buildwise/db";
 import { publicEnv } from "@/lib/public-env";
 
-const PROTECTED_PREFIX = "/apps";
+const PROTECTED_PREFIXES = ["/apps", "/new", "/ideas", "/admin"];
+
+const isProtected = (pathname: string) =>
+  PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
 /** Refreshes the Supabase session cookie and applies the optimistic auth redirects. */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
@@ -35,7 +38,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     return redirect;
   };
 
-  if (!signedIn && (pathname === PROTECTED_PREFIX || pathname.startsWith(`${PROTECTED_PREFIX}/`))) {
+  if (!signedIn && isProtected(pathname)) {
     return redirectTo(`/signin?next=${encodeURIComponent(pathname + search)}`);
   }
   if (signedIn && pathname === "/signin") {

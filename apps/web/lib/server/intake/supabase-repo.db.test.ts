@@ -86,4 +86,20 @@ describe("SupabaseIntakeRepo through IntakeService", () => {
     });
     expect(updated.costUsd).toBe(1.18);
   });
+
+  test("one unreadable mask map does not block the agent's queue", async () => {
+    const broken = await db
+      .from("ideas")
+      .insert({ user_id: userId, text: IDEA, mask_map_enc: "not-a-sealed-value" })
+      .select("id")
+      .single();
+    const good = await service.submitIdea(userId, `${IDEA} Mail asha@x.in.`, []);
+
+    const ids = (await service.listSubmittedIdeas()).map((idea) => idea.id);
+    expect(ids).not.toContain(broken.data!.id);
+    const status = await db.from("ideas").select("status").eq("id", broken.data!.id).single();
+    expect(status.data?.status).toBe("failed");
+    // Earlier broken rows are now out of the queue, so a fresh idea is always reachable.
+    expect((await service.listSubmittedIdeas()).map((idea) => idea.id)).toContain(good.id);
+  });
 });

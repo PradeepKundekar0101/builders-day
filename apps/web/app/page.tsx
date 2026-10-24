@@ -35,7 +35,7 @@ export default function Home() {
             and deploy it securely.
           </p>
           <Link
-            href="/signin"
+            href="/new"
             className="mt-8 inline-flex h-12 items-center rounded-lg bg-go px-6 text-base font-semibold text-white hover:bg-go-hover"
           >
             Price my idea
@@ -56,7 +56,7 @@ export default function Home() {
             </ul>
             <div className="mt-5 flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm text-slate">Estimated price</p>
+                <p className="text-sm text-slate">Estimated price (approximate)</p>
                 <p className="mt-1 text-4xl font-extrabold">
                   <span className="bg-marker px-1 [box-decoration-break:clone]">$4.96</span>
                 </p>

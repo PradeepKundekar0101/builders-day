@@ -1,18 +1,17 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { serverEnv } from "./env";
+import { isUuid } from "./ids";
 import { bearerMatches, errorResponse, isSameOrigin } from "./http";
 import { sessionUser, type SessionUser } from "./session-user";
 
 type Params = Record<string, string>;
 type Context<P extends Params> = { params: Promise<P> };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /** Ids in our URLs are UUIDs; anything else cannot exist, so answer 404 before touching the database. */
 async function validParams<P extends Params>(context: Context<P>): Promise<P | null> {
-  const params = await context.params;
-  return Object.values(params).every((value) => UUID.test(value)) ? params : null;
+  const params = ((await context.params) ?? {}) as P;
+  return Object.values(params).every(isUuid) ? params : null;
 }
 
 const notFound = () =>

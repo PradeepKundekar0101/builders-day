@@ -224,4 +224,19 @@ describe("IntakeService", () => {
       }),
     ).rejects.toMatchObject({ code: "wrong_state" });
   });
+
+  test("the founder's list shows their own ideas, newest first, unmasked", async () => {
+    const { service } = setup();
+    const first = await service.submitIdea("u1", `Contact asha@x.in. ${IDEA}`, []);
+    const second = await service.submitIdea("u1", IDEA, []);
+    await service.submitSpec(second.id, spec);
+    await service.submitIdea("u2", IDEA, []);
+
+    const list = await service.listIdeas("u1");
+    expect(list.map((item) => item.id)).toEqual([second.id, first.id]);
+    expect(list[0]).toMatchObject({ title: "Tiffin tracker", status: "spec_ready", costUsd: 4 });
+    expect(list[1]!.title).toContain("asha@x.in");
+    expect(list[1]!.title.length).toBeLessThanOrEqual(80);
+    expect(list[1]).toMatchObject({ status: "submitted", costUsd: null });
+  });
 });

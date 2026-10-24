@@ -62,7 +62,10 @@ export type QuoteRecord = {
 export interface IntakeRepo {
   createIdea(idea: Omit<IdeaRecord, "id" | "status" | "questionCount">): Promise<IdeaRecord>;
   getIdea(id: string): Promise<IdeaRecord | null>;
+  /** Newest first, at most 50. */
   listIdeasByStatus(status: IdeaStatus): Promise<IdeaRecord[]>;
+  /** Newest first. */
+  listIdeasForUser(userId: string): Promise<IdeaRecord[]>;
   updateIdea(id: string, patch: Partial<Pick<IdeaRecord, "status" | "maskMap">>): Promise<void>;
   /** Atomically bumps the question count; false when it is already at max. */
   claimQuestionSlot(ideaId: string, max: number): Promise<boolean>;

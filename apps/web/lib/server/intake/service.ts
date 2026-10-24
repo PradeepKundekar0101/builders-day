@@ -55,6 +55,14 @@ export type IdeaView = {
   estimate: { spec: Spec; quote: QuoteRecord } | null;
 };
 
+export type IdeaSummary = {
+  id: string;
+  title: string;
+  status: IdeaStatus;
+  review: SpecRecord["operatorStatus"] | null;
+  costUsd: number | null;
+};
+
 export type PendingApproval = {
   id: string;
   requestedAt: string;
@@ -193,6 +201,25 @@ export class IntakeService {
       .slice(index + 1)
       .filter((message) => message.kind === "answer")
       .map(({ id, content }) => ({ id, content }));
+  }
+
+  /** For the owner: their ideas, newest first, titled by the spec name once there is one. */
+  async listIdeas(userId: string): Promise<IdeaSummary[]> {
+    const ideas = await this.repo.listIdeasForUser(userId);
+    return Promise.all(
+      ideas.map(async (idea) => {
+        const spec = await this.repo.getSpecForIdea(idea.id);
+        const quote = spec && priceVisible(spec) ? await this.repo.getQuoteForSpec(spec.id) : null;
+        const text = unmask(idea.text, idea.maskMap).replace(/\s+/g, " ");
+        return {
+          id: idea.id,
+          title: spec?.spec.name ?? (text.length > 80 ? `${text.slice(0, 79)}…` : text),
+          status: idea.status,
+          review: spec?.operatorStatus ?? null,
+          costUsd: quote?.costUsd ?? null,
+        };
+      }),
+    );
   }
 
   /** For the owner: everything on the idea page, with personal data restored. */
