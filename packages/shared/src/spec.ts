@@ -44,7 +44,9 @@ export const SpecSchema = z
     name: z.string().min(1).max(60),
     summary: z.string().min(1).max(500),
     pages: z
-      .array(z.object({ name: z.string().min(1), purpose: z.string().min(1), mustHave: z.boolean() }))
+      .array(
+        z.object({ name: z.string().min(1), purpose: z.string().min(1), mustHave: z.boolean() }),
+      )
       .min(1),
     entities: z.array(EntitySchema),
     auth: z.object({
@@ -64,12 +66,20 @@ export const SpecSchema = z
     const seen = new Set<string>();
     spec.entities.forEach((entity, i) => {
       if (seen.has(entity.name)) {
-        ctx.addIssue({ code: "custom", path: ["entities", i, "name"], message: "duplicate entity name" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["entities", i, "name"],
+          message: "duplicate entity name",
+        });
       }
       seen.add(entity.name);
     });
     if (spec.auth.enabled && spec.auth.providers.length === 0) {
-      ctx.addIssue({ code: "custom", path: ["auth", "providers"], message: "required when auth is enabled" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["auth", "providers"],
+        message: "required when auth is enabled",
+      });
     }
   });
 
