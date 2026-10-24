@@ -18,6 +18,17 @@ export const AgentConfig = z.object({
   maxTurns: z.number().int().positive().default(60),
 });
 export type AgentConfig = z.infer<typeof AgentConfig>;
+/**
+ * The provider reservation for one build: never more than the budget the user approved, nor the
+ * operator's cap. The SDK checks its budget between turns, so the agent stops at 80% to leave room
+ * for its final turn inside the reservation.
+ */
+export function agentBudget(approvedUsd: number, capUsd: number) {
+  const usd = Math.min(approvedUsd, capUsd);
+  if (!Number.isFinite(usd) || usd <= 0) throw new Error("Build has no approved provider budget");
+  const reserveMicros = Math.floor(usd * 1e6);
+  return { reserveMicros, agentUsd: (reserveMicros / 1e6) * 0.8 };
+}
 // The agent shapes the product UI. Data access, auth, migrations, manifests and config stay trusted template code.
 const WRITABLE = [
   /^app\/(?!api\/|auth\/)[\w\-/[\]().]+\.(tsx|ts|css)$/,
