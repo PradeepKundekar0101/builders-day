@@ -22,9 +22,9 @@ The customer page polls every five seconds while visible and checks again on foc
 
 ## Deployment prerequisites
 
-Local only. Apply the existing wallet migration first, then `20261024041000_manual_upi.sql` and `20261024042000_manual_payment_build_context.sql`. The manual migrations have not been applied to production. Configure the existing Supabase service credentials securely. Verify the recipient and the authorized staff account before live activation. Production migration and deployment require explicit approval.
+The wallet already existed in production. On 24 October 2026, `20261024041000_manual_upi.sql` and `20261024042000_manual_payment_build_context.sql` were applied together in one transaction to project `bxnmselwdjodquzuzglo`, with both versions recorded in the migration ledger. Configure the existing Supabase service credentials securely. Verify the recipient and the authorized staff account before live activation. Production migration and deployment require explicit approval.
 
-The previous PhonePe merchant gateway code is dormant and not used by this UI. Keep `PHONEPE_PAYMENTS_ENABLED=false`; no merchant account is needed for the selected manual flow. `20261024040000_credit_purchases.sql` belongs to that unused gateway flow.
+The unused PhonePe merchant gateway implementation has been removed. This checkout uses only the supplied QR and manual receipt verification.
 
 ## Verification
 
@@ -33,3 +33,11 @@ The previous PhonePe merchant gateway code is dormant and not used by this UI. K
 `node apps/web/e2e/fixtures/qr-journey-preview.mjs` serves a loopback-only QA harness on port 3126. It renders the real build, checkout and admin components using simulated identities and estimate responses, and the real manual approval SQL against a separate in-memory database. It never makes a real payment or executes a build worker. Browser QA verified the 150-credit shortfall → exact QR → reload → admin receipt approval → 150-credit wallet → original build estimate → explicit build approval readiness journey.
 
 Live Supabase authentication, phone-to-QR scanning, actual receipt matching and production worker execution still need a deployment-environment smoke test. The local tests do not prove real payment receipt.
+
+## Release status, 24 October 2026
+
+The payment page now uses the site's shared dark slate, warm gold and Schibsted design tokens. The release branch includes current `origin/phase-0-foundation`. Existing Pine Labs prototype files from that branch are preserved but are not used by this payment flow. The production build and 204 tests passed after integration.
+
+Web deployment is not confirmed. The saved Vercel CLI token expired. The browser is signed in as `resh68umb@gmail.com`, and the documented `conch-s-team/buildwise` project returns 404; its team switcher lists only the personal Reshma Baskaran team. The owner must restore the deployment account/project access. No replacement Vercel project was created.
+
+Read-only production inspection also found no `prompt_studio_sessions` table and no admin/operator profiles (seven user profiles). The QR tables can support standalone wallet purchases once web deployment and a designated approver are configured, but the estimate return journey requires reconciling the existing Studio migrations and live-build environment before enabling real purchases there. No roles were elevated and no credits were granted.
