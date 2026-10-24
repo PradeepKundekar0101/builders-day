@@ -6,16 +6,18 @@
     "start": "tsx src/main.ts",
     "fixture": "tsx src/fixture.ts",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "agent:fixture": "node --env-file-if-exists=.env.local --import tsx src/agent-fixture.ts"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.309",
     "@buildwise/build-engine": "workspace:*",
     "@buildwise/cost-guard": "workspace:*",
     "@buildwise/shared": "workspace:*",
+    "@electric-sql/pglite": "^0.3.14",
     "@supabase/supabase-js": "^2.118.0",
     "tsx": "^4.20.0",
-    "zod": "^4.6.7",
-    "@electric-sql/pglite": "^0.3.14"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

@@ -12,9 +12,9 @@ import {
   runBoundedCall,
   runCreditAttempt,
 } from "@buildwise/cost-guard";
-import { supportedSpec, validateDesign } from "@buildwise/build-engine";
-import { generateProduct } from "./generate";
-import { ProviderConfig, planRequest, requestDesign } from "./provider";
+import { supportedSpec } from "@buildwise/build-engine";
+import { AgentConfig, runCodeAgent } from "./agent";
+import { prepareProduct, verifyProduct } from "./generate";
 function required(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing ${name}`);
@@ -22,12 +22,12 @@ function required(name: string) {
 }
 if (process.env.PROVN_LIVE_BUILDS !== "true")
   throw new Error("Worker disabled. Enable only after deployment and spending approval.");
-const provider = ProviderConfig.parse({
-  apiKey: required("OPENAI_API_KEY"),
-  model: required("PROVN_BUILD_MODEL"),
-  inputRate: Number(required("PROVN_BUILD_INPUT_USD_PER_MILLION")),
-  outputRate: Number(required("PROVN_BUILD_OUTPUT_USD_PER_MILLION")),
-  pricingVersion: required("PROVN_BUILD_PRICING_VERSION"),
+const maxUsd = Number(required("PROVN_BUILD_MAX_USD"));
+// The SDK checks its budget between turns, so leave headroom for the last turn inside the reservation.
+const agent = AgentConfig.parse({
+  apiKey: required("ANTHROPIC_API_KEY"),
+  model: process.env.PROVN_BUILD_MODEL || undefined,
+  maxBudgetUsd: maxUsd * 0.8,
 });
 const db = createClient(
   required("NEXT_PUBLIC_SUPABASE_URL"),
@@ -143,38 +143,44 @@ while (!stopping) {
       pages: full.pages.filter((_p, i) => selected.has(`page:${i}`)),
       entities: full.entities.filter((e) => selected.has(`entity:${e.name}`)),
     });
-    const p = planRequest(spec),
-      maxMicros = Math.ceil(p.inputBound * provider.inputRate + p.maxOutput * provider.outputRate);
     const attempt = await runCreditAttempt({
       wallet,
       accountId: build.user_id,
       runId: build.id,
       attemptId: `${build.id}:initial`,
       execute: async () => {
-        await step("Generating product copy and layout within the approved budget.");
+        const directory = resolve(root, build.id);
+        const { migration } = await prepareProduct({
+          spec,
+          requirements: version.payload,
+          directory,
+          template,
+          onStep: step,
+        });
+        await step("Claude is writing the product code within the approved budget.");
         const call = await runBoundedCall({
           guard,
           buildId: build.id,
-          callId: `${build.id}:design`,
-          taskId: "design",
-          maxMicros,
+          callId: `${build.id}:code`,
+          taskId: "code",
+          maxMicros: Math.ceil(maxUsd * 1e6),
           execute: () =>
-            requestDesign(
+            runCodeAgent({
               spec,
-              provider,
-              AbortSignal.any([abort.signal, AbortSignal.timeout(90000)]),
-            ),
+              requirements: version.payload,
+              directory,
+              config: agent,
+              signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20 * 60_000)]),
+              onStep: step,
+            }),
         });
         if (!call.executed || !call.settlement.allowed) throw new Error("Budget requires review");
-        if (call.value.status !== "completed") throw new Error("Provider generation incomplete");
-        const design = validateDesign(spec, JSON.parse(call.value.text));
+        if (!call.value.ok) throw new Error(`Code agent stopped: ${call.value.subtype}`);
         await owns();
-        const result = await generateProduct({
-          spec,
-          design,
-          requirements: version.payload,
-          directory: resolve(root, build.id),
-          template,
+        const result = await verifyProduct({
+          directory,
+          migration,
+          agent: { model: agent.model, summary: call.value.summary.slice(0, 4000) },
           onStep: step,
         });
         await owns();
