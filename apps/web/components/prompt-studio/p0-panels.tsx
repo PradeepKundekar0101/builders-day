@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   PromptStudioDraftSchema,
   sanitizeStudioDraft,
@@ -10,13 +10,13 @@ import {
   INITIAL_DEMO,
   PLANS,
   demoQuote,
-  demoRoutes,
   demoTransition,
   type BuilderProfile,
   type DemoAction,
   type Scope,
 } from "@/lib/provn-demo";
 import { planFromIdea } from "@/lib/demo/plan";
+import { routeBuild, routingSavings } from "@/lib/route/build-routes";
 import "./p0-panels.css";
 export type P0Module = "cost" | "route" | "launch" | "shield" | "proof" | "wallet";
 export function useProvnDemo(draft: PromptStudioDraft, reviewed: boolean) {
@@ -27,6 +27,12 @@ export function useProvnDemo(draft: PromptStudioDraft, reviewed: boolean) {
   const fingerprint = JSON.stringify({ draft, scope });
   const current = state.fingerprint === fingerprint;
   const context = { fingerprint, reviewed, profile, scope };
+  const routes = useMemo(() => {
+    const plan = planFromIdea(draft.input.idea);
+    // The mock brief names every product "My product"; the idea gives a better name until edited.
+    const named = draft.spec.name === "My product" ? plan : { ...plan, name: draft.spec.name };
+    return routeBuild(named, profile, scope);
+  }, [draft.input.idea, draft.spec.name, profile, scope]);
   function act(action: DemoAction) {
     try {
       const next = demoTransition(state, action, context);
@@ -52,10 +58,16 @@ export function useProvnDemo(draft: PromptStudioDraft, reviewed: boolean) {
       setError("");
     },
     quote: demoQuote(scope),
-    routes: demoRoutes(profile, scope),
+    routes,
   };
 }
 type Controller = ReturnType<typeof useProvnDemo>;
+const usd = (n: number) => (n < 0.01 ? `$${n.toFixed(4)}` : `$${n.toFixed(2)}`);
+function savingsText({ routed, baseline, savedPct }: ReturnType<typeof routingSavings>) {
+  return savedPct > 0
+    ? `Routed estimate ${usd(routed)} per build pass versus ${usd(baseline)} on Claude Opus 5.5 for every task, about ${savedPct}% less.`
+    : `Routed estimate ${usd(routed)} per build pass; every task needs a frontier model.`;
+}
 export function P0Panels({
   module,
   setModule,
@@ -295,8 +307,9 @@ export function P0Panels({
           <p className="p0-eyebrow">PROVN ROUTE</p>
           <h2>The right tier for each task.</h2>
           <p className="p0-description">
-            Default policy: cheapest model that passes. Actual quality evaluation and routing
-            require the team’s router adapter.
+            Each build task is scored for job type, effort and impact by the Provn Route engine,
+            then sent to the cheapest model that clears its quality bar. High-effort or high-impact
+            work goes to frontier models.
           </p>
           <label className="p0-checkbox">
             <input
@@ -306,23 +319,37 @@ export function P0Panels({
             />
             Private mode: force every task to Lib 3 (local)
           </label>
+          <p className="p0-success" data-testid="route-savings">
+            {savingsText(routingSavings(c.routes))}
+          </p>
           <div className="p0-route-list">
             {c.routes.map((r) => (
-              <article className="p0-card" key={r.task}>
+              <article className="p0-card" key={r.task} data-tier={r.tier}>
                 <span className="p0-badge">{r.library}</span>
                 <h3>{r.task}</h3>
                 <p>
-                  Effort: {r.effort} · Impact: {r.impact}
+                  {r.jobType} · Effort {r.effort} · Impact {r.impact}
                 </p>
-                <strong>{r.model}</strong>
+                <strong>
+                  {r.model} <small>· {r.lab}</small>
+                </strong>
                 <p>{r.reason}</p>
-                <small>Evaluation: pending · Routing decision: simulated</small>
+                {r.guardrails.map((g) => (
+                  <p className="p0-guardrail" key={g}>
+                    ⚑ {g}
+                  </p>
+                ))}
+                <small>
+                  {r.costUsd === 0 ? "Free, runs locally" : `Est. ${usd(r.costUsd)} per run`} ·
+                  Decision only, no model called
+                </small>
               </article>
             ))}
           </div>
           <p className="p0-footnote">
-            Lib 1: frontier · Lib 2: Hugging Face SLMs · Lib 3: local Gemma / Qwen. Free excludes
-            frontier; Max quality can select frontier only on an eligible plan.
+            Lib 1: frontier · Lib 2: Hugging Face SLMs · Lib 3: local Gemma / Qwen. Lean uses Cost
+            saver, which never downgrades money or security work. Max quality raises the bar on a
+            paid plan; on Free it routes like Standard.
           </p>
           <a
             className="p0-link"
@@ -330,10 +357,11 @@ export function P0Panels({
             target="_blank"
             rel="noreferrer"
           >
-            Open the team’s router ↗
+            Try a task in Provn Route ↗
           </a>
           <p className="p0-footnote">
-            External service from the PRD; not integrated or verified by this frontend.
+            Same engine as Provn Route. This demo shows the routing decisions; it does not run the
+            models.
           </p>
         </>
       )}

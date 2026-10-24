@@ -3,7 +3,6 @@ import {
   DEFAULT_PROFILE,
   INITIAL_DEMO,
   demoTransition,
-  demoRoutes,
   type DemoContext,
   type DemoAction,
 } from "./provn-demo";
@@ -80,20 +79,5 @@ describe("PROVN frontend demo safety gates", () => {
     expect(state.refund).toBe(180);
     expect(state.retries).toBe(3);
     expect(() => demoTransition(state, "platform-failure", context())).toThrow();
-  });
-  it("private routing always stays local, including Max quality", () => {
-    expect(
-      demoRoutes({ ...DEFAULT_PROFILE, privateMode: true, plan: "pro" }, "max").every((r) =>
-        r.library.startsWith("Lib 3"),
-      ),
-    ).toBe(true);
-    expect(demoRoutes(DEFAULT_PROFILE, "max").some((r) => r.library.startsWith("Lib 1"))).toBe(
-      false,
-    );
-    expect(
-      demoRoutes({ ...DEFAULT_PROFILE, plan: "pro" }, "max").some((r) =>
-        r.library.startsWith("Lib 1"),
-      ),
-    ).toBe(true);
   });
 });

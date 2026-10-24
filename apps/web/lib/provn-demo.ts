@@ -178,27 +178,3 @@ export function demoTransition(state: DemoState, action: DemoAction, ctx: DemoCo
   }
   throw Error("Unsupported demo action.");
 }
-export function demoRoutes(profile: BuilderProfile, scope: Scope) {
-  return ["App shell & UI", "Data model", "Security review"].map((task, i) => ({
-    task,
-    effort: i === 0 ? "Low" : i === 1 ? "Medium" : "High",
-    impact: i === 2 ? "High" : "Medium",
-    library: profile.privateMode
-      ? "Lib 3 · local"
-      : scope === "max" && profile.plan !== "free" && i === 2
-        ? "Lib 1 · frontier"
-        : "Lib 2 · Hugging Face SLM",
-    model: profile.privateMode
-      ? i === 1
-        ? "Qwen (local)"
-        : "Gemma (local)"
-      : scope === "max" && profile.plan !== "free" && i === 2
-        ? "Frontier adapter"
-        : "SLM adapter",
-    reason: profile.privateMode
-      ? "Private mode forces local inference."
-      : i === 2 && scope === "max" && profile.plan !== "free"
-        ? "High impact + Max quality override."
-        : "Cheapest eligible tier; real quality eval pending.",
-  }));
-}
