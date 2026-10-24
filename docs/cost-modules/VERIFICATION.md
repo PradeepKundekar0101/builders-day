@@ -21,3 +21,7 @@ Commands ran under the available pnpm-managed Node 24.19.0 and pnpm 11.25.0. The
 The full Supabase/Docker database suite (`pnpm test:db`) and deployed authentication/payment E2E were not run. Docker was unavailable in this environment. Root `pnpm test` deliberately does not run the upstream Supabase suite; its DB script prints a reminder. PGlite exercises SQL behavior but not Supabase REST, Realtime delivery, or multiple real PostgreSQL connections.
 
 No hosted database was changed. No actual provider, billing, payment, refund, subscription balance, or production worker was connected. No claim of measured pricing accuracy or guaranteed external-provider spending is made. The demo's layout was visually inspected at desktop width; mobile-specific device testing remains pending.
+
+## Branding revision 0.1.1
+
+Product-facing names and browser titles now use PROVN. The upstream @buildwise package namespace is retained for compatibility. Accounting behavior is unchanged from the tested 0.1.0 implementation.

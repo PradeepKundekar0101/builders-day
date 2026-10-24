@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "My apps - Buildwise" };
+export const metadata: Metadata = { title: "My apps - PROVN" };
 
 export default function AppsPage() {
   return (

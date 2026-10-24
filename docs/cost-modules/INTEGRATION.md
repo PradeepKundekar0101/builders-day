@@ -1,8 +1,8 @@
 # Cost Guard + Estimator integration guide
 
-Version 0.1.0. Prepared against builders-day commit `39501f2ba9e3794cc703662f71affc28db650b2a`, branch `phase-0-foundation`, on 24 October 2026.
+Version 0.1.1. Prepared against builders-day commit `39501f2ba9e3794cc703662f71affc28db650b2a`, branch `phase-0-foundation`, on 24 October 2026.
 
-The repository uses the name Buildwise. These packages implement the Cost Guard + Estimator work discussed as part of Conduit. They use the existing pnpm workspace, TypeScript, Zod specification, Next.js APIs, Supabase schema, and build events.
+The product is named PROVN. The upstream repository still uses the internal @buildwise package namespace; these imports are preserved for integration compatibility. These packages implement Cost Guard + Estimator. They use the existing pnpm workspace, TypeScript, Zod specification, Next.js APIs, Supabase schema, and build events.
 
 ## Run the local demo
 
@@ -193,8 +193,8 @@ The ZIP is a standalone source checkout for trying the demo. The companion `.pat
 
 ```sh
 git switch -c integrate-cost-modules 39501f2ba9e3794cc703662f71affc28db650b2a
-git apply --check /path/to/buildwise-cost-modules-v0.1.0.patch
-git apply /path/to/buildwise-cost-modules-v0.1.0.patch
+git apply --check /path/to/provn-cost-modules-v0.1.1.patch
+git apply /path/to/provn-cost-modules-v0.1.1.patch
 pnpm install --frozen-lockfile
 pnpm test
 pnpm typecheck

@@ -62,7 +62,7 @@ export default function Page() {
     <div className="shell">
       <header>
         <a href="/" className="brand">
-          <span className="mark">b</span> buildwise<span className="divider">/</span>
+          <span className="mark">P</span> PROVN<span className="divider">/</span>
           <span className="muted">Cost workspace</span>
         </a>
         <span className="badge">LOCAL DEMO · NO REAL SPEND</span>
