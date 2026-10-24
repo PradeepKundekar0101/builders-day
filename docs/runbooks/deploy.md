@@ -32,6 +32,17 @@ Secrets live only in `.env.deploy.local` (git-ignored) and in the Vercel and Sup
 - `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` stays unset until the Google provider is configured in Supabase.
 - Deploy from the repo root: `vercel deploy --prod --scope conch-s-team`. `.vercelignore` keeps local secrets out of the upload.
 
+## Intake agent
+
+Until AgenticOrg hosts it, the Claude intake agent runs from a developer machine:
+
+```bash
+scripts/run-intake-agent.sh
+```
+
+It polls production for submitted ideas, asks founders up to four questions, and submits specs.
+Ideas wait on "Reading your idea" while no agent is running.
+
 ## Verify
 
 ```bash
