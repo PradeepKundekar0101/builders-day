@@ -21,6 +21,8 @@ test("Prompt Studio: answer, estimate, build, preview, attack, fix", async ({ pa
   }
 
   const card = page.getByRole("article", { name: "Estimate and build" });
+  await expect(card.getByText(/^Estimating… /)).toBeVisible();
+  await expect(card.getByRole("button", { name: "Build it →" })).toHaveCount(0);
   await expect(card.getByTestId("journey-cost")).toHaveText(/^\$\d+\.\d{2}$/, { timeout: 15_000 });
   await expect(card.getByTestId("journey-time")).toHaveText(/hour/);
   await expect(card.getByRole("heading", { name: "Private Client Portal" })).toBeVisible();

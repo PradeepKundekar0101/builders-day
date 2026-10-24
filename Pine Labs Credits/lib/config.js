@@ -16,7 +16,8 @@ const num = (v, d) => (v === undefined || v === "" ? d : Number(v));
 
 export function readConfig(env = process.env) {
   const mode = (env.PINELABS_MODE || "uat").toLowerCase();
-  if (!["mock", "uat", "live"].includes(mode)) throw new Error(`PINELABS_MODE must be mock, uat or live (got "${mode}")`);
+  if (!["mock", "uat", "live"].includes(mode))
+    throw new Error(`PINELABS_MODE must be mock, uat or live (got "${mode}")`);
   const port = num(env.PORT, 4600);
   const cfg = {
     mode,
@@ -32,7 +33,10 @@ export function readConfig(env = process.env) {
     linkExpiryHours: num(env.LINK_EXPIRY_HOURS, 24),
     dataFile: env.DATA_FILE || "",
     agents: {
-      baseUrl: (env.AGENTICORG_BASE_URL || "https://agenticorg.hackathon.pinelabs.com").replace(/\/$/, ""),
+      baseUrl: (env.AGENTICORG_BASE_URL || "https://agenticorg.hackathon.pinelabs.com").replace(
+        /\/$/,
+        "",
+      ),
       apiKey: env.AGENTICORG_API_KEY || "",
       // Provn credits charged for each completed agent run.
       runCredits: num(env.AGENT_RUN_CREDITS, 10),
@@ -53,7 +57,10 @@ export function readConfig(env = process.env) {
     if (!cfg.apiKey && !cfg.clientId) missing.push("PINELABS_CLIENT_ID");
     if (!cfg.apiKey && !cfg.clientSecret) missing.push("PINELABS_CLIENT_SECRET");
     if (!cfg.baseUrl) missing.push("PINELABS_BASE_URL (required for live)");
-    if (missing.length) throw new Error(`Missing ${missing.join(", ")}. Copy .env.example to .env, or run with PINELABS_MODE=mock.`);
+    if (missing.length)
+      throw new Error(
+        `Missing ${missing.join(", ")}. Copy .env.example to .env, or run with PINELABS_MODE=mock.`,
+      );
   }
   return cfg;
 }

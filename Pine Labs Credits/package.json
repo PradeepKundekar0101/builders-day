@@ -4,7 +4,9 @@
   "private": true,
   "description": "Provn credits top-up via Pine Labs payment links, with a local admin console.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.mjs",
     "mock": "PINELABS_MODE=mock node server.mjs",

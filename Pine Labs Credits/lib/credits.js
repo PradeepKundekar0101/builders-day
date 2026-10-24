@@ -20,7 +20,13 @@ export const toWalletTopup = (link) => ({
   paymentRef: link.id,
 });
 
-export function createCreditsService({ store, client, config, log = () => {}, agentClient = null }) {
+export function createCreditsService({
+  store,
+  client,
+  config,
+  log = () => {},
+  agentClient = null,
+}) {
   const { pricing } = config;
 
   function upsertUser(db, { email, name, phone }) {
@@ -32,9 +38,12 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
   }
 
   async function createTopup({ email, name, phone, usd }) {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     if (!EMAIL.test(email)) throw Object.assign(new Error("Enter a valid email"), { status: 400 });
-    if (phone && !/^\d{10}$/.test(phone)) throw Object.assign(new Error("Phone must be 10 digits"), { status: 400 });
+    if (phone && !/^\d{10}$/.test(phone))
+      throw Object.assign(new Error("Phone must be 10 digits"), { status: 400 });
     let q;
     try {
       q = priceQuote(usd, pricing);
@@ -42,7 +51,9 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
       throw Object.assign(e, { status: 400 });
     }
     const reference = "provn_" + randomBytes(8).toString("hex");
-    const expiresAt = new Date(Date.now() + config.linkExpiryHours * 3600_000).toISOString().replace(/\.\d+Z$/, "Z");
+    const expiresAt = new Date(Date.now() + config.linkExpiryHours * 3600_000)
+      .toISOString()
+      .replace(/\.\d+Z$/, "Z");
     const req = buildPaymentLinkRequest({
       reference,
       quote: q,
@@ -93,7 +104,10 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
       link.updatedAt = now();
       if (PAID_STATUSES.has(link.status) && !link.grantedAt) {
         const paid = r.amount?.value;
-        if (paid !== undefined && (Number(paid) < link.charge.minor || r.amount?.currency !== link.charge.currency)) {
+        if (
+          paid !== undefined &&
+          (Number(paid) < link.charge.minor || r.amount?.currency !== link.charge.currency)
+        ) {
           link.problem = `Amount mismatch: Pine Labs reports ${paid} ${r.amount?.currency}, expected ${link.charge.minor} ${link.charge.currency}`;
           return link;
         }
@@ -132,13 +146,20 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
     }
     const evt = parseWebhookEvent(body);
     store.tx((db) => {
-      db.webhooks.unshift({ at: now(), id: headers["webhook-id"] || null, verified: sig.ok, reason: sig.reason || null, ...evt });
+      db.webhooks.unshift({
+        at: now(),
+        id: headers["webhook-id"] || null,
+        verified: sig.ok,
+        reason: sig.reason || null,
+        ...evt,
+      });
       db.webhooks.length = Math.min(db.webhooks.length, 200);
     });
     if (!sig.ok) throw Object.assign(new Error(`Webhook rejected: ${sig.reason}`), { status: 401 });
     // Never trust the payload alone: look the link up and confirm with Pine Labs.
     const db = store.read();
-    const id = evt.paymentLinkId || Object.values(db.links).find((l) => l.reference === evt.reference)?.id;
+    const id =
+      evt.paymentLinkId || Object.values(db.links).find((l) => l.reference === evt.reference)?.id;
     if (!id || !db.links[id]) return { ignored: true, event: evt.event };
     return syncLink(id, "webhook");
   }
@@ -160,13 +181,19 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
   function spend({ email, credits, reason = "usage", idempotencyKey }) {
     email = String(email || "").toLowerCase();
     credits = Number(credits);
-    if (!Number.isInteger(credits) || credits <= 0) throw Object.assign(new Error("credits must be a positive integer"), { status: 400 });
+    if (!Number.isInteger(credits) || credits <= 0)
+      throw Object.assign(new Error("credits must be a positive integer"), { status: 400 });
     return store.tx((db) => {
-      const key = idempotencyKey ? `spend:${idempotencyKey}` : `spend:${randomBytes(8).toString("hex")}`;
+      const key = idempotencyKey
+        ? `spend:${idempotencyKey}`
+        : `spend:${randomBytes(8).toString("hex")}`;
       const prior = db.ledger.find((e) => e.id === key);
       if (prior) return { entry: prior, balance: balanceOf(db, email) };
       const bal = balanceOf(db, email);
-      if (bal < credits) throw Object.assign(new Error(`Insufficient credits: balance ${bal}, need ${credits}`), { status: 402 });
+      if (bal < credits)
+        throw Object.assign(new Error(`Insufficient credits: balance ${bal}, need ${credits}`), {
+          status: 402,
+        });
       const entry = { id: key, type: "spend", email, credits, reason, at: now() };
       db.ledger.push(entry);
       return { entry, balance: bal - credits };
@@ -176,15 +203,24 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
   /** Runs an AgenticOrg agent for a user; charges agents.runCredits only when the run completes. */
   async function runAgent({ agentId, email, task, inputs }) {
     if (!agentClient) throw Object.assign(new Error("Agents are not configured"), { status: 400 });
-    email = String(email || "").trim().toLowerCase();
-    if (!EMAIL.test(email)) throw Object.assign(new Error("Pick the user who pays for this run"), { status: 400 });
-    if (!/^[0-9a-f-]{36}$/i.test(String(agentId))) throw Object.assign(new Error("Agent id must be the agent's UUID"), { status: 400 });
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    if (!EMAIL.test(email))
+      throw Object.assign(new Error("Pick the user who pays for this run"), { status: 400 });
+    if (!/^[0-9a-f-]{36}$/i.test(String(agentId)))
+      throw Object.assign(new Error("Agent id must be the agent's UUID"), { status: 400 });
     const cost = config.agents?.runCredits ?? 0;
     const bal = balanceOf(store.read(), email);
-    if (bal < cost) throw Object.assign(new Error(`${email} has ${bal} credits; a run costs ${cost}. Top up first.`), { status: 402 });
+    if (bal < cost)
+      throw Object.assign(
+        new Error(`${email} has ${bal} credits; a run costs ${cost}. Top up first.`),
+        { status: 402 },
+      );
     const runInputs = inputs && typeof inputs === "object" ? inputs : { task: String(task || "") };
     const started = Date.now();
-    let result, error = null;
+    let result,
+      error = null;
     try {
       result = await agentClient.runAgent(agentId, runInputs);
     } catch (e) {
@@ -197,21 +233,28 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
       task: String(runInputs.task ?? JSON.stringify(runInputs)).slice(0, 500),
       status: error ? "error" : result?.status || "unknown",
       confidence: result?.confidence ?? null,
-      output: error ? null : result?.output ?? result,
+      output: error ? null : (result?.output ?? result),
       error,
       ms: Date.now() - started,
       charged: 0,
       at: now(),
     };
     if (run.status === "completed" && cost > 0) {
-      spend({ email, credits: cost, reason: `Agent run ${agentId.slice(0, 8)}`, idempotencyKey: run.id });
+      spend({
+        email,
+        credits: cost,
+        reason: `Agent run ${agentId.slice(0, 8)}`,
+        idempotencyKey: run.id,
+      });
       run.charged = cost;
     }
     store.tx((db) => {
       (db.runs ||= []).unshift(run);
       db.runs.length = Math.min(db.runs.length, 200);
     });
-    log(`agent ${agentId} for ${email}: ${run.status}${run.charged ? `, -${run.charged} credits` : ""}`);
+    log(
+      `agent ${agentId} for ${email}: ${run.status}${run.charged ? `, -${run.charged} credits` : ""}`,
+    );
     return { ...run, balance: balanceOf(store.read(), email) };
   }
 
@@ -229,7 +272,9 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
       const grants = db.ledger.filter((e) => e.email === u.email && e.type === "grant");
       const spends = db.ledger.filter((e) => e.email === u.email && e.type === "spend");
       const chargedByCurrency = {};
-      for (const l of paid) chargedByCurrency[l.charge.currency] = (chargedByCurrency[l.charge.currency] || 0) + l.charge.minor;
+      for (const l of paid)
+        chargedByCurrency[l.charge.currency] =
+          (chargedByCurrency[l.charge.currency] || 0) + l.charge.minor;
       return {
         ...u,
         links: links.length,
@@ -240,7 +285,11 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
         creditsGranted: grants.reduce((s, e) => s + e.credits, 0),
         creditsSpent: spends.reduce((s, e) => s + e.credits, 0),
         balance: balanceOf(db, u.email),
-        lastPaidAt: paid.map((l) => l.paidAt).sort().pop() || null,
+        lastPaidAt:
+          paid
+            .map((l) => l.paidAt)
+            .sort()
+            .pop() || null,
       };
     });
     const links = Object.values(db.links).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -262,5 +311,14 @@ export function createCreditsService({ store, client, config, log = () => {}, ag
     };
   }
 
-  return { createTopup, syncLink, handleWebhook, reconcileOpen, spend, runAgent, summary, balance: (e) => balanceOf(store.read(), String(e).toLowerCase()) };
+  return {
+    createTopup,
+    syncLink,
+    handleWebhook,
+    reconcileOpen,
+    spend,
+    runAgent,
+    summary,
+    balance: (e) => balanceOf(store.read(), String(e).toLowerCase()),
+  };
 }

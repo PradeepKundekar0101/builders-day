@@ -122,6 +122,13 @@ export function PromptStudio({
   const [confirmed, setConfirmed] = useState(false);
   const [listening, setListening] = useState(false);
   const speech = useRef<Speech | null>(null);
+  const ideaBox = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    // The page is server-rendered, so someone can type before React hydrates. That text is in the
+    // box but not in state, which leaves "Shape my idea" disabled; adopt it once on mount.
+    const typed = ideaBox.current?.value;
+    if (typed) setIdea((old) => old || typed);
+  }, []);
   const loadId = params.get("session");
   const resumeId = params.get("resume");
   const resumed = useRef<string | null>(null);
@@ -447,6 +454,7 @@ export function PromptStudio({
       </label>
       <textarea
         id="idea"
+        ref={ideaBox}
         value={idea}
         maxLength={2000}
         onChange={(e) => setIdea(e.target.value)}

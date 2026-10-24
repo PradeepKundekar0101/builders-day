@@ -42,7 +42,17 @@ Tests exercise migration compatibility, owner RLS, reviewed-version ownership, i
 1. Review this integration branch and run all CI, including the real Supabase database/browser job. Local PGlite checks are not a substitute for hosted Supabase auth/storage verification.
 2. Inspect the destination migration ledger before applying migrations. Two branches used duplicate versions: `20261024010000` for Studio and Cost Guard, and `20261024020000` for short ideas and credit wallets. Cost Guard is now `20261024011000`; credit wallets are `20261024021000`. If those old cost versions were already applied, reconcile the ledger with the database owner instead of replaying CREATE TABLE statements. `20261024035000` repairs Studio's required intake-message kind. `20261024040000` adds the build handoff, worker tables and private artifact bucket. No remote migration has been run here.
 3. Configure a persistent worker/container host. Vercel hosts the web app, not this long-running process. Build the container from the repository root using `docker build -f apps/worker/Dockerfile -t provn-worker .`. Supply environment variables from `apps/worker/.env.example` through the host's secret store. Do not commit them.
-4. Verify the configured OpenAI model's current standard input/output rates, record `PROVN_BUILD_PRICING_VERSION`, and obtain an explicit paid smoke-test spending limit before running it. There is no guessed default model or price.
+4. Set `ANTHROPIC_API_KEY` and `PROVN_BUILD_MAX_USD` (the per-build provider-spend cap reserved in Cost Guard) and obtain an explicit paid smoke-test spending limit before running it. `PROVN_BUILD_MODEL` defaults to `claude-opus-5-5`. Run `pnpm --filter @buildwise/worker agent:fixture /tmp/provn-agent-fixture` locally first: it runs the real code agent and build without touching Supabase.
+
+## Claude code agent
+
+The worker lays down the trusted template, canonical `product.json`, checked migration and locked dependencies, then runs the Claude Agent SDK in the build directory to write the product UI.
+The agent gets only Read, Write, Edit, Glob, Grep and an in-process `typecheck` tool.
+It has no shell, web, subagents or filesystem settings, and its environment carries only the Anthropic key.
+A PreToolUse hook confines writes to `app/**` (excluding `app/api` and `app/auth`) and `components/**`, and blocks `.env*` and paths outside the build.
+The data route, auth, migration, manifests and config remain trusted template code.
+Agent-written code is executed by `next build` with a secret-free environment, so run the worker in its isolated container.
+Reported `total_cost_usd` and token totals settle the Cost Guard reservation even when the run fails; the agent stops at 80% of the cap to leave room for its final turn.
 5. Fund test users through the existing trusted credit-wallet service. The UI displays the actual balance; it never invents credit or allows client-funded balances. Free monthly allowance and payment/subscription provisioning are existing wallet commands but are not automatically activated by this change. Decide which funding policy the team wants before enabling builds for users.
 6. Enable `PROVN_LIVE_BUILDS=true` on the worker and web only after deployment approval. Confirm a fresh worker heartbeat, request one reviewed build, approve its displayed cap, observe progress, and download the private ZIP from the signed-in account. Verify a second account cannot retrieve it.
 7. Test the generated app against a dedicated Supabase project, including email sign-in and cross-account CRUD, before approving deployment. The source artifact is not a security certification or production release.

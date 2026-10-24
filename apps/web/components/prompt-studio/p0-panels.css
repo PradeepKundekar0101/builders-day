@@ -509,3 +509,24 @@
 .p0-app-estimate {
   margin: 16px 0 24px;
 }
+/* Tier colours match Provn Route's route map: frontier blue, SLM violet, local green. */
+.p0-route-list [data-tier="frontier"] .p0-badge {
+  border-color: #8d9cf8;
+  color: #b9c2fb;
+}
+.p0-route-list [data-tier="slm"] .p0-badge {
+  border-color: #b99cf2;
+  color: #d3c2f7;
+}
+.p0-route-list [data-tier="local"] .p0-badge {
+  border-color: #6fc39a;
+  color: #a5dcc0;
+}
+.p0-route-list strong small {
+  color: #bbc3cc;
+  font-weight: 400;
+}
+.p0-card .p0-guardrail {
+  color: #e5bd8b;
+  margin: 4px 0;
+}

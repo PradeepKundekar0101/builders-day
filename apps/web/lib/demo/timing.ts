@@ -3,6 +3,8 @@
  * compresses it to roughly 20 to 25 seconds per phase so it still feels like work is happening.
  */
 export const DEMO_TIMING = {
+  /** Pricing the plan line by line, from the answered brief to the totals. */
+  estimateMs: 6_500,
   /** Whole simulated build, first step to the app appearing in the preview. */
   buildMs: 22_000,
   /** First attack run, first probe to the grade. */

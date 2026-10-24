@@ -6,7 +6,13 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 export const PAID_STATUSES = new Set(["PROCESSED", "PAID"]);
 export const OPEN_STATUSES = new Set(["CREATED", "CLICKED", "PAYMENT_INITIATED", "ACTIVE"]);
 
-export function createPineLabsClient({ baseUrl, clientId, clientSecret, apiKey, fetchImpl = fetch }) {
+export function createPineLabsClient({
+  baseUrl,
+  clientId,
+  clientSecret,
+  apiKey,
+  fetchImpl = fetch,
+}) {
   let token = null; // { value, expiresAt }
 
   const headers = (extra = {}) => ({
@@ -42,7 +48,11 @@ export function createPineLabsClient({ baseUrl, clientId, clientSecret, apiKey, 
     const body = await call("/api/auth/v1/token", {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, grant_type: "client_credentials" }),
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "client_credentials",
+      }),
     });
     const expiresAt = body.expires_at ? Date.parse(body.expires_at) : Date.now() + 30 * 60_000;
     token = { value: body.access_token, expiresAt };
@@ -60,14 +70,20 @@ export function createPineLabsClient({ baseUrl, clientId, clientSecret, apiKey, 
     getPaymentLink: (paymentLinkId) =>
       authed(`/api/pay/v1/paymentlink/${encodeURIComponent(paymentLinkId)}`, { method: "GET" }),
     cancelPaymentLink: (paymentLinkId) =>
-      authed(`/api/pay/v1/paymentlink/${encodeURIComponent(paymentLinkId)}/cancel`, { method: "PUT" }),
+      authed(`/api/pay/v1/paymentlink/${encodeURIComponent(paymentLinkId)}/cancel`, {
+        method: "PUT",
+      }),
   };
 }
 
 /** Builds the create-link request body for one credits top-up. */
 export function buildPaymentLinkRequest({ reference, quote, user, callbackUrl, expiresAt }) {
   const [first, ...rest] = (user.name || user.email.split("@")[0]).trim().split(/\s+/);
-  const customer = { email_id: user.email, first_name: first, last_name: rest.join(" ") || undefined };
+  const customer = {
+    email_id: user.email,
+    first_name: first,
+    last_name: rest.join(" ") || undefined,
+  };
   if (user.phone) Object.assign(customer, { mobile_number: user.phone, country_code: "91" });
   return {
     merchant_payment_link_reference: reference,
@@ -76,7 +92,11 @@ export function buildPaymentLinkRequest({ reference, quote, user, callbackUrl, e
     expire_by: expiresAt,
     callback_url: callbackUrl,
     customer,
-    merchant_metadata: { provn_user: user.email, credits: String(quote.credits), usd: quote.usd.toFixed(2) },
+    merchant_metadata: {
+      provn_user: user.email,
+      credits: String(quote.credits),
+      usd: quote.usd.toFixed(2),
+    },
   };
 }
 
@@ -84,12 +104,19 @@ export function buildPaymentLinkRequest({ reference, quote, user, callbackUrl, e
  * Verifies a Pine Labs webhook. Signed string is `${webhook-id}.${webhook-timestamp}.${rawBody}`,
  * HMAC-SHA256 with the base64-decoded secret, base64 output, sent as "v1,<sig>" (possibly several, space separated).
  */
-export function verifyWebhookSignature({ headers, rawBody, secretBase64, toleranceSec = 600, now = Date.now() }) {
+export function verifyWebhookSignature({
+  headers,
+  rawBody,
+  secretBase64,
+  toleranceSec = 600,
+  now = Date.now(),
+}) {
   const id = headers["webhook-id"];
   const ts = headers["webhook-timestamp"];
   const sigHeader = headers["webhook-signature"] || headers["webhook_signature"];
   if (!id || !ts || !sigHeader) return { ok: false, reason: "missing webhook headers" };
-  if (Math.abs(now / 1000 - Number(ts)) > toleranceSec) return { ok: false, reason: "timestamp outside tolerance" };
+  if (Math.abs(now / 1000 - Number(ts)) > toleranceSec)
+    return { ok: false, reason: "timestamp outside tolerance" };
   const expected = signWebhook({ id, timestamp: ts, rawBody, secretBase64 });
   const exp = Buffer.from(expected);
   for (const part of String(sigHeader).split(" ")) {

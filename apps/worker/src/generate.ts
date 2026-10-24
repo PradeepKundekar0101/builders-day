@@ -21,9 +21,29 @@ export async function checkMigration(sql: string) {
     await pg.close();
   }
 }
-export async function generateProduct(input: {
+export function defaultDesign(raw: unknown): Design {
+  const spec = supportedSpec(raw);
+  return {
+    headline: spec.name.slice(0, 140),
+    description: spec.summary.slice(0, 600) || spec.name,
+    accent: "violet",
+    pages: spec.pages.map((p) => ({
+      title: p.name.slice(0, 80),
+      body: p.purpose.slice(0, 3000) || p.name,
+    })),
+  };
+}
+const buildEnv = () => ({
+  PATH: process.env.PATH,
+  HOME: process.env.HOME,
+  CI: "true",
+  NEXT_TELEMETRY_DISABLED: "1",
+  NODE_USE_SYSTEM_CA: "1",
+});
+/** Lays down the trusted template, canonical spec and checked migration, then installs pinned dependencies. */
+export async function prepareProduct(input: {
   spec: unknown;
-  design: Design;
+  design?: Design;
   requirements?: unknown;
   directory: string;
   template: string;
@@ -37,38 +57,44 @@ export async function generateProduct(input: {
     filter: (source) =>
       !source.split("/").some((p) => ["node_modules", ".next", ".env.local"].includes(p)),
   });
-  for (const [name, content] of Object.entries(generatedFiles(spec, input.design))) {
+  for (const [name, content] of Object.entries(
+    generatedFiles(spec, input.design ?? defaultDesign(spec)),
+  )) {
     await mkdir(resolve(dir, name, ".."), { recursive: true });
     await writeFile(join(dir, name), content);
   }
   if (input.requirements)
     await writeFile(join(dir, "requirements.json"), JSON.stringify(input.requirements, null, 2));
-  await input.onStep?.("Generated pages, forms and owner-scoped data routes.");
   const migration = await checkMigration(migrationFor(spec));
   await input.onStep?.(
     "Generated database migration applied successfully with row-level security.",
   );
-  // The model never writes code, package manifests, scripts or filenames. Only this trusted template executes.
-  const env = {
-    PATH: process.env.PATH,
-    HOME: process.env.HOME,
-    CI: "true",
-    NEXT_TELEMETRY_DISABLED: "1",
-    NODE_USE_SYSTEM_CA: "1",
-  };
+  // Dependencies come only from the trusted template lockfile, installed without lifecycle scripts.
   await exec("npm", ["ci", "--ignore-scripts", "--no-audit", "--no-fund"], {
     cwd: dir,
-    env,
+    env: buildEnv(),
     timeout: 180000,
     maxBuffer: 2_000_000,
   });
+  return { dir, migration };
+}
+/** Compiles and packages the product. Agent-written UI code runs here, so the env carries no secrets. */
+export async function verifyProduct(input: {
+  directory: string;
+  migration: Awaited<ReturnType<typeof checkMigration>>;
+  agent?: { model: string; summary: string };
+  onStep?: (message: string) => Promise<void>;
+}) {
+  const dir = resolve(input.directory),
+    env = buildEnv();
   await exec("npm", ["run", "typecheck"], { cwd: dir, env, timeout: 120000, maxBuffer: 2_000_000 });
   await exec("npm", ["run", "build"], { cwd: dir, env, timeout: 180000, maxBuffer: 2_000_000 });
   await input.onStep?.("TypeScript and production compilation passed.");
   const report = {
     typecheck: true,
     productionBuild: true,
-    migration,
+    migration: input.migration,
+    ...(input.agent && { codeAgent: input.agent }),
     productAcceptance: "Requires human review",
     deployment: "Not deployed",
   };
@@ -79,4 +105,9 @@ export async function generateProduct(input: {
     { cwd: dir, env, timeout: 30000 },
   );
   return { report, archive: await readFile(join(dir, "product.zip")) };
+}
+/** Template-only build with no model involvement. */
+export async function generateProduct(input: Parameters<typeof prepareProduct>[0]) {
+  const { dir, migration } = await prepareProduct(input);
+  return verifyProduct({ directory: dir, migration, onStep: input.onStep });
 }
