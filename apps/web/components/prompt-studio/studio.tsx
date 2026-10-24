@@ -555,7 +555,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           }}
         />
       )}
-      <div className="studio-landscape" aria-hidden="true"><div className="portal-arch" /><div className="portal-reflection" /></div>
+      <div className="studio-landscape" aria-hidden="true"></div>
       <nav className="studio-nav" aria-label="Prompt Studio navigation">
         <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
           <svg width="26" height="27" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -580,7 +580,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       </nav>
       <header className="studio-hero">
         <p className="studio-eyebrow">
-          <span /> FROM IDEA TO EVIDENCE · PRODUCT DEMO
+          <span /> YOUR IDEAS. BEYOND POSSIBILITY.
         </p>
         <h1>
           {draft ? (
@@ -602,6 +602,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
             ? "A few thoughtful details. A brief that feels like you."
             : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
         </p>
+        <a className="orbit-hero-action" href="#idea"><span aria-hidden="true">↗</span> Shape your idea</a>
       </header>
       <div className="studio-content">
         <ol className="studio-steps" aria-label="Your progress">

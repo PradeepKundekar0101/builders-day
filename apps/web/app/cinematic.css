@@ -1,0 +1,24 @@
+/* Shared cinematic visual language across authentication and project pages. */
+body {font-weight:400;font-family:var(--font-schibsted),Inter,sans-serif}
+body>header {background:#151c24;border-color:#3c4855}
+body .bg-go {color:#171d25}
+.conduit-signin.conduit-signin {--mint:#e5bd8b;background:linear-gradient(90deg,#151c24f5 0%,#151c24d9 40%,#151c2450 100%),url('/images/provn-orbit.jpg') center/cover fixed;color:#f3f0e9;gap:40px;padding:32px;}
+.conduit-signin .signin-panel {background:#151c2470;border:1px solid #e5bd8b26;border-radius:16px;backdrop-filter:blur(16px)}
+.conduit-signin .signin-panel::before {display:none}
+.conduit-signin .conduit-wordmark {color:#f3f0e9;letter-spacing:4px;font-weight:400;font-size:20px}
+.conduit-signin .conduit-wordmark>span,.conduit-signin .conduit-emblem {display:none}
+.conduit-signin h1 {font-size:48px;font-weight:300;letter-spacing:-2px;line-height:1.15}
+.conduit-signin h1 span {color:#e5bd8b}
+.conduit-signin .signin-description,.conduit-signin .signin-note,.conduit-signin .signin-footer {color:#bbc3cc}
+.conduit-signin .email-signin {background:#e5bd8b;color:#171d25;border-color:#e5bd8b}
+.conduit-signin .google-signin,.conduit-signin .signin-email {background:#1d2630;color:#f3f0e9;border-color:#566270}
+.conduit-signin .product-showcase {background:#151c2499;border:1px solid #e5bd8b33;backdrop-filter:blur(12px)}
+.conduit-signin .product-window,.conduit-signin .studio-preview,.conduit-signin .preview-main,.conduit-signin .preview-sidebar,.conduit-signin .window-toolbar {background:#1d2630;color:#f3f0e9;border-color:#3c4855}
+.conduit-signin .showcase-heading h2 {font-weight:300;color:#f3f0e9}
+.conduit-signin .showcase-heading p {color:#bbc3cc}
+@media(max-width:760px){.conduit-signin.conduit-signin{padding:20px;gap:20px}.conduit-signin h1{font-size:36px}}
+.conduit-signin .idea-input,.conduit-signin .brief-preview>div,.conduit-signin .plan-preview>div {background:#27323e;border-color:#566270;color:#f3f0e9}
+.conduit-signin .preview-intro p,.conduit-signin .preview-breadcrumb,.conduit-signin .preview-kicker,.conduit-signin .preview-footnote,.conduit-signin .preview-caption,.conduit-signin .brief-preview p,.conduit-signin .plan-preview p,.conduit-signin .brief-preview span,.conduit-signin .plan-preview .plan-note,.conduit-signin .idea-input>div,.conduit-signin .example-chips {color:#bbc3cc}
+.conduit-signin .idea-input b,.conduit-signin .sidebar-active,.conduit-signin .showcase-bottom nav>button {background:#e5bd8b;color:#171d25}
+.conduit-signin .plan-preview b,.conduit-signin .mini-logo {color:#e5bd8b}
+.conduit-signin .showcase-pill>span,.conduit-signin .preview-caption i {background:#e5bd8b}
