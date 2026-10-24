@@ -6,6 +6,9 @@ import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 
 type Props = {
+  pauseOnOpen?: boolean;
+  message: string;
+  onMessageChange: (value: string) => void;
   onRefine: (draft: PromptStudioDraft, message: string) => Promise<boolean>;
   onCancel: () => void;
   reviewed: boolean;
@@ -27,6 +30,9 @@ const stages = [
   "Simulation complete. No application deployed.",
 ];
 export function BuildWorkspace({
+  pauseOnOpen = false,
+  message,
+  onMessageChange: setMessage,
   onRefine,
   onCancel,
   draft,
@@ -46,8 +52,7 @@ export function BuildWorkspace({
   const [rightTab, setRightTab] = useState<"preview" | "live" | "modules">("preview");
   const journey = useProvnDemo(draft, reviewed);
   const [module, setModule] = useState<P0Module>("cost");
-  const [paused, setPaused] = useState(false);
-  const [message, setMessage] = useState("");
+  const [paused, setPaused] = useState(pauseOnOpen);
   const [localError, setLocalError] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [step, setStep] = useState(-1);

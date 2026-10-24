@@ -8,6 +8,7 @@ import "./p0-panels.css";
 import "./design-system.css";
 import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
+import { readHandoff, writeHandoff, handoffKey, studioSignInPath } from "@/lib/studio-handoff";
 import {
   MockPromptStudioAdapter,
   PromptStudioDraftSchema,
@@ -74,6 +75,7 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
 export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const params = useSearchParams();
   const [live, setLive] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
   const [modelTrace, setModelTrace] = useState("");
   const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
@@ -91,8 +93,59 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const [listening, setListening] = useState(false);
   const speech = useRef<Speech | null>(null);
   const loadId = params.get("session");
+  const resumeId = params.get("resume");
+  const resumed = useRef<string | null>(null);
   useEffect(() => {
-    if (!loadId || demo) return;
+    if (!resumeId || resumed.current === resumeId) return;
+    resumed.current = resumeId;
+    try {
+      const value = readHandoff(sessionStorage, resumeId);
+      // Hydrate tab-local recovery data after mount; storage is unavailable during SSR.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIdea(value.idea);
+      setPendingMessage(value.pendingMessage);
+      setDraft(value.draft);
+      setSpecText(value.specText);
+      setProfile(value.profile);
+      setOnboarded(value.onboarded);
+      setTab(value.tab);
+      setShowOnboarding(false);
+      setConfirmed(false);
+      setLive(false);
+      setNotice(
+        demo
+          ? "Your local draft is restored. Sign in when you are ready to save it. No build has started."
+          : "Your draft is restored. Review it, then save it to your account. No build has started.",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to restore your draft.");
+    }
+  }, [demo, resumeId]);
+  function signInToStudio(event?: { preventDefault(): void }) {
+    event?.preventDefault();
+    try {
+      const id = crypto.randomUUID();
+      writeHandoff(sessionStorage, id, {
+        version: 1,
+        createdAt: Date.now(),
+        pendingMessage,
+        idea,
+        draft,
+        specText,
+        profile,
+        onboarded,
+        tab,
+      });
+      window.location.assign(studioSignInPath(id));
+    } catch {
+      setError(
+        "Your browser could not preserve this draft. Export or copy your work before signing in.",
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (!loadId || demo || resumeId) return;
     const controller = new AbortController();
     fetch(`/api/prompt-studio/sessions/${encodeURIComponent(loadId)}`, {
       signal: controller.signal,
@@ -111,7 +164,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [loadId, demo]);
+  }, [loadId, demo, resumeId]);
   useEffect(
     () => () => {
       speech.current?.stop();
@@ -235,7 +288,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       const clean = sanitizeStudioDraft(draft);
       if (review) createStudioReview(clean);
       if (demo) {
-        setNotice("Demo only: use Export JSON to keep this brief. Sign in to save versions.");
+        signInToStudio();
         return;
       }
       const id = session?.id ?? crypto.randomUUID();
@@ -250,10 +303,21 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           status: review ? "user_reviewed" : "draft",
         }),
       });
+      if (response.status === 401) {
+        signInToStudio();
+        return;
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setDraft(PromptStudioDraftSchema.parse(data.draft));
       setSession({ id, revision: data.revision });
+      if (resumeId) {
+        try {
+          sessionStorage.removeItem(handoffKey(resumeId));
+        } catch {
+          /* Saved server copy is authoritative. */
+        }
+      }
       window.history.replaceState(null, "", `?session=${id}`);
       setNotice(
         `Version ${data.revision} saved${review ? " and marked user reviewed" : ""}. No build or paid execution started.`,
@@ -337,6 +401,9 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   if (draft)
     return (
       <BuildWorkspace
+        pauseOnOpen={Boolean(resumeId)}
+        message={pendingMessage}
+        onMessageChange={setPendingMessage}
         onRefine={refine}
         onCancel={() => modelRequest.current?.abort()}
         reviewed={confirmed}
@@ -639,7 +706,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           <ProvnLogo />
         </a>
         <span className="studio-nav-divider" />
-        <a className="studio-nav-label" href="/signin">
+        <a className="studio-nav-label" href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
           Sign in
         </a>
         <a href="#idea" className="studio-nav-cta">
@@ -739,7 +806,10 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
           <span>
             {demo ? (
               <>
-                Demo mode · <a href="/apps/new">Sign in to save your work ↗</a>
+                Demo mode ·{" "}
+                <a href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
+                  Sign in to save your work ↗
+                </a>
               </>
             ) : (
               "Your idea stays yours."

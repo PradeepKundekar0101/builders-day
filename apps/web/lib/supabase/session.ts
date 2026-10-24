@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@buildwise/db";
 import { publicEnv } from "@/lib/public-env";
 
+import { safeNext } from "@/lib/safe-next";
+
 const PROTECTED_PREFIX = "/apps";
 
 /** Refreshes the Supabase session cookie and applies the optimistic auth redirects. */
@@ -34,7 +36,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     return redirectTo(`/signin?next=${encodeURIComponent(pathname + search)}`);
   }
   if (signedIn && pathname === "/signin") {
-    return redirectTo("/apps");
+    return redirectTo(safeNext(request.nextUrl.searchParams.get("next")));
   }
   return response;
 }

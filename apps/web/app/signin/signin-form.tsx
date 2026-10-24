@@ -14,6 +14,9 @@ const LINK_ERROR = "That sign-in link is invalid or expired. Request a new one."
 export function SignInForm() {
   const params = useSearchParams();
   const next = safeNext(params.get("next"));
+  const resume = next.startsWith("/apps/new?")
+    ? new URL(next, "https://local.invalid").searchParams.get("resume")
+    : null;
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>(
     params.get("error") === "link" ? { kind: "error", message: LINK_ERROR } : { kind: "idle" },
@@ -52,6 +55,17 @@ export function SignInForm() {
 
   return (
     <div className="mt-8">
+      {resume && (
+        <div className="mb-5 text-sm text-slate">
+          <p>Sign in to continue to your Prompt Studio draft. Your work is kept in this tab.</p>
+          <a
+            className="underline"
+            href={`/prompt-studio-demo?resume=${encodeURIComponent(resume)}`}
+          >
+            Back to my draft
+          </a>
+        </div>
+      )}
       {status.kind === "error" && (
         <p
           role="alert"
