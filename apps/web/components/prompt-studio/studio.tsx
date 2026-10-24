@@ -339,22 +339,24 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         )}
         {!draft ? (
           <div className="studio-welcome">
-            <div className="studio-composer">{composer}</div>
-            <div className="studio-examples">
-              <span>A little inspiration</span>
-              <button onClick={() => setIdea(sample)} disabled={busy}>
-                <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
-              </button>
-              <button
-                onClick={() =>
-                  setIdea(
-                    "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
-                  )
-                }
-                disabled={busy}
-              >
-                <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
-              </button>
+            <div className="studio-input-panel">
+              <div className="studio-composer">{composer}</div>
+              <div className="studio-examples">
+                <span>Try an example prompt</span>
+                <button onClick={() => setIdea(sample)} disabled={busy}>
+                  <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
+                </button>
+                <button
+                  onClick={() =>
+                    setIdea(
+                      "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
+                    )
+                  }
+                  disabled={busy}
+                >
+                  <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
+                </button>
+              </div>
             </div>
             <p className="studio-helper">
               Start with at least 50 characters. No technical vocabulary needed.

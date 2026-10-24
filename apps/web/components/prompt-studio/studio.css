@@ -769,3 +769,92 @@ body:has(.conduit-studio) > header {
     padding-inline: 12px;
   }
 }
+/* Keep example prompts in the readable input surface and above the desktop fold. */
+.is-welcome .studio-hero {
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+.is-welcome .studio-hero h1 {
+  font-size: clamp(40px, 4.2vw, 60px);
+  margin-top: 16px;
+  margin-bottom: 14px;
+}
+.is-welcome .studio-steps {
+  margin-bottom: 18px;
+}
+.studio-input-panel {
+  background: #fff;
+  border: 1px solid #dce2cf;
+  border-radius: 23px;
+  box-shadow: 0 12px 40px #33482014;
+  overflow: hidden;
+}
+.studio-input-panel .studio-composer {
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 18px 20px;
+}
+.studio-input-panel .studio-composer > textarea {
+  min-height: 70px;
+}
+.studio-input-panel .studio-examples {
+  margin: 0;
+  padding: 15px 20px 18px;
+  background: #f7f9f2;
+  border-top: 1px solid #e3e8d8;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.studio-input-panel .studio-examples > span {
+  flex-basis: 100%;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 3px;
+  background: none;
+  text-align: left;
+  color: #4f5d38;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 0;
+}
+.studio-input-panel .studio-examples button {
+  padding: 10px 15px;
+  font-size: 13px;
+  color: #35451f;
+  background: #fff;
+  border: 1px solid #cbd5b7;
+  gap: 9px;
+}
+.studio-input-panel .studio-examples button:hover {
+  background: #eaf0dd;
+  border-color: #81945b;
+}
+.studio-input-panel .studio-examples button svg {
+  width: 16px;
+  height: 16px;
+}
+.is-welcome .studio-assurances {
+  margin-top: 22px;
+}
+@media (max-width: 760px) {
+  .is-welcome .studio-hero {
+    padding-top: 35px;
+  }
+  .is-welcome .studio-hero h1 {
+    font-size: clamp(34px, 8vw, 48px);
+  }
+  .studio-input-panel .studio-examples {
+    padding: 13px 15px 16px;
+    gap: 8px;
+  }
+  .studio-input-panel .studio-examples button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .studio-input-panel .studio-composer {
+    padding: 15px;
+  }
+}
