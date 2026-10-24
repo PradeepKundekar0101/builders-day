@@ -15,12 +15,18 @@ const EMAIL_OTP_TYPES: EmailOtpType[] = [
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
+  const code = searchParams.get("code");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = safeNext(searchParams.get("next"));
 
   if (tokenHash && type && EMAIL_OTP_TYPES.includes(type)) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    if (!error) return NextResponse.redirect(new URL(next, request.url));
+  } else if (code) {
+    // Supabase's default email template sends a PKCE code instead of a token hash.
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(new URL(next, request.url));
   }
   return NextResponse.redirect(new URL("/signin?error=link", request.url));

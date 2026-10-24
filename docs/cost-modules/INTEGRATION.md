@@ -1,97 +1,76 @@
-# Cost Guard + Estimator integration guide
+# PROVN Cost Guard + Estimator: credit integration
 
-Version 0.1.1. Prepared against builders-day commit `39501f2ba9e3794cc703662f71affc28db650b2a`, branch `phase-0-foundation`, on 24 October 2026.
+Version 0.2.0, 24 October 2026. Reconciled locally with `phase-1-intake-estimator` at `614c94a846d474c0dd95bd063f9f6d6c5d27ec00` and the credit PRD merged into `phase-0-foundation` at `597bd4d55c21c66447ec68ca148bde632ef80fcf`. The internal `@buildwise` namespace is retained for compatibility. The vision PRD takes precedence over older dollar/payment flow documents.
 
-The product is named PROVN. The upstream repository still uses the internal @buildwise package namespace; these imports are preserved for integration compatibility. These packages implement Cost Guard + Estimator. They use the existing pnpm workspace, TypeScript, Zod specification, Next.js APIs, Supabase schema, and build events.
+## Run the demo
 
-## Run the local demo
-
-From the extracted source directory, use the repository's Node 26+ and pnpm tooling:
+Use the repository's requested Node 26+ and pnpm 12.4.2:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm --filter @buildwise/cost-demo dev
 ```
 
-Open http://127.0.0.1:3210. No environment variables, account, Supabase instance, model key, or payment credentials are needed. The demo is a separate Next.js workspace so it can run without the foundation app's authentication setup. All spending is simulated. Its mutation API refuses production mode; use `dev`, not `start`, for demonstrations. The server listens on loopback.
+Open http://127.0.0.1:3210. No keys, payment account, Supabase or model calls are needed. All balances, attempts, evidence and refunds are simulated. The mutation API refuses production mode and the dev server binds to loopback. Demo state resets on server restart; New demo creates a separate simulated account.
 
-1. Start with all booking features selected: approximate customer price $6.16, worker model budget $2.58.
-2. Choose the $4.96 scope suggestion to defer email and the optional dashboard. The required scope remains intact. Worker budget becomes $1.98.
-3. Lock the quote. The server recomputes from the fixed fixture and validates selections, rather than trusting the displayed price.
-4. Run a simulated call twice. Each reserves $0.90, starts once, settles $0.65, and releases $0.25. Total spend is $1.30.
-5. The third request cannot reserve $0.90 against the remaining $0.68. It pauses before spending.
-6. Approve exactly $1 more. The cap becomes $2.98. Run the next call and then stop.
-7. Start a new demo and try the concurrent reservations button. Two $1.50 requests compete against one budget; only an affordable number is admitted. Reservations remain held because these calls have not been settled.
+Try these flows:
 
-The demo uses server memory, resets on restart, and is not a payment or durable accounting system. Reloading the page starts a new UI session. It does not claim that an app has been built. The fixed synthetic approver exists only in the demo API.
+1. Managed + Builder: full scope is 616 credits, estimated 430k tokens and 5.75 effort hours. Lock, then explicitly approve 616 credits and start. Available balance goes from 2,500 to 1,884; 616 credits are held.
+2. Simulate the same failure twice. Each attempt uses 65 provider-cost credits. The second identical failure pauses the run. A third attempt cannot start without explicit bounded resume approval.
+3. Confirm platform failure. The 616 held credits return; provider expense remains 130 credits. These are separate ledgers.
+4. New demo: run a successful attempt, complete and charge the quote, then simulate a staff refund. Refunds cannot credit the charge twice.
+5. Free plan: a 616-credit quote cannot start against 300 credits, even after approval.
+6. Change the customer target to 500 credits. The suggested 496-credit scope defers email and the optional dashboard, preserving required features.
+7. BYOK: preview shows no platform model/setup charge, with provider-cost forecast still visible. Local execution is simulated only. The authenticated production route rejects BYOK until verified key ownership is integrated.
 
-## What is included
+## Reconciliation with phase 1
 
-| Path | Responsibility |
-|---|---|
-| `packages/estimator` | Pure cost calculation, catalog, revision-bound selections, optional-scope suggestions |
-| `packages/cost-guard` | Atomic-store contract, reservation lifecycle, idempotent settlement, exact approval cap, worker helper |
-| `apps/cost-demo` | Local interactive example using both real packages and a simulated worker |
-| `apps/web/app/api/cost` | Authenticated estimate preview and owner-scoped budget status/decision routes |
-| `apps/web/lib/cost/server.ts` | Server-only identity and service-role adapter |
-| `supabase/migrations/20261024010000_cost_guard.sql` | Persistent state, command journal, pricing versions, RPCs, build aggregates and events |
-
-## Estimator contract
+There is one arithmetic engine in `packages/estimator/src/pricing.ts`. Feature defaults derive from phase 1's `FEATURES_V1`. Both APIs remain available:
 
 ```ts
-import { estimate, defaultSelection, suggestAlternatives } from '@buildwise/estimator';
-import { SpecSchema } from '@buildwise/shared';
+import {
+  estimate, defaultSelection, validatedInputFromSelection,
+  estimateSpec, defaultSpecSelection, suggestAlternatives,
+} from '@buildwise/estimator';
 
-const spec = SpecSchema.parse(storedSpec);
+// Existing phase-1 count/name interface:
+const names = defaultSelection(spec);
+const legacy = estimate(validatedInputFromSelection(spec, names));
+
+// Revision-bound interface for executable credit quotes:
 const specRevision = `${specRow.id}:${specRow.version}`;
-const selection = defaultSelection(spec, specRevision);
-const quote = estimate({ spec, specRevision, selection, pricing });
+const selection = defaultSpecSelection(spec, specRevision);
+const quote = estimateSpec({ spec, specRevision, selection, pricing });
 const alternatives = suggestAlternatives(
   { spec, specRevision, selection, pricing },
-  5, // customer price target, USD
+  targetCredits / 100, // backwards-compatible helper takes USD
 );
 ```
 
-The result preserves `costUsd`, `lowUsd`, `highUsd`, `hours`, `modelBudgetUsd`, and `drivers`. It also includes `tokens`, `featureCosts`, `weightsVersion`, `specRevision`, `selection`, and `approximate: true`.
+`estimate` preserves phase-1 return fields and adds credits. Our previous `estimate(specInput)` API is now `estimateSpec`; previous revision-based `defaultSelection` is now `defaultSpecSelection`. All included callers are updated. Phase-1 `inputFromSelection` remains permissive for source compatibility; server quote creation uses `validatedInputFromSelection`, which rejects unknown/duplicate selections, missing required features and missing auth dependencies. Intake tests now verify optional scope removal while retaining required scope.
 
-Selections contain `{specRevision, selectedIds}`. IDs are `page:<index>`, `entity:<name>`, `auth`, and `integration:<kind>`. Page IDs are stable only within an immutable spec revision. If any spec content or page order changes, create a new spec revision and reselect. Do not edit the stored JSON under an existing revision.
+Both APIs return `costCredits`, `lowCredits`, `highCredits`, `modelBudgetCredits`, `requiresApproval`, `billingMode`, tokens and effort hours. Existing USD fields remain for compatible database storage. One credit = $0.01. `requiresApproval` on a preview uses the default 50-credit threshold; the wallet's locked run is authoritative for an account-specific threshold.
 
-`pages` means standalone pages; do not list CRUD forms/list screens again because entity pricing already includes them. Intake must enforce this convention. Owner-scoped entities and the admin dashboard require authentication. Enabled auth and must-have features cannot be removed. Other cross-feature dependencies are not represented in the existing SpecSchema; extend the schema and catalog rules together before offering such combinations.
+Revision selections use `page:<index>`, `entity:<name>`, `auth`, `integration:<kind>`. Create a new spec revision for any content/order change. Standalone pages must exclude CRUD forms/lists already priced within entities. Required features and enabled auth stay included. Entity and admin-dashboard selections require auth.
 
-Defaults use the repository's provisional $6 per million blended tokens, 2x model margin, $1 deployment allowance, and +/-30% range. They are not current provider prices. Model budget excludes margin and other fees. Hours are a heuristic effort estimate, not a delivery promise. Monthly subscriptions, INR collection, refunds, and runtime service costs remain outside these packages.
+Pricing remains provisional: $6 per million blended tokens, 2x model margin, $1 setup allowance, +/-30% range. These are planning assumptions, not current provider rates. The PRD's +/-20% accuracy is a target that requires real usage calibration, not a verified result. Hours represent heuristic effort, not elapsed runtime or a delivery promise. BYOK preview treats platform model and setup work as plan-covered; explicit third-party integration fees remain separate. No plan/model entitlement enforcement is claimed here.
 
-Alternatives defer optional features in descending model-cost order, accumulating a valid reduced scope. They report `achievable: false` when required scope still exceeds the target. This is a deterministic heuristic, not a globally optimal product planner. Nothing applies until the user chooses it.
+## Two ledgers
 
-## Quote and payment integration
+| Ledger | Purpose | Enforcement |
+|---|---|---|
+| Credit wallet | Customer allowances, top-ups, quoted holds, charges, refunds | Atomic account CAS, explicit approval above threshold, available-balance check |
+| Provider guard | Actual model expense and pending usage | Reserve conservative maximum before dispatch, start once, settle actual usage, stop on breach |
 
-The production `POST /api/cost/estimate` endpoint accepts:
+One integer unit = one micro-dollar = 0.0001 credit. Use `creditsToUnits`, `unitsToCredits` and `usdToMicros`; do not calculate balances with floating-point additions. A refund never reduces provider spend or original charged history.
 
-```json
-{
-  "specId": "a-real-spec-uuid",
-  "selection": {
-    "specRevision": "a-real-spec-uuid:1",
-    "selectedIds": ["page:0", "auth", "entity:appointments"]
-  },
-  "pricingVersion": "v1"
-}
-```
+Monthly allowances are Free 300, Builder 2,500, Pro 7,000. Top-ups require at least 100 credits and a unique verified payment reference. No money is collected by the package. Allowances use a trusted, monotonic `YYYY-MM` period and a stable command ID.
 
-It verifies the signed-in owner, loads stored spec and pricing, and computes a preview. It does not insert or lock a quote. Requests from the browser must carry a same-origin `Origin`; configure `NEXT_PUBLIC_SITE_URL` to the actual app origin.
+Policy choices where the PRD is silent: unused monthly credits do not roll over; paid top-ups remain available. Existing holds keep their original period. Unused old-period allowance expires on ordinary settlement, while confirmed platform-failure compensation is returned as durable paid credits. Plan changes within an already-granted month are not automatically prorated. Team pooling and custom plans need a team identity/entitlement adapter. These choices are explicit and can be revised before launch.
 
-The payment/quote owner must wire its existing phase-2 flow as follows:
+## Database and authenticated API
 
-1. Persist a draft with `selected_features = selection`, `weights_version = pricing.version`, and the estimator output mapped to existing quote columns.
-2. At lock time, load the authoritative spec and pricing again and rerun the estimator. Ignore all client-supplied numeric prices.
-3. Freeze spec revision, selections and pricing version. Prevent edits to locked/paid quotes through server authorization or a database constraint. This handoff does not implement the team's payment or quote-lock workflow.
-4. Only the verified payment webhook creates a build with `budget_usd = model_budget_usd`. The guard will not initialize for an unpaid quote.
-5. Quote revisions after lock require a new quote/payment decision. Do not overwrite a paid quote or initialize a replacement budget to erase spending.
-
-The library leaves the repo's 10% tolerance unapproved. Its initial hard cap is exactly `builds.budget_usd`. If the team wants a 110% ceiling, explicitly disclose and authorize that amount before execution. Forecast-based early pauses are not implemented in this release; the hard before-call admission gate is.
-
-## Database setup and production adapter
-
-Apply the new migration after the existing foundation migration to a local or staging Supabase database. No remote migration has been applied by this handoff.
+Apply migrations in order to a local/staging Supabase database, then regenerate types:
 
 ```sh
 pnpm exec supabase start
@@ -99,108 +78,126 @@ pnpm exec supabase migration up --local
 pnpm db:types
 ```
 
-The migration adds:
+No hosted migration has been run by this handoff. The new migrations add immutable pricing, per-build provider accounts/journals, credit wallet accounts/journals, service-role RPCs, micro-dollar precision, and quote billing mode/revision. Locked credit quotes cannot change their numeric/scope snapshot. The existing foundation and phase-1 hardening migrations are preserved.
 
-- Immutable `cost_pricing_versions`, seeded with v1. Insert a new version rather than updating old prices.
-- `cost_guard_accounts`, containing versioned per-build state and reservations.
-- `cost_guard_journal`, containing every committed command and state version.
-- `cost_guard_read` and `cost_guard_cas`, executable only by `service_role`.
-- Micro-dollar precision on model budget/spend columns.
+Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `NEXT_PUBLIC_SITE_URL`. The service client remains server-only. Public mutations require same-origin requests and authenticated identity. The request cannot choose its wallet owner or approver.
 
-Accounts and journal have RLS enabled and no browser policies. The trusted service owns transitions. SQL adds defensive checks but does not duplicate the entire TypeScript state machine. Never expose the generic CAS RPC or raw next-state JSON through a public server endpoint. Do not give an LLM service-role credentials.
+| Endpoint | Body / behavior |
+|---|---|
+| `POST /api/cost/estimate` | `{specId, selection, pricingVersion: "v1", billingMode: "managed"}`; recomputed preview; BYOK previews supported |
+| `GET /api/cost/wallet` | Current owner's balance, holds, charges, refunds and runs |
+| `POST /api/cost/wallet` | `{decisionId: UUID, thresholdCredits: 50}`; applies to future quotes |
+| `POST /api/cost/wallet/runs` | `{runId: UUID, specId, selection, pricingVersion: "v1", billingMode: "managed"}`; immutable locked quote + wallet run |
+| `POST /api/cost/wallet/runs/:id` | `{action: "approve", decisionId: UUID, capCredits: 616}`, `{action: "start", decisionId: UUID}`, or `{action: "resume", decisionId: UUID, extraAttempts: 1}` |
+| `GET /api/cost/budget/:buildId` | Owner-scoped provider ledger |
+| `POST /api/cost/budget/:buildId` | Legacy exact cap approval or stop; cap increases on wallet-funded runs are rejected and require a new quote |
 
-State updates use a version check under database locks. Reservation, usage, approval, build aggregates, and budget event writes commit together. Losing concurrent updates reread and recompute. A command ID must be reused when retrying an uncertain operation. Starting the same call twice is denied. Repeated identical settlement does not increase spend twice; conflicting settlement is rejected.
+Quote creation recomputes from the owner's stored spec and immutable pricing. Operator-pending/rejected specs are blocked. Retrying a run UUID must match the same quote exactly. A failed preparation may leave an inert locked quote, but no funds move until start. Approval must match the locked cap exactly. Start atomically reserves credits and inserts the existing `builds` row using the quote's provider budget. Concurrent retries cannot create another funded build for that quote. No new user-supplied price is trusted.
 
-This version uses one JSON state row per build plus a journal. It is suited to bounded builds, not an unbounded billing ledger. Large workloads should normalize reservations/usage and add retention without losing unsettled reservations or audit history.
+The authenticated BYOK execution path deliberately refuses to start until the router verifies a provider credential belongs to the account and routes every call through that credential. A client `billingMode` flag cannot authorize platform-funded calls for free.
 
-The server adapter uses `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and the existing session client. It uses a narrow untyped RPC client until database types are regenerated. Keys stay in server-only code.
+These endpoints are ready for the team's authenticated UI to call; that UI is not mounted by this module. The standalone demo is the visual reference. No browser endpoint accepts top-ups, monthly grants, actual usage, settlement or refunds.
+
+## Trusted billing and worker integration
 
 ```ts
-import { CostGuard, PostgresStore } from '@buildwise/cost-guard';
+import {
+  CreditWallet, PostgresWalletStore, CostGuard, PostgresStore,
+  creditsToUnits, runCreditAttempt, runBoundedCall,
+} from '@buildwise/cost-guard';
 
-// serviceClient is an authenticated service-role client owned by trusted worker code.
+const wallet = new CreditWallet(new PostgresWalletStore(serviceClient));
 const guard = new CostGuard(new PostgresStore(serviceClient));
-const status = await guard.status(buildId);
-```
 
-The first read initializes from a paid build with zero existing usage. Existing builds with recorded usage require an explicit migration, rather than silently resetting the ledger. On approval, the new cap is recorded with actor and exact micro-dollar amount, then the paused build is requeued. Worker claim/heartbeat handling remains owned by the worker.
+// ONLY after billing verifies payment signature, recipient, currency, amount,
+// event identity and settlement. Persist a stable ID; never trust browser totals.
+await wallet.execute(accountId, {
+  type: 'topup', id: verifiedEventId, paymentRef: verifiedPaymentId,
+  units: creditsToUnits(verifiedPurchasedCredits),
+});
+// On verified entitlement provisioning / monthly renewal:
+await wallet.execute(accountId, {
+  type: 'allowance', id: renewalEventId, plan: 'builder', period: '2026-10',
+});
 
-## Worker integration
-
-Use integer micro-dollars: $1 = 1,000,000 micros. Keep actual provider rates separate from the estimator's blended planning rate. Compute a conservative upper bound using the known input, maximum output/reasoning tokens, cache charges, tool fees, and the provider rate version. Set provider limits accordingly. Do not reserve only the expected average.
-
-```ts
-import { runBoundedCall } from '@buildwise/cost-guard';
-
-const result = await runBoundedCall({
-  guard,
-  buildId,
-  callId: durableCallId, // persist before dispatch; same ID for retries
-  taskId: 'entity:appointments',
-  maxMicros: maximumPossibleCallCost,
+// The existing worker claims the queued build. One attempt is an entire
+// generation/repair cycle, not each individual model call.
+const attempt = await runCreditAttempt({
+  wallet, accountId, runId: buildId, attemptId: durableAttemptId,
   execute: async () => {
-    // Configure a maximum output limit and disable unaccounted SDK retries.
-    const response = await boundedProviderCall();
-    return {
-      value: response.output,
-      actualMicros: priceActualProviderUsage(response.usage),
-      inputTokens: response.usage.inputTokens,
-      outputTokens: response.usage.outputTokens,
-      pricingVersion: providerRateVersion,
+    const call = await runBoundedCall({
+      guard, buildId, callId: durableProviderCallId, taskId: 'generation',
+      maxMicros: conservativeProviderMaximum,
+      execute: async () => {
+        const response = await boundedProviderCall();
+        return {
+          value: response.output,
+          actualMicros: priceActualUsage(response.usage),
+          inputTokens: response.usage.inputTokens,
+          outputTokens: response.usage.outputTokens,
+          pricingVersion: providerRateVersion,
+        };
+      },
+    });
+    if (!call.executed) return {
+      value: null, success: false, failureFingerprint: 'provider-budget',
     };
+    // Normalize errors so the same failure has the same stable fingerprint.
+    return { value: call.value, success: true };
   },
 });
-if (!result.executed) {
-  // Do not call the provider. Pause this task and surface the reason.
-}
 ```
 
-The placeholder provider/pricing functions above are the worker team's adapter, not implemented providers. Every paid call, including repair loops and internal SDK calls, must pass through this boundary. Keep the guard active in experimental/control mode.
+The named billing/provider values above are integration inputs, not implemented Pine Labs or model clients. Their owners must supply verified events and actual usage. Disable SDK retries that escape the guard. Bound input, maximum output/reasoning tokens, cache charges and tool fees with versioned provider prices. Every paid call must pass the guard, including repair, security and routing calls.
 
-`runBoundedCall` reserves, starts once, invokes the provider, and reconciles. A provider exception leaves a started reservation held because it may already have incurred cost. A replacement worker reads the same state, queries the provider using its durable request ID, and reconciles confirmed usage. Never auto-release uncertain usage on timeout. Do not run a new call while pretending it is a retry of a started call.
+The loop breaker admits one attempt at a time, defaults to three attempts, and pauses after two consecutive identical failure fingerprints. Owner resume grants one to three extra attempts within the existing caps. It does not add credits or increase the provider budget. SQL checks an active funded attempt before reserve/start, so bypassing the helper does not bypass the run gate. The SQL adapter also blocks legacy cap increases on wallet-funded runs.
 
-`cancel` is allowed only before `start`. If a provider exceeds its reservation, the guard records the real spend, flags a breach, and freezes new calls. It cannot undo external charges. A hard cap depends on a genuinely bounded provider call; this handoff does not claim that arbitrary agents or tools can be capped automatically.
+A thrown exception leaves an attempt and provider reservation unresolved because cost may already have been incurred. Recover using the durable provider request ID, reconcile confirmed usage, then report the attempt through `wallet.execute({type: 'reportAttempt', ...})`. Never retry dispatch with the same started call ID or release uncertain usage on timeout. An unknown failure pauses for review and retains the hold. SQL blocks customer settlement until all provider reservations are settled or cancelled before start.
 
-`stop` blocks new calls and marks the build failed, but does not cancel an already-running provider call or issue a refund. Reconcile in-flight usage after stopping. The worker must implement provider cancellation where supported.
+Trusted completion charges an amount no greater than the approved cap:
 
-## User-facing budget routes
+```ts
+await wallet.execute(accountId, {
+  type: 'finish', id: settlementId, runId: buildId,
+  outcome: 'success', chargeUnits: approvedChargeUnits,
+});
+// Confirmed platform-caused failure before charge returns the held balance:
+await wallet.execute(accountId, {
+  type: 'finish', id: failureDecisionId, runId: buildId,
+  outcome: 'platform_failure', chargeUnits: 0, evidenceRef: incidentReference,
+});
+// A confirmed fault after charging needs attributable staff review:
+await wallet.execute(accountId, {
+  type: 'refund', id: refundDecisionId, runId: buildId, cause: 'platform',
+  evidenceRef: incidentReference, actorId: verifiedStaffId,
+});
+```
 
-- `GET /api/cost/budget/:id`: owner-scoped status.
-- `POST /api/cost/budget/:id`: `{action: "approve", decisionId: UUID, newCapMicros: integer}` or `{action: "stop", decisionId: UUID}`.
+Choose one settlement outcome, not both examples for the same active run. Staff refunds return only the unrefunded charge; repeated payment references and repeated command IDs cannot create duplicate credits. Customer cancellation can charge only a trusted reconciled amount within the cap. Deployment/release success remains owned by the worker; wallet settlement does not prove a working app was published. Stopping the provider guard does not cancel an already-dispatched call or automatically refund credits.
 
-The server derives the actor from authenticated claims, never from a request-supplied user ID. The supplied approval amount is an absolute new cap, not a delta. Show it explicitly before submitting. SQL verifies that the actor owns the build or is staff. The included user API permits the owner only; operator UI integration remains separate.
+## Operational boundaries
 
-Subscribe to existing `build_events` with `type = 'budget'`, then refetch the authenticated status. The event includes cap, spend, pause and breach flags. Never treat browser state as spending authority. The separate demo page is a reference UI that can be adapted to these endpoints; it is not already mounted in the authenticated main application.
+The wallet supports category tags `build`, `security`, `guild`, and `domain` in one account. Only build quote preparation is wired to the web routes; the other modules must supply their own verified prices, fulfillment and trusted settlement adapters. Guild payouts, domain buying, pooled team accounts, subscription collection and Free-plan model restrictions are not implemented here.
 
-## Verification and team responsibilities
+SQL runs behind a service-role-only boundary and trusts the TypeScript transition engine. Never expose raw CAS state or generic commands to a browser/LLM. Wallet operations serialize by account; provider operations use the same account-then-build lock order as settlement. Journals retain command IDs and evidence references. Production scaling should normalize the growing JSON run/receipt arrays and add retention/recovery without losing idempotency or open holds.
 
-Run:
+The main app's actual auth/Supabase REST, Realtime, billing callbacks, router keys and worker claim/recovery lifecycle still require team staging integration. The module does not claim production readiness or measured estimate accuracy.
+
+## Apply and verify
+
+The ZIP is a standalone source checkout. The patch is specifically based on phase 1, not the old foundation branch. Do not replace newer team files with the ZIP.
 
 ```sh
+git switch -c integrate-provn-credits 614c94a846d474c0dd95bd063f9f6d6c5d27ec00
+git apply --check /path/to/provn-cost-modules-v0.2.0.patch
+git apply /path/to/provn-cost-modules-v0.2.0.patch
+pnpm install --frozen-lockfile
 pnpm test
 pnpm typecheck
 pnpm lint
 pnpm --filter @buildwise/cost-demo build
 ```
 
-The SQL tests use embedded PostgreSQL (PGlite) with a minimal Supabase auth scaffold. They execute the actual foundation and new migrations, excluding only the Realtime publication statement. They test CAS contention, duplicate usage, restored service state, unauthorized approvers, RPC privileges, and immutable prices. They do not replace deployed Supabase/auth/payment integration tests.
+Review the integration diff, then merge through the team's normal GitHub process once write access is available. The local branch includes the upstream phase-1 history and new PRD. No push or hosted change was made.
 
-The worker team must connect provider bounds, actual usage pricing, recovery and claim lifecycle. The intake team must supply immutable specifications and the standalone-page convention. The payment team owns quote locking, verified payment, extra-charge policy and refunds. The product team must approve commercial pricing and any tolerance. This module handles per-build budgets, not monthly allowances.
-
-## Applying the handoff
-
-The ZIP is a standalone source checkout for trying the demo. The companion `.patch` is the contribution for an existing clone. Apply it on a review branch based on the recorded upstream commit:
-
-```sh
-git switch -c integrate-cost-modules 39501f2ba9e3794cc703662f71affc28db650b2a
-git apply --check /path/to/provn-cost-modules-v0.1.1.patch
-git apply /path/to/provn-cost-modules-v0.1.1.patch
-pnpm install --frozen-lockfile
-pnpm test
-pnpm typecheck
-pnpm lint
-```
-
-If the team has moved forward, merge the contribution on a separate branch and resolve changes to manifests, the lockfile, routes and migrations. Do not overwrite newer team files with the full ZIP.
-
-To reproduce the release from a clean committed checkout, run `python3 scripts/package-cost-modules.py /absolute/output/directory`. The accompanying manifest records base commit, release commit, file sizes and SHA-256 checksums. Neither the ZIP nor patch contains Git credentials or environment files with secrets.
+See `VERIFICATION.md` for exact checks and environment limits. Repackage a clean committed checkout with `python3 scripts/package-cost-modules.py /absolute/output/directory`; the versioned manifest records base/release commits and SHA-256 hashes.

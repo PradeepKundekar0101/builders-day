@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
-import { CostGuard, PostgresStore } from "@buildwise/cost-guard";
+import { CostGuard, PostgresStore, CreditWallet, PostgresWalletStore } from "@buildwise/cost-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function costIdentity() {
@@ -18,7 +18,11 @@ export function costService() {
   const db = createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return { db, guard: new CostGuard(new PostgresStore(db)) };
+  return {
+    db,
+    guard: new CostGuard(new PostgresStore(db)),
+    wallet: new CreditWallet(new PostgresWalletStore(db)),
+  };
 }
 export function requireSameOrigin(request: Request) {
   if (

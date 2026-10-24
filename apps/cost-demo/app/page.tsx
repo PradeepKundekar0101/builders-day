@@ -1,6 +1,11 @@
 "use client";
 import { useState } from "react";
-import { catalog, estimate, suggestAlternatives, type Selection } from "@buildwise/estimator";
+import {
+  catalog,
+  estimateSpec as estimate,
+  suggestAlternatives,
+  type SpecSelection as Selection,
+} from "@buildwise/estimator";
 import { fixture, specRevision } from "../fixture";
 
 type Status = {
@@ -14,20 +19,34 @@ type Status = {
 };
 const features = catalog(fixture);
 const initial: Selection = { specRevision, selectedIds: features.map((f) => f.id) };
-const dollars = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+const credits = (n: number) => `${Number(n.toFixed(2)).toLocaleString()} cr`;
 export default function Page() {
   const [selection, setSelection] = useState(initial),
-    [target, setTarget] = useState("5"),
-    [build, setBuild] = useState<{ id: string; status: Status } | null>(null),
+    [target, setTarget] = useState("500"),
+    [plan, setPlan] = useState("builder"),
+    [billingMode, setBillingMode] = useState<"managed" | "byok">("managed"),
+    [build, setBuild] = useState<{
+      id: string;
+      status: Status;
+      wallet: {
+        availableCredits: number;
+        reservedCredits: number;
+        chargedCredits: number;
+        refundedCredits: number;
+        runs: { phase: string; pauseReason?: string; capCredits: number }[];
+      };
+    } | null>(null),
     [events, setEvents] = useState<string[]>([]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const quote = estimate({ spec: fixture, specRevision, selection });
+  const quote = estimate({ spec: fixture, specRevision, selection, billingMode });
   const validTarget =
     target.trim() !== "" && Number.isFinite(Number(target)) && Number(target) >= 0;
   const alternatives = validTarget
-    ? suggestAlternatives({ spec: fixture, specRevision, selection }, Number(target))
+    ? suggestAlternatives(
+        { spec: fixture, specRevision, selection, billingMode },
+        Number(target) / 100,
+      )
     : null;
   async function action(action: string) {
     setBusy(true);
@@ -36,11 +55,11 @@ export default function Page() {
       const response = await fetch("/api/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, selection, id: build?.id }),
+        body: JSON.stringify({ action, selection, plan, billingMode, id: build?.id }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setBuild({ id: data.id ?? build?.id, status: data.status });
+      setBuild({ id: data.id ?? build?.id, status: data.status, wallet: data.wallet });
       setEvents((e) => [
         data.message ?? "Quote recomputed on the server. Demo budget opened.",
         ...e,
@@ -51,13 +70,22 @@ export default function Page() {
       setBusy(false);
     }
   }
-  const label = build?.status.stopped
-    ? "Stopped"
-    : build?.status.breached
-      ? "Needs investigation"
-      : build?.status.paused
-        ? "Paused for budget"
-        : "Ready";
+  const run = build?.wallet.runs[0];
+  const active = run?.phase === "running";
+  const labels: Record<string, string> = {
+    awaiting_approval: "Approval required",
+    ready: "Ready to start",
+    running: "Running",
+    paused: "Paused",
+    completed: "Completed",
+    failed: "Failed",
+    repeated_failure: "Paused: repeated failure",
+    attempt_limit: "Paused: attempt limit",
+    failure_review: "Paused: reviewing failure",
+  };
+  const label = run
+    ? labels[run.phase === "paused" ? (run.pauseReason ?? "paused") : run.phase]
+    : "Waiting for a quote";
   return (
     <div className="shell">
       <header>
@@ -76,7 +104,8 @@ export default function Page() {
             Stay in control.
           </h1>
           <p>
-            Choose the scope, inspect the estimate, then watch the guard protect a simulated build.
+            Choose the scope, inspect the credit estimate, then watch the guard protect a simulated
+            build.
           </p>
         </div>
         <div className="workspace">
@@ -111,7 +140,7 @@ export default function Page() {
                   </span>
                   <span className="feature-cost">
                     {quote.featureCosts.find((c) => c.id === f.id)
-                      ? dollars(quote.featureCosts.find((c) => c.id === f.id)!.modelUsd)
+                      ? credits(quote.featureCosts.find((c) => c.id === f.id)!.modelUsd * 100)
                       : "Not included"}
                   </span>
                 </label>
@@ -126,10 +155,10 @@ export default function Page() {
             <p className="eyebrow">02 / ESTIMATE</p>
             <span className="tag">Approximate · pricing v1</span>
             <div className="price" data-testid="price">
-              {dollars(quote.costUsd)}
+              {credits(quote.costUsd * 100)}
             </div>
             <p className="range">
-              Range {dollars(quote.lowUsd)} to {dollars(quote.highUsd)}
+              Range {credits(quote.lowUsd * 100)} to {credits(quote.highUsd * 100)}
             </p>
             <div className="metrics">
               <div>
@@ -144,47 +173,66 @@ export default function Page() {
             <dl>
               <div>
                 <dt>Model cost + margin</dt>
-                <dd>{dollars(quote.drivers[0]!.costUsd)}</dd>
+                <dd>{credits(quote.drivers[0]!.costUsd * 100)}</dd>
               </div>
               <div>
                 <dt>Deployment allowance</dt>
-                <dd>$1.00</dd>
+                <dd>{credits(quote.drivers[1]!.costUsd * 100)}</dd>
               </div>
               <div>
                 <dt>Integration fees</dt>
-                <dd>{dollars(quote.drivers[2]!.costUsd)}</dd>
+                <dd>{credits(quote.drivers[2]!.costUsd * 100)}</dd>
               </div>
               <div className="budget-line">
                 <dt>Worker model budget</dt>
-                <dd>{dollars(quote.modelBudgetUsd)}</dd>
+                <dd>{credits(quote.modelBudgetUsd * 100)}</dd>
               </div>
             </dl>
             <p className="note">
-              Hosting and third-party runtime charges are separate and not estimated here. No
-              monthly credit balance is connected.
+              1 credit = $0.01. Quotes above 50 credits require approval. Hosting and third-party
+              runtime charges are separate. BYOK platform work is covered by the plan; provider
+              usage is billed separately.
             </p>
+            <label>
+              Demo plan{" "}
+              <select disabled={!!build} value={plan} onChange={(e) => setPlan(e.target.value)}>
+                <option value="builder">Builder: 2,500 credits</option>
+                <option value="free">Free: 300 credits</option>
+              </select>
+            </label>{" "}
+            <label>
+              Billing{" "}
+              <select
+                disabled={!!build}
+                value={billingMode}
+                onChange={(e) => setBillingMode(e.target.value as "managed" | "byok")}
+              >
+                <option value="managed">Managed</option>
+                <option value="byok">BYOK</option>
+              </select>
+            </label>
             <button className="primary" disabled={busy || !!build} onClick={() => action("lock")}>
-              {build ? "Quote locked for this demo" : "Lock quote & open demo budget"}
+              {build ? "Quote locked for this demo" : "Lock credit quote"}
             </button>
             <div className="alternatives">
-              <label htmlFor="target">Customer price target (USD)</label>
+              <label htmlFor="target">Customer price target (credits)</label>
               <input
                 id="target"
                 type="number"
                 min="0"
-                step="0.5"
+                step="50"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
               />
               {!validTarget ? (
                 <p>Enter a non-negative amount.</p>
-              ) : quote.costUsd <= Number(target) ? (
+              ) : quote.costCredits <= Number(target) ? (
                 <p className="success">Your selection fits this target.</p>
               ) : (
                 alternatives?.suggestions.map((a, i) => (
                   <div key={i} className="suggestion">
                     <strong>
-                      {dollars(a.estimate.costUsd)} · save {dollars(a.savingsUsd)}
+                      {credits(a.estimate.costCredits)} · save {credits(a.savingsUsd * 100)}
                     </strong>
                     <p>{a.tradeoff}</p>
                     <button disabled={!!build || busy} onClick={() => setSelection(a.selection)}>
@@ -193,7 +241,7 @@ export default function Page() {
                   </div>
                 ))
               )}
-              {validTarget && !alternatives?.achievable && quote.costUsd > Number(target) && (
+              {validTarget && !alternatives?.achievable && quote.costCredits > Number(target) && (
                 <p className="note">
                   Required scope exceeds this target. Revise the specification or increase the
                   budget.
@@ -206,12 +254,29 @@ export default function Page() {
           <div className="section-heading">
             <div>
               <p className="eyebrow">03 / EXECUTION</p>
-              <h2>Cost Guard</h2>
+              <h2>Credit wallet + Cost Guard</h2>
             </div>
             <span className={`tag ${build?.status.paused ? "warning" : ""}`} data-testid="status">
-              {build ? label : "Waiting for a quote"}
+              {label}
             </span>
           </div>
+          <div className="guard-grid">
+            {[
+              ["Wallet available", build?.wallet.availableCredits],
+              ["Held for run", build?.wallet.reservedCredits],
+              ["Customer charged", build?.wallet.chargedCredits],
+              ["Refunded after charge", build?.wallet.refundedCredits],
+            ].map(([title, value]) => (
+              <div key={String(title)}>
+                <span>{title}</span>
+                <strong>{credits(Number(value ?? 0))}</strong>
+              </div>
+            ))}
+          </div>
+          <p className="note">
+            Provider expense below is tracked separately from customer credits. Local simulated
+            balances only.
+          </p>
           <div className="guard-grid">
             {[
               ["Authorized cap", build?.status.capMicros],
@@ -221,7 +286,7 @@ export default function Page() {
             ].map(([title, value]) => (
               <div key={String(title)}>
                 <span>{title}</span>
-                <strong>{typeof value === "number" ? dollars(value / 1e6) : "$0.00"}</strong>
+                <strong>{typeof value === "number" ? credits(value / 10000) : "0 cr"}</strong>
               </div>
             ))}
           </div>
@@ -235,33 +300,42 @@ export default function Page() {
             />
           </div>
           <p className="note">
-            Each simulated call reserves $0.90 before starting and reports $0.65 actual usage.
-            Unknown usage stays reserved.
+            Each simulated attempt reserves 90 provider-cost credits and uses 65. Two identical
+            failures pause the run; at most three attempts are permitted before approval. Unknown
+            usage stays reserved.
           </p>
           <div className="actions">
             <button
-              disabled={!build || busy || build.status.stopped}
-              onClick={() => action("turn")}
-            >
-              Run next simulated call
-            </button>
-            <button
-              disabled={!build || busy || build.status.stopped}
-              onClick={() => action("concurrent")}
-            >
-              Try 2 concurrent reservations
-            </button>
-            <button
-              disabled={!build || busy || build.status.stopped}
+              disabled={
+                !build || busy || !["awaiting_approval", "ready"].includes(run?.phase ?? "")
+              }
               onClick={() => action("approve")}
             >
-              Approve exactly $1 more
+              Approve {run?.capCredits ?? quote.costCredits} credits & start
+            </button>
+            <button disabled={!active || busy} onClick={() => action("turn")}>
+              Run successful attempt
+            </button>
+            <button disabled={!active || busy} onClick={() => action("fail")}>
+              Simulate same failure
+            </button>
+            <button disabled={run?.phase !== "paused" || busy} onClick={() => action("resume")}>
+              Approve one more attempt
+            </button>
+            <button disabled={!active || busy} onClick={() => action("complete")}>
+              Complete & charge quote
             </button>
             <button
-              disabled={!build || busy || build.status.stopped}
-              onClick={() => action("stop")}
+              disabled={!build || busy || !["running", "paused"].includes(run?.phase ?? "")}
+              onClick={() => action("platform_failure")}
             >
-              Stop build
+              Confirm platform failure
+            </button>
+            <button
+              disabled={!build || busy || !["completed", "failed"].includes(run?.phase ?? "")}
+              onClick={() => action("refund")}
+            >
+              Simulate staff refund
             </button>
             <button
               disabled={busy}

@@ -1,4 +1,5 @@
-import { MemoryStore, CostGuard } from "@buildwise/cost-guard";
+import { MemoryStore, CostGuard, CreditWallet, MemoryWalletStore } from "@buildwise/cost-guard";
 export const store = new MemoryStore();
 export const guard = new CostGuard(store);
-// This app is a local simulation. No Supabase, provider calls, or payment processing.
+export const wallet = new CreditWallet(new MemoryWalletStore());
+// Local simulations only. No provider, payment, or Supabase calls.

@@ -1,22 +1,16 @@
 # PROVN Cost Guard + Estimator
 
-Local integration handoff, version 0.1.1.
-
-Start here:
+Local release 0.2.0 reconciles the credit PRD with the existing phase-1 estimator, intake service and package architecture. Both estimator APIs share one calculation engine. Included: credit previews, approval above 50 credits, account allowances/top-ups, atomic run holds, provider hard caps, bounded retry attempts, platform-failure credit returns, authenticated APIs and PostgreSQL adapters.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm --filter @buildwise/cost-demo dev
 ```
 
-Open http://127.0.0.1:3210. The demo needs no keys and spends no real credits.
+Open http://127.0.0.1:3210. This is a local simulation with no real spend, no keys and no external service calls.
 
-- [Integration guide](docs/cost-modules/INTEGRATION.md)
-- [Verification record](docs/cost-modules/VERIFICATION.md)
-- [Estimator](packages/estimator/src/index.ts)
-- [Cost Guard](packages/cost-guard/src/index.ts)
-- [Database migration](supabase/migrations/20261024010000_cost_guard.sql)
+- [Integration guide](docs/cost-modules/INTEGRATION.md): APIs, worker/billing examples, policy decisions, phase-1 compatibility and handoff steps.
+- [Verification](docs/cost-modules/VERIFICATION.md): tests, builds and unverified production boundaries.
+- [Credit PRD](docs/provn-vision-prd.md): product requirements.
 
-Built on upstream `39501f2ba9e3794cc703662f71affc28db650b2a`. The ZIP includes the complete source workspace and lockfile, without installed dependencies, credentials, build outputs, or Git history. A separate patch contains only this contribution for applying to the team's repository.
-
-The estimator uses provisional repository pricing. Real model execution, payment, quote locking, and monthly credits are not connected. See the integration guide for the exact boundaries and teammate-owned connection points.
+The team's production UI, payment verification, router/provider adapter, verified BYOK keys, deployment and hosted Supabase integration remain separate. Team pooling and cross-module fulfillment are not claimed. All authored product UI uses PROVN; internal `@buildwise` imports remain compatible.

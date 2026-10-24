@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { estimate, catalog, defaultSelection, suggestAlternatives, DEFAULT_PRICING } from "./index";
+import {
+  estimateSpec as estimate,
+  catalog,
+  defaultSpecSelection as defaultSelection,
+  suggestAlternatives,
+  DEFAULT_PRICING,
+} from "./index";
 import type { Spec } from "@buildwise/shared";
 const spec: Spec = {
   name: "Booking",
