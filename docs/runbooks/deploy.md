@@ -25,6 +25,8 @@ Secrets live only in `.env.deploy.local` (git-ignored) and in the Vercel and Sup
 ## Vercel
 
 - Project settings: root directory `apps/web`, framework Next.js, Node 24.x.
+- Functions run in `bom1` (Mumbai), next to the database, via `apps/web/vercel.json`. The default `iad1` adds a round trip across the world to every query.
+- Server secrets (type secret, production and preview): `SUPABASE_SERVICE_ROLE_KEY`, `MASK_MAP_KEY` (32 random bytes, base64), `AGENT_API_TOKEN` (64 hex chars). Rotating `MASK_MAP_KEY` makes existing ideas unreadable; they are marked failed.
 - Environment (production and preview): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (type config, it is public by design), `ENABLE_EXPERIMENTAL_COREPACK=1`.
 - Production only: `NEXT_PUBLIC_SITE_URL=https://getbuildwise.vercel.app`; previews fall back to `NEXT_PUBLIC_VERCEL_BRANCH_URL`.
 - `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` stays unset until the Google provider is configured in Supabase.
