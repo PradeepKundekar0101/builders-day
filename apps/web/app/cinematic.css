@@ -7,14 +7,14 @@ body .bg-go {color:#171d25}
 .conduit-signin .signin-panel::before {display:none}
 .conduit-signin .conduit-wordmark {color:#f3f0e9;letter-spacing:4px;font-weight:400;font-size:20px}
 .conduit-signin .conduit-wordmark>span,.conduit-signin .conduit-emblem {display:none}
-.conduit-signin h1 {font-size:48px;font-weight:300;letter-spacing:-2px;line-height:1.15}
+.conduit-signin h1 {font-size:48px;font-weight:400;letter-spacing:-2px;line-height:1.15}
 .conduit-signin h1 span {color:#e5bd8b}
 .conduit-signin .signin-description,.conduit-signin .signin-note,.conduit-signin .signin-footer {color:#bbc3cc}
 .conduit-signin .email-signin {background:#e5bd8b;color:#171d25;border-color:#e5bd8b}
 .conduit-signin .google-signin,.conduit-signin .signin-email {background:#1d2630;color:#f3f0e9;border-color:#566270}
 .conduit-signin .product-showcase {background:#151c2499;border:1px solid #e5bd8b33;backdrop-filter:blur(12px)}
 .conduit-signin .product-window,.conduit-signin .studio-preview,.conduit-signin .preview-main,.conduit-signin .preview-sidebar,.conduit-signin .window-toolbar {background:#1d2630;color:#f3f0e9;border-color:#3c4855}
-.conduit-signin .showcase-heading h2 {font-weight:300;color:#f3f0e9}
+.conduit-signin .showcase-heading h2 {font-weight:400;color:#f3f0e9}
 .conduit-signin .showcase-heading p {color:#bbc3cc}
 @media(max-width:760px){.conduit-signin.conduit-signin{padding:20px;gap:20px}.conduit-signin h1{font-size:36px}}
 .conduit-signin .idea-input,.conduit-signin .brief-preview>div,.conduit-signin .plan-preview>div {background:#27323e;border-color:#566270;color:#f3f0e9}

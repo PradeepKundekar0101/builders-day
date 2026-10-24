@@ -16,8 +16,8 @@ body:has(.conduit-studio),body:has(.conduit-build-workspace) {background:var(--p
 .portal-reflection {position:absolute;inset:76% 0 0;background:linear-gradient(#e5bd8b22,transparent),repeating-linear-gradient(0deg,transparent 0 9px,#151c2440 10px 12px);filter:blur(3px)}
 .conduit-studio.is-welcome .studio-hero {max-width:1280px;margin:auto;text-align:left;padding:76px 0 24px}
 .conduit-studio .studio-eyebrow {justify-content:flex-start;color:var(--provn-accent);font-size:12px;letter-spacing:1.4px;line-height:1.6}
-.conduit-studio.is-welcome .studio-hero h1 {font-size:clamp(56px,6vw,80px);font-weight:300;line-height:1.08;letter-spacing:-3px;margin:24px 0}
-.conduit-studio .studio-hero h1 em {font-style:normal;color:var(--provn-accent);font-weight:300}
+.conduit-studio.is-welcome .studio-hero h1 {font-size:clamp(56px,6vw,80px);font-weight:400;line-height:1.08;letter-spacing:-3px;margin:24px 0}
+.conduit-studio .studio-hero h1 em {font-style:normal;color:var(--provn-accent);font-weight:400}
 .conduit-studio .studio-subtitle {max-width:530px;color:var(--provn-muted);font-size:16px;line-height:1.65}
 .conduit-studio .studio-content {max-width:1280px}
 .conduit-studio .studio-welcome {max-width:560px;margin:0}
@@ -112,8 +112,8 @@ body:has(.conduit-studio),body:has(.conduit-build-workspace) {background:var(--p
 .conduit-studio .studio-landscape::after {background:linear-gradient(180deg,#151c2466,transparent 38%,transparent 78%,#151c24)}
 .conduit-studio.is-welcome .studio-hero {text-align:center;padding:36px 0 0;height:665px;max-width:1280px;position:relative;z-index:1}
 .conduit-studio .studio-hero .studio-eyebrow {justify-content:center;font-size:11px;letter-spacing:2px;color:#bbc3cc}
-.conduit-studio.is-welcome .studio-hero h1 {font-size:64px;line-height:1.08;letter-spacing:-2.6px;font-weight:300;margin:18px 0}
-.conduit-studio .studio-hero h1 em {color:#f0c79b;font-weight:300}
+.conduit-studio.is-welcome .studio-hero h1 {font-size:64px;line-height:1.08;letter-spacing:-2.6px;font-weight:400;margin:18px 0}
+.conduit-studio .studio-hero h1 em {color:#f0c79b;font-weight:400}
 .conduit-studio .studio-subtitle {max-width:560px;margin:0 auto;font-size:14px;color:#d0d3d7;line-height:1.6}
 .orbit-hero-action {display:inline-flex;align-items:center;gap:16px;font-size:12px;letter-spacing:1.2px;margin:22px auto;color:#f3f0e9;min-height:44px}
 .orbit-hero-action>span {display:grid;place-items:center;width:44px;height:44px;border:1px solid #e5bd8b;border-radius:50%;font-size:20px;color:#e5bd8b;transition:background .2s}
@@ -127,24 +127,24 @@ body:has(.conduit-studio),body:has(.conduit-build-workspace) {background:var(--p
 .conduit-studio .studio-welcome>.studio-helper,.conduit-studio .studio-privacy {text-align:center;margin-inline:auto}
 .portal-sample-link {display:flex;justify-content:center}
 .portal-story {margin-top:80px}
-.portal-story h2,.portal-proof h2 {font-weight:300;letter-spacing:-1.3px}
+.portal-story h2,.portal-proof h2 {font-weight:400;letter-spacing:-1.3px}
 .conduit-studio .provn-onboard-backdrop {background:linear-gradient(#151c2444,#151c2488),url('/images/provn-orbit.jpg') center/cover;backdrop-filter:none}
 .conduit-studio .provn-onboard {background:#151c24ec;backdrop-filter:blur(24px);border:1px solid #e5bd8b66;box-shadow:0 30px 100px #0005;padding:36px}
-.conduit-studio .provn-onboard h2 {font-weight:300;font-size:34px;letter-spacing:-1px}
+.conduit-studio .provn-onboard h2 {font-weight:400;font-size:34px;letter-spacing:-1px}
 .conduit-studio .onboard-personas button {background:#1d2630a0;border-color:#566270}
 .conduit-studio .onboard-personas button[aria-pressed=true] {background:#e5bd8b12;border-color:#e5bd8b}
 .conduit-build-workspace.conduit-build-workspace {background:linear-gradient(#151c24ef,#151c24f5),url('/images/provn-orbit.jpg') center/cover}
 .conduit-build-workspace .build-topbar {background:#151c24d9;border-color:#e5bd8b33}
-.conduit-build-workspace .build-wordmark {font-weight:300}
+.conduit-build-workspace .build-wordmark {font-weight:400}
 .conduit-build-workspace .build-wordmark>span {letter-spacing:3px;font-size:18px;font-weight:400}
 .conduit-build-workspace .build-project-icon {border-color:#e5bd8b44;background:#e5bd8b0c;color:#e5bd8b}
 .conduit-build-workspace .build-question-bubble {border-color:#e5bd8b50;background:#1d2630}
 .conduit-build-workspace .build-avatar {border:1px solid #e5bd8b55;border-radius:50%;color:#e5bd8b;background:#27323e}
 .conduit-build-workspace .build-export,.conduit-build-workspace .p0-primary,.conduit-build-workspace .studio-button {border-radius:30px}
-.conduit-build-workspace .p0-panel h2 {font-weight:300;letter-spacing:-1px;font-size:32px}
+.conduit-build-workspace .p0-panel h2 {font-weight:400;letter-spacing:-1px;font-size:32px}
 .conduit-build-workspace .p0-panel,.conduit-build-workspace .build-conversation {background:#151c24ed}
 .conduit-build-workspace .p0-card,.conduit-build-workspace .p0-table,.conduit-build-workspace .p0-scope button {border-radius:12px}
-.conduit-build-workspace .p0-metrics strong {font-weight:300}
+.conduit-build-workspace .p0-metrics strong {font-weight:400}
 .conduit-build-workspace .build-view-tabs button,.conduit-build-workspace .p0-module-nav button {font-weight:400}
 .conduit-build-workspace .build-topbar button {font-size:13px}
 @media(max-width:760px){
@@ -198,3 +198,7 @@ body:has(.conduit-studio.is-welcome) {height:100svh;overflow:hidden}
 .conduit-studio.is-welcome .studio-button {background:linear-gradient(115deg,#f3d7ae,#d5a876);box-shadow:inset 0 1px 0 #fff5;color:#171d25}
 .conduit-studio.is-welcome .studio-button:hover:not(:disabled) {background:linear-gradient(115deg,#ffe5c0,#e5bd8b)}
 .conduit-studio .provn-onboard {background:linear-gradient(140deg,#17232ff7 0%,#222c36f7 65%,#3b332ef7 100%)}
+
+/* Restore the original nature-theme headline typography. */
+.conduit-studio.is-welcome .studio-hero h1 {font-weight:400;letter-spacing:-0.065em;line-height:1.09}
+.conduit-studio .studio-hero h1 em {font-weight:400;font-style:italic}
