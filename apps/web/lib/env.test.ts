@@ -39,10 +39,11 @@ describe("parsePublicEnv", () => {
   });
 
   test("falls back to the Vercel branch URL when no site URL is set", () => {
-    const { NEXT_PUBLIC_SITE_URL: _unused, ...rest } = valid;
-    expect(
-      parsePublicEnv({ ...rest, NEXT_PUBLIC_VERCEL_BRANCH_URL: "buildwise-git-x.vercel.app" })
-        .siteUrl,
-    ).toBe("https://buildwise-git-x.vercel.app");
+    const branchOnly = {
+      ...valid,
+      NEXT_PUBLIC_SITE_URL: undefined,
+      NEXT_PUBLIC_VERCEL_BRANCH_URL: "buildwise-git-x.vercel.app",
+    };
+    expect(parsePublicEnv(branchOnly).siteUrl).toBe("https://buildwise-git-x.vercel.app");
   });
 });
