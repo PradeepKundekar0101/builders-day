@@ -196,6 +196,12 @@ importers:
       '@buildwise/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@buildwise/estimator':
+        specifier: workspace:*
+        version: link:../../packages/estimator
+      '@buildwise/masker':
+        specifier: workspace:*
+        version: link:../../packages/masker
       '@buildwise/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -263,6 +269,8 @@ importers:
       '@buildwise/shared':
         specifier: workspace:*
         version: link:../shared
+
+  packages/masker: {}
 
   packages/shared:
     dependencies:
