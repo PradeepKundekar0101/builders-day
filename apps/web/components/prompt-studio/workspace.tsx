@@ -657,7 +657,7 @@ export function BuildWorkspace({
                 }}
                 running={running}
               />
-            ) : rightTab === "preview" && buildConnection && buildState.previewUrl ? (
+            ) : rightTab === "preview" && !busy && !running && buildConnection && buildState.previewUrl ? (
               <iframe
                 title="Running application preview"
                 src={buildState.previewUrl}
@@ -665,7 +665,7 @@ export function BuildWorkspace({
                 referrerPolicy="no-referrer"
                 style={{ width: "100%", flex: 1, border: 0, background: "white" }}
               />
-            ) : rightTab === "preview" && built ? (
+            ) : rightTab === "preview" && !busy && built ? (
               <>
                 <div className="build-address">
                   <span className="build-window-dots">
@@ -703,79 +703,27 @@ export function BuildWorkspace({
                 </div>
               </>
             ) : rightTab === "preview" ? (
-              <>
-                <div className="build-address">
-                  <span className="build-window-dots">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                  <span>
-                    ⌑ &nbsp; local scaffold / {activePage?.name.toLowerCase().replaceAll(" ", "-")}
-                  </span>
-                  <span className="build-wireframe-tag">WIREFRAME</span>
+              <section className="agent-progress" aria-label="Agent progress">
+                <div className="agent-progress-heading">
+                  <span className="build-small-label">{running ? "BUILD IN PROGRESS" : "YOUR BUILD PLAN"}</span>
+                  <h2>{error || buildState.error ? "Let’s resolve this step" : paused ? "Ready when you are" : running || busy ? "Taking shape, step by step" : next ? "A little direction from you" : "From idea to preview"}</h2>
+                  <p>{running ? "Following the build sequence below." : next ? "Answer the question in chat to continue." : "Follow the progress here. Your product preview will appear when it is ready."}</p>
                 </div>
-                <div className="build-preview-stage">
-                  <div
-                    className={`build-app-surface ${mobile ? "is-mobile" : ""}`}
-                    key={refreshKey}
-                  >
-                    <div className="scaffold-nav">
-                      <strong>
-                        <span>◈</span>
-                        {draft.spec.name}
-                      </strong>
-                      <span>Preview only</span>
-                    </div>
-                    <nav className="scaffold-pages" aria-label="Preview pages">
-                      {draft.spec.pages.slice(0, buildStage === 0 ? 1 : undefined).map((p, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setPage(i)}
-                          aria-current={page === i ? "page" : undefined}
-                        >
-                          {p.name}
-                        </button>
-                      ))}
-                    </nav>
-                    <div className="scaffold-content">
-                      <span className="scaffold-eyebrow">YOUR PRODUCT, TAKING SHAPE</span>
-                      <h1>{activePage?.name}</h1>
-                      <p>{activePage?.purpose}</p>
-                      <div className="scaffold-summary">
-                        <span>PRODUCT BRIEF</span>
-                        <h2>{draft.spec.summary}</h2>
-                      </div>
-                      <div className="scaffold-grid">
-                        {["Primary journey", "Your data", "Connections"]
-                          .slice(0, buildStage === 0 ? 0 : buildStage === 1 ? 1 : 3)
-                          .map((title, i) => (
-                            <div key={title}>
-                              <span>0{i + 1}</span>
-                              <h3>{title}</h3>
-                              <p>
-                                {i === 0
-                                  ? draft.questions.find((q) => q.id === "journey")?.answer ||
-                                    "Define this in the conversation."
-                                  : i === 1
-                                    ? `${draft.spec.entities.length} data entities defined in your brief.`
-                                    : `${draft.spec.integrations.length} integrations defined in your brief.`}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-                      <div className="scaffold-skeleton" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-                    </div>
-                    <div className="scaffold-caption">
-                      Layout scaffold only · No generated code or working backend
-                    </div>
-                  </div>
-                </div>
-              </>
+                <ol className="agent-progress-list">
+                  {(running ? stages : [...phaseNames, "Generate application preview"]).map((label, index) => {
+                    const done = running ? index < step : index < (reviewed ? 4 : buildStage);
+                    const current = running ? index === step : index === (reviewed ? 4 : buildStage);
+                    const blocked = current && Boolean(error || buildState.error);
+                    const waiting = current && (paused || Boolean(next) || (!running && reviewed));
+                    return <li key={label} className={`agent-progress-row ${done ? "is-done" : current ? "is-current" : ""}`} aria-current={current ? "step" : undefined}>
+                      <span className="agent-progress-check" aria-hidden="true">{done ? "✓" : blocked ? "!" : current && !waiting ? "•" : ""}</span>
+                      <div><strong>{label}</strong><span>{done ? "Completed" : blocked ? "Needs attention" : waiting ? "Waiting for your input" : current ? "In progress" : "Upcoming"}</span></div>
+                      <span className="agent-progress-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                    </li>;
+                  })}
+                </ol>
+                <p className="agent-progress-note">{buildConnection ? "Progress follows the connected build service." : demo ? "Demo workflow · Build steps are simulated." : "Planning progress · No generated application yet."}</p>
+              </section>
             ) : (
               <div className="build-live-empty">
                 <div className="build-live-icon">↗</div>
