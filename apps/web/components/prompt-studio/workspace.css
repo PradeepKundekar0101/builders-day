@@ -1263,3 +1263,42 @@ body:has(.conduit-build-workspace) > header {
 .build-answer-options button:disabled {
   opacity: 0.5;
 }
+
+/* AgenticOrg security review inside the journey card. */
+.provn-agent-review {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #3c4855;
+  border-radius: 10px;
+  background: #151c24;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.provn-agent-review-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e5bd8b;
+}
+.provn-agent-review-label b {
+  text-transform: capitalize;
+}
+.provn-agent-review-label b.is-high {
+  color: #ef9b99;
+}
+.provn-agent-review-label b.is-medium {
+  color: #e4bd76;
+}
+.provn-agent-review-label b.is-low {
+  color: #9bc8b1;
+}
+.provn-agent-review ol {
+  margin-top: 8px;
+  padding-left: 18px;
+  list-style: decimal;
+  color: #bbc3cc;
+}

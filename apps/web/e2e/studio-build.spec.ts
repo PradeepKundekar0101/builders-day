@@ -7,7 +7,7 @@ const IDEA =
   "Build a private client portal for a small design agency. Clients should sign in, see project progress, approve designs, and share feedback. Team members manage their own projects.";
 
 test("Prompt Studio: answer, estimate, build, preview, attack, fix", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await page.goto("/prompt-studio-demo");
   await page.getByRole("button", { name: /Continue to my workspace/ }).click();
   await page.getByRole("textbox", { name: "Describe your product" }).fill(IDEA);
@@ -26,8 +26,9 @@ test("Prompt Studio: answer, estimate, build, preview, attack, fix", async ({ pa
   await expect(card.getByRole("heading", { name: "Private Client Portal" })).toBeVisible();
 
   await card.getByRole("button", { name: "Build it →" }).click();
+  await expect(card.getByText(/^Building… \d\/9 · /)).toBeVisible();
   const app = page.getByLabel("Built app preview");
-  await expect(app).toBeVisible({ timeout: 20_000 });
+  await expect(app).toBeVisible({ timeout: 40_000 });
   await expect(app.getByRole("button", { name: "Get started" })).toBeVisible();
   await app
     .getByRole("navigation", { name: "Preview pages" })
@@ -36,10 +37,12 @@ test("Prompt Studio: answer, estimate, build, preview, attack, fix", async ({ pa
   await expect(app.getByRole("cell", { name: "Spring campaign" })).toBeVisible();
 
   await card.getByRole("button", { name: "Attack my app" }).click();
-  await expect(card.getByText(/Grade B/)).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByText(/^Attacking… 1\/\d · /)).toBeVisible();
+  await expect(card.getByText(/Grade B/)).toBeVisible({ timeout: 40_000 });
   await expect(card.getByText("Vulnerable")).toBeVisible();
 
   await card.getByRole("button", { name: "Fix & re-attack" }).click();
-  await expect(card.getByText(/Grade A/)).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByText(/Applying fix… Adding a rate limit/)).toBeVisible();
+  await expect(card.getByText(/Grade A/)).toBeVisible({ timeout: 40_000 });
   await expect(card.getByText("Vulnerable")).toHaveCount(0);
 });

@@ -12,7 +12,9 @@ import type { PromptStudioDraft } from "@buildwise/shared";
 import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 import { SitePreview } from "@/components/demo/site-preview";
-import type { AttackResult } from "@/lib/demo/attack";
+import type { SecurityReview } from "@/lib/demo/agenticorg";
+import { fixSteps, type AttackResult } from "@/lib/demo/attack";
+import { attackSchedule, DEMO_TIMING, stepFinishTimes } from "@/lib/demo/timing";
 import { planFromIdea } from "@/lib/demo/plan";
 import { questionOptions } from "@/lib/demo/question-options";
 
@@ -35,10 +37,16 @@ type Props = {
 const stages = [
   "Reading the current product brief",
   "Mapping pages and navigation",
-  "Preparing a local visual scaffold",
+  "Generating the data model",
+  "Scaffolding pages and components",
+  "Wiring sign-in and permissions",
+  "Installing dependencies",
+  "Running type checks and tests",
   "Checking preview layout",
   "Simulation complete. No application deployed.",
 ];
+/** Relative length of each build stage after the first; scaffolding, installs and tests take longest. */
+const stageWeights = [1, 1.2, 1.8, 1.2, 1.6, 2, 1, 0.6];
 export function BuildWorkspace({
   pauseRevision = 0,
   buildConnection,
@@ -74,6 +82,7 @@ export function BuildWorkspace({
   const [refreshKey, setRefreshKey] = useState(0);
   const [appPage, setAppPage] = useState("Home");
   const [attack, setAttack] = useState<JourneyAttack>({ kind: "idle" });
+  const [review, setReview] = useState<SecurityReview | null | undefined>(undefined);
   const attackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const terminal = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -177,7 +186,13 @@ export function BuildWorkspace({
     wasBuilt.current = built;
   }, [built]);
   const needsFix = attack.kind === "done" && attack.result.grade !== "A";
-  const probe = attack.kind === "running" ? attack.result.probes[attack.shown - 1] : undefined;
+  const fixing =
+    attack.kind === "running" && !!attack.fix && attack.fix.done < attack.fix.steps.length;
+  // The probe in flight; after the last one, it stays on screen while the grade is scored.
+  const probe =
+    attack.kind === "running" && !fixing
+      ? attack.result.probes[Math.min(attack.shown, attack.result.probes.length - 1)]
+      : undefined;
   async function runAttack(hardened: boolean) {
     setConsoleOpen(true);
     const response = await fetch("/api/demo/attack", {
@@ -190,15 +205,32 @@ export function BuildWorkspace({
       return;
     }
     const result = (await response.json()) as AttackResult;
-    setAttack({ kind: "running", result, shown: 0 });
-    result.probes.forEach((_, i) =>
-      attackTimers.current.push(
-        setTimeout(() => setAttack({ kind: "running", result, shown: i + 1 }), 650 * (i + 1)),
+    // The first attack also asks the real AgenticOrg agent for its review, in parallel.
+    if (!hardened) {
+      setReview(undefined);
+      void fetch("/api/demo/review", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idea: draft.input.idea, name: appPlan.name }),
+      })
+        .then((r) => (r.ok ? (r.json() as Promise<{ review: SecurityReview | null }>) : null))
+        .then((body) => setReview(body?.review ?? null))
+        .catch(() => setReview(null));
+    }
+    const steps = hardened ? fixSteps(result) : [];
+    const fix = (done: number) => (hardened ? { steps, done } : undefined);
+    const { ticks, doneAt } = attackSchedule(result.probes.length, steps.length, hardened);
+    attackTimers.current.forEach(clearTimeout);
+    setAttack({ kind: "running", result, shown: 0, fix: fix(0) });
+    attackTimers.current = [
+      ...ticks.map((tick) =>
+        setTimeout(
+          () => setAttack({ kind: "running", result, shown: tick.shown, fix: fix(tick.fixDone) }),
+          tick.at,
+        ),
       ),
-    );
-    attackTimers.current.push(
-      setTimeout(() => setAttack({ kind: "done", result }), 650 * (result.probes.length + 1)),
-    );
+      setTimeout(() => setAttack({ kind: "done", result }), doneAt),
+    ];
   }
   const answered = draft.questions.filter((q) => q.answer?.trim()).length;
   const activePage = draft.spec.pages[Math.min(page, draft.spec.pages.length - 1)];
@@ -207,16 +239,18 @@ export function BuildWorkspace({
   }, [answered, notes.length]);
   useEffect(() => {
     if (!running) return;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += 1;
-      setStep(current);
-      if (current >= stages.length - 1) {
-        setRunning(false);
-        clearInterval(timer);
-      }
-    }, 750);
-    return () => clearInterval(timer);
+    const finishTimes = stepFinishTimes(
+      DEMO_TIMING.buildMs,
+      stages.length - 1,
+      (i) => stageWeights[i] ?? 1,
+    );
+    const timers = finishTimes.map((at, i) =>
+      setTimeout(() => {
+        setStep(i + 1);
+        if (i === finishTimes.length - 1) setRunning(false);
+      }, at),
+    );
+    return () => timers.forEach(clearTimeout);
   }, [running]);
   /** Sends the typed message, or a suggested answer the user clicked. */
   async function send(answer?: string) {
@@ -446,9 +480,10 @@ export function BuildWorkspace({
                     <BuildJourney
                       plan={appPlan}
                       building={running}
-                      progress={`${Math.max(step, 0) + 1}/${stages.length}`}
+                      progress={`${Math.max(step, 0) + 1}/${stages.length} · ${stages[Math.min(step + 1, stages.length - 1)]}`}
                       built={built}
                       attack={attack}
+                      review={review}
                       onBuild={() => {
                         setStep(0);
                         setRunning(true);
@@ -634,7 +669,7 @@ export function BuildWorkspace({
                 </div>
                 <div className="build-preview-stage">
                   <div
-                    className={`build-app-surface build-app-built ${mobile ? "is-mobile" : ""} ${attack.kind === "running" ? "is-under-attack" : ""}`}
+                    className={`build-app-surface build-app-built ${mobile ? "is-mobile" : ""} ${probe ? "is-under-attack" : ""}`}
                     key={refreshKey}
                     aria-label="Built app preview"
                   >
@@ -803,6 +838,17 @@ export function BuildWorkspace({
                       simulated app, not deployed
                     </p>
                   )}
+                  {attack.kind === "running" &&
+                    attack.fix?.steps.slice(0, attack.fix.done + 1).map((line, i) => (
+                      <p key={line}>
+                        <span
+                          className={i < attack.fix!.done ? "terminal-green" : "terminal-amber"}
+                        >
+                          [{i < attack.fix!.done ? " FIX" : "...."}]
+                        </span>{" "}
+                        {line}
+                      </p>
+                    ))}
                   {attack.kind !== "idle" && (
                     <div aria-label="Attack results">
                       {attack.result.probes

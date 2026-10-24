@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { AttackResult, Probe } from "@/lib/demo/attack";
+import { fixSteps, type AttackResult, type Probe } from "@/lib/demo/attack";
+import { attackSchedule, DEMO_TIMING, stepFinishTimes } from "@/lib/demo/timing";
 import type { Plan } from "@/lib/demo/plan";
 import { SitePreview } from "@/components/demo/site-preview";
 
 type Phase = "idea" | "estimating" | "estimated" | "building" | "built";
 type AttackState =
   | { kind: "idle" }
-  | { kind: "running"; result: AttackResult; shown: number }
+  | {
+      kind: "running";
+      result: AttackResult;
+      shown: number;
+      /** Set on a fix and re-attack: the fix steps, and how many have finished. */
+      fix?: { steps: string[]; done: number };
+    }
   | { kind: "done"; result: AttackResult; hardened: boolean };
 
 const EXAMPLES = [
@@ -92,19 +99,30 @@ export function DemoStudio() {
     setPhase("building");
     setStep(0);
     setPage("Home");
-    steps.forEach((_, i) => later(() => setStep(i + 1), 700 * (i + 1)));
-    later(() => setPhase("built"), 700 * (steps.length + 1));
+    // Tests and the deploy take longer than the other steps.
+    const slow = steps.length - 2;
+    const finishTimes = stepFinishTimes(DEMO_TIMING.buildMs, steps.length, (i) =>
+      i >= slow ? 2.2 : 1,
+    );
+    finishTimes.forEach((at, i) => later(() => setStep(i + 1), at));
+    later(() => setPhase("built"), DEMO_TIMING.buildMs + 600);
   }
 
   async function runAttack(hardened: boolean) {
     setError(null);
     try {
       const result = await post<AttackResult>("/api/demo/attack", { idea, hardened });
-      setAttack({ kind: "running", result, shown: 0 });
-      result.probes.forEach((_, i) =>
-        later(() => setAttack({ kind: "running", result, shown: i + 1 }), 650 * (i + 1)),
+      const fixes = hardened ? fixSteps(result) : [];
+      const fix = (done: number) => (hardened ? { steps: fixes, done } : undefined);
+      const { ticks, doneAt } = attackSchedule(result.probes.length, fixes.length, hardened);
+      setAttack({ kind: "running", result, shown: 0, fix: fix(0) });
+      ticks.forEach((tick) =>
+        later(
+          () => setAttack({ kind: "running", result, shown: tick.shown, fix: fix(tick.fixDone) }),
+          tick.at,
+        ),
       );
-      later(() => setAttack({ kind: "done", result, hardened }), 650 * (result.probes.length + 1));
+      later(() => setAttack({ kind: "done", result, hardened }), doneAt);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -118,8 +136,14 @@ export function DemoStudio() {
     setStep(0);
   }
 
-  const current = attack.kind === "running" ? attack.result.probes[attack.shown - 1] : undefined;
-  const underAttack = attack.kind === "running";
+  const fixing =
+    attack.kind === "running" && !!attack.fix && attack.fix.done < attack.fix.steps.length;
+  // The probe in flight; after the last one, it stays on screen while the grade is scored.
+  const current =
+    attack.kind === "running" && !fixing
+      ? attack.result.probes[Math.min(attack.shown, attack.result.probes.length - 1)]
+      : undefined;
+  const underAttack = attack.kind === "running" && !fixing;
 
   return (
     <div className="grid min-h-[calc(100dvh-3.5rem)] gap-4 p-4 lg:grid-cols-[minmax(320px,420px)_1fr]">
@@ -277,7 +301,26 @@ export function DemoStudio() {
                 Attack my app
               </button>
             )}
-            {attack.kind !== "idle" && (
+            {attack.kind === "running" && attack.fix && (
+              <ol aria-label="Fix log" className="mt-3 space-y-1 font-mono text-xs">
+                {attack.fix.steps.slice(0, attack.fix.done).map((line) => (
+                  <li key={line} className="text-slate">
+                    <span className="text-go">✓</span> {line}
+                  </li>
+                ))}
+                {fixing && (
+                  <li className="animate-pulse text-ink">› {attack.fix.steps[attack.fix.done]}</li>
+                )}
+              </ol>
+            )}
+            {attack.kind === "running" && !fixing && (
+              <p role="status" className="mt-3 animate-pulse font-mono text-xs text-ink">
+                {attack.shown < attack.result.probes.length
+                  ? `› ${attack.fix ? "Re-attacking" : "Attacking"} ${attack.shown + 1}/${attack.result.probes.length}: ${current?.name}`
+                  : "› Scoring the results"}
+              </p>
+            )}
+            {attack.kind !== "idle" && !fixing && (
               <AttackLog
                 probes={attack.result.probes.slice(
                   0,

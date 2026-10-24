@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { runAttack } from "./attack";
+import { fixSteps, runAttack } from "./attack";
 import { planFromIdea } from "./plan";
 
 const paid = planFromIdea(
@@ -32,5 +32,14 @@ describe("runAttack", () => {
       "credential-stuffing",
     );
     expect(runAttack(plain, false).probes.find((p) => p.outcome === "found")?.id).toBe("form-spam");
+  });
+});
+
+describe("fixSteps", () => {
+  test("starts with the patch for the probe the first run found", () => {
+    expect(fixSteps(runAttack(paid, true))[0]).toBe(
+      "Adding a rate limit and account lockout to /sign-in",
+    );
+    expect(fixSteps(runAttack(plain, true))[0]).toMatch(/^Adding a rate limit and bot check/);
   });
 });

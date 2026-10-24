@@ -8,6 +8,8 @@ export type Probe = {
   payload: string;
   outcome: "blocked" | "found";
   detail: string;
+  /** What the simulated fix changes, on the one probe a fix can close. */
+  fix?: string;
 };
 
 export type AttackResult = { probes: Probe[]; grade: "A" | "B" };
@@ -76,6 +78,7 @@ export function runAttack(plan: Plan, hardened: boolean): AttackResult {
         name: "Credential stuffing on sign-in",
         target: "/sign-in",
         payload: "500 leaked passwords in 60 seconds",
+        fix: "Adding a rate limit and account lockout to /sign-in",
         detail: hardened
           ? "Rate limit and lockout stop the run after 5 attempts."
           : "Every attempt was answered. Add a rate limit and lockout.",
@@ -85,6 +88,7 @@ export function runAttack(plan: Plan, hardened: boolean): AttackResult {
         name: "Automated form spam",
         target: `New ${main.toLowerCase().replace(/s$/, "")} form`,
         payload: "1,000 submissions in 60 seconds",
+        fix: `Adding a rate limit and bot check to the ${main.toLowerCase().replace(/s$/, "")} form`,
         detail: hardened
           ? "Rate limit and bot check reject the flood after 10 submissions."
           : "Every submission was saved. Add a rate limit and a bot check.",
@@ -92,4 +96,10 @@ export function runAttack(plan: Plan, hardened: boolean): AttackResult {
   probes.push({ ...weakSpot, outcome: hardened ? "blocked" : "found" });
 
   return { probes, grade: hardened ? "A" : "B" };
+}
+
+/** What the simulated fix does before the re-attack, in order. */
+export function fixSteps(result: AttackResult): string[] {
+  const patch = result.probes.find((p) => p.fix)?.fix ?? "Patching the weak spot";
+  return [patch, "Running the test suite against the patch", "Redeploying the preview"];
 }

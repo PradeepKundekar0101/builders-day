@@ -205,6 +205,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.118.0
         version: 2.118.0
+      agenticorg-sdk:
+        specifier: ^0.4.0
+        version: 0.4.0
       next:
         specifier: 16.4.2
         version: 16.4.2(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.64.1)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -1438,6 +1441,9 @@ packages:
     resolution: {integrity: sha512-oJlA3XiRm7Cyk6qFD2Jn8ak9B7jSy0qy00ADO3+8dpT0LSjFihQYv4C02LFCSYJV3Q37xYwwRy5m+IpIiUzqWw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  agenticorg-sdk@0.4.0:
+    resolution: {integrity: sha512-R1vrn8VfzY2km4B5d4kpTfjKoW1+t41qLQCMKKZjV+sruA1b/BzAbN2kiQNhypn0vrubEeCc2AKRM1xYFno/Fw==}
 
   ajv@6.15.0:
     resolution: {integrity: sha512-fgFx7Hfoq60ytK2c7DhnF8jIvzYgOMxfugjLOSMHjLIPgenqa7S7oaagATUq99mV6IYvN2tRmC0wnTYX6iPbMw==}
@@ -4051,6 +4057,8 @@ snapshots:
       acorn: 8.19.0
 
   acorn@8.19.0: {}
+
+  agenticorg-sdk@0.4.0: {}
 
   ajv@6.15.0:
     dependencies:
