@@ -4,6 +4,7 @@ import {
   type StudioBuildConnection,
   type StudioBuildState,
 } from "@/lib/prompt-studio/build-events";
+import { JourneyGuide } from "./journey-guide";
 import { ProvnLogo } from "@/components/provn-logo";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
@@ -347,25 +348,22 @@ export function BuildWorkspace({
                     </div>
                   );
                 })}
-                {!next && buildStage === 3 && (
-                  <article className="build-message">
-                    <div className="build-message-label">
-                      <span className="build-avatar">✦</span>PROVN
-                      <span>Ready for your review</span>
-                    </div>
-                    <p>
-                      That gives us a clear starting point. Review the product brief and the exact
-                      model instructions before handing this to your builder.
-                    </p>
-                    <button className="build-inline-button" onClick={() => setLeftTab("brief")}>
-                      Review brief & prompts ↗
-                    </button>
-                    <p className="build-message-note">
-                      The right panel is a visual scaffold. The mock does not generate or deploy
-                      working applications.
-                    </p>
-                  </article>
-                )}
+                <JourneyGuide
+                  stage={buildStage}
+                  reviewed={reviewed}
+                  current={journey.current}
+                  state={journey.state}
+                  profile={journey.profile}
+                  quote={journey.quote.total}
+                  busy={busy}
+                  onOpen={(destination) => {
+                    if (destination === "brief") setLeftTab("brief");
+                    else {
+                      setModule(destination);
+                      setRightTab("modules");
+                    }
+                  }}
+                />
                 {notes.map((note, i) => (
                   <article className="build-message build-message-user" key={i}>
                     <div className="build-message-label">
