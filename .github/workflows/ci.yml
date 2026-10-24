@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm exec prettier --check .
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  db-and-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Pin the local Postgres image; see the Task 2 ruling in the Phase 0 ledger.
+      - run: mkdir -p supabase/.temp && printf '17.6.1.167' > supabase/.temp/postgres-version
+      - run: pnpm exec supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+      - run: bash scripts/supabase-env.sh
+      - run: pnpm test:db
+      - name: Build web
+        run: |
+          set -a && . ./.env.test && set +a
+          NEXT_PUBLIC_SUPABASE_URL="$SUPABASE_URL" \
+          NEXT_PUBLIC_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+          NEXT_PUBLIC_SITE_URL=http://localhost:3100 \
+          pnpm --filter web build
+      - name: Scan client bundle for server secrets
+        run: |
+          set -a && . ./.env.test && set +a
+          pnpm check:bundle
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+      - run: pnpm --filter web e2e
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report

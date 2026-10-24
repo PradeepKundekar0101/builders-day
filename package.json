@@ -12,7 +12,8 @@
     "test": "pnpm -r test",
     "format": "prettier --write .",
     "db:types": "supabase gen types typescript --local | prettier --stdin-filepath generated.ts > packages/db/src/database.types.ts",
-    "test:db": "pnpm --filter @buildwise/db test:db"
+    "test:db": "pnpm --filter @buildwise/db test:db",
+    "check:bundle": "pnpm --filter @buildwise/scripts check:bundle"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

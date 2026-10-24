@@ -1,0 +1,16 @@
+{
+  "name": "@buildwise/scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check:bundle": "tsx check-client-bundle.ts"
+  },
+  "dependencies": {
+    "@buildwise/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
