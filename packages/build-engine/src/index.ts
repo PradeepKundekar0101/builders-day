@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SpecSchema, type Spec } from "@buildwise/shared";
+import { SpecSchema, buildScopeIssues, type Spec } from "@buildwise/shared";
 
 export const DesignSchema = z
   .object({
@@ -15,24 +15,11 @@ export const DesignSchema = z
 export type Design = z.infer<typeof DesignSchema>;
 export function supportedSpec(raw: unknown): Spec {
   const spec = SpecSchema.parse(raw);
-  if (spec.integrations.length)
+  const issues = buildScopeIssues(spec);
+  if (issues.length)
     throw new Error(
-      "This worker supports pages and owner-scoped CRUD only. Remove external integrations before building.",
+      `This brief can't be built yet: ${issues.join(" ")} Edit the brief (Brief & prompts, Advanced spec), save it as reviewed, and build again.`,
     );
-  if (spec.auth.providers.some((p) => p !== "email"))
-    throw new Error("Generated apps support email sign-in only.");
-  if (spec.entities.length && !spec.auth.enabled)
-    throw new Error("Data entities require email authentication.");
-  if (
-    spec.pages.length > 12 ||
-    spec.entities.length > 8 ||
-    spec.entities.some((e) => e.fields.length > 20)
-  )
-    throw new Error("Template scope exceeds 12 pages, 8 entities or 20 fields.");
-  for (const e of spec.entities) {
-    if (new Set(e.fields.map((f) => f.name)).size !== e.fields.length)
-      throw new Error("Duplicate field names");
-  }
   return spec;
 }
 export function validateDesign(spec: Spec, raw: unknown) {
