@@ -2,6 +2,7 @@ import { z } from "zod";
 import { studioUser, studioError } from "@/lib/prompt-studio/server";
 import { costService } from "@/lib/cost/server";
 import { StudioHttpError } from "@/lib/prompt-studio/request";
+import { releasedLiveUrl } from "@/lib/prompt-studio/live-url";
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await studioUser(),
@@ -34,22 +35,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         .createSignedUrl(output.artifact_path, 60, { download: "provn-product.zip" });
       downloadUrl = data?.signedUrl;
     }
-    // Same rule as released_url(): the owner sees the live URL only once the build is released.
-    let liveUrl: string | undefined;
-    if (build.status === "released") {
-      const { data: deployment } = await db
-        .from("deployments")
-        .select("url")
-        .eq("build_id", id)
-        .eq("status", "ready")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      liveUrl =
-        deployment?.url && /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(deployment.url)
-          ? deployment.url
-          : undefined;
-    }
+    const liveUrl = await releasedLiveUrl(db, build);
     return Response.json(
       {
         build,

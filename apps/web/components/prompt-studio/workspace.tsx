@@ -18,8 +18,12 @@ import { attackSchedule, DEMO_TIMING, stepFinishTimes } from "@/lib/demo/timing"
 import { planFromIdea } from "@/lib/demo/plan";
 import { questionOptions } from "@/lib/demo/question-options";
 
+/** The newest real (worker) build of this draft, as listed by /api/prompt-studio/build-status. */
+export type LatestBuild = { id: string; status: string; revision: number; liveUrl?: string };
 type Props = {
   buildHref?: string;
+  /** Present outside the demo: Build starts the real build instead of the simulation. */
+  realBuild?: { reviewedHref?: string; latest?: LatestBuild };
   pauseOnOpen?: boolean;
   message: string;
   onMessageChange: (value: string) => void;
@@ -53,6 +57,7 @@ const stages = [
 const stageWeights = [1, 1.2, 1.8, 1.2, 1.6, 2, 1, 0.6];
 export function BuildWorkspace({
   buildHref,
+  realBuild,
   pauseOnOpen = false,
   message,
   onMessageChange: setMessage,
@@ -84,7 +89,6 @@ export function BuildWorkspace({
   const [step, setStep] = useState(-1);
   const [running, setRunning] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [page, setPage] = useState(0);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [appPage, setAppPage] = useState("Home");
@@ -101,7 +105,34 @@ export function BuildWorkspace({
     // The mock brief names every product "My product"; the idea gives a better name until edited.
     return draft.spec.name === "My product" ? plan : { ...plan, name: draft.spec.name };
   }, [draft.input.idea, draft.spec.name]);
-  const appSlug = appPlan.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const latest = realBuild?.latest;
+  const liveUrl = latest?.liveUrl;
+  const latestHref =
+    latest && realBuild?.reviewedHref
+      ? `${realBuild.reviewedHref.replace(/revision=\d+/, `revision=${latest.revision}`)}&run=${latest.id}`
+      : undefined;
+  function startBuild() {
+    if (!realBuild) {
+      setStep(0);
+      setRunning(true);
+      setConsoleOpen(true);
+      return;
+    }
+    if (realBuild.reviewedHref) {
+      window.location.assign(realBuild.reviewedHref);
+      return;
+    }
+    setLeftTab("brief");
+    setLocalError(
+      "To build for real, save this draft and mark it reviewed in Brief & prompts. You approve the cost on the next page.",
+    );
+  }
+  // A real build that just went live opens the Live view.
+  const wasLive = useRef(Boolean(liveUrl));
+  useEffect(() => {
+    if (liveUrl && !wasLive.current) setRightTab("live");
+    wasLive.current = Boolean(liveUrl);
+  }, [liveUrl]);
   const bottom = useRef<HTMLDivElement>(null);
   const buildStage = draft.buildStage ?? 0;
   const [buildState, setBuildState] = useState<StudioBuildState>({
@@ -240,7 +271,6 @@ export function BuildWorkspace({
     ];
   }
   const answered = draft.questions.filter((q) => q.answer?.trim()).length;
-  const activePage = draft.spec.pages[Math.min(page, draft.spec.pages.length - 1)];
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "nearest" });
   }, [answered, notes.length]);
@@ -335,7 +365,9 @@ export function BuildWorkspace({
           </div>
           <span className="build-mode">
             <i />
-            {isLiveAdapterMode(draft.adapterMode) ? "Live intake · draft preview" : "Mock environment"}
+            {isLiveAdapterMode(draft.adapterMode)
+              ? "Live intake · draft preview"
+              : "Mock environment"}
           </span>
           {buildHref && (
             <a className="build-export" href={buildHref}>
@@ -496,11 +528,7 @@ export function BuildWorkspace({
                       built={built}
                       attack={attack}
                       review={review}
-                      onBuild={() => {
-                        setStep(0);
-                        setRunning(true);
-                        setConsoleOpen(true);
-                      }}
+                      onBuild={startBuild}
                       onAttack={(hardened) => void runAttack(hardened)}
                     />
                   )}
@@ -633,13 +661,28 @@ export function BuildWorkspace({
                     {needsFix ? "✓ Fix & re-attack" : "⚠ Attack"}
                   </button>
                 )}
-                <button
-                  className="build-deploy"
-                  disabled
-                  title="Connect the deployment service to publish"
-                >
-                  ↑ Publish
-                </button>
+                {liveUrl ? (
+                  <a
+                    className="build-deploy"
+                    href={liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ↗ Open live
+                  </a>
+                ) : (
+                  <button
+                    className="build-deploy"
+                    disabled
+                    title={
+                      realBuild
+                        ? "Build this reviewed brief to get a live URL"
+                        : "Connect the deployment service to publish"
+                    }
+                  >
+                    ↑ Publish
+                  </button>
+                )}
               </div>
             </div>
             {rightTab === "modules" ? (
@@ -650,14 +693,14 @@ export function BuildWorkspace({
                 draft={draft}
                 onChange={onChange}
                 onReview={() => setLeftTab("brief")}
-                onBuild={() => {
-                  setStep(0);
-                  setRunning(true);
-                  setConsoleOpen(true);
-                }}
+                onBuild={startBuild}
                 running={running}
               />
-            ) : rightTab === "preview" && !busy && !running && buildConnection && buildState.previewUrl ? (
+            ) : rightTab === "preview" &&
+              !busy &&
+              !running &&
+              buildConnection &&
+              buildState.previewUrl ? (
               <iframe
                 title="Running application preview"
                 src={buildState.previewUrl}
@@ -674,7 +717,7 @@ export function BuildWorkspace({
                     <i />
                   </span>
                   <span>
-                    https://{appSlug}.provn.app/
+                    {appPlan.name} · /
                     {appPage === "Home" ? "" : appPage.toLowerCase().replaceAll(" ", "-")}
                   </span>
                   <span className="build-wireframe-tag">SIMULATED BUILD</span>
@@ -705,42 +748,135 @@ export function BuildWorkspace({
             ) : rightTab === "preview" ? (
               <section className="agent-progress" aria-label="Agent progress">
                 <div className="agent-progress-heading">
-                  <span className="build-small-label">{running ? "BUILD IN PROGRESS" : "YOUR BUILD PLAN"}</span>
-                  <h2>{error || buildState.error ? "Let’s resolve this step" : paused ? "Ready when you are" : running || busy ? "Taking shape, step by step" : next ? "A little direction from you" : "From idea to preview"}</h2>
-                  <p>{running ? "Following the build sequence below." : next ? "Answer the question in chat to continue." : "Follow the progress here. Your product preview will appear when it is ready."}</p>
+                  <span className="build-small-label">
+                    {running ? "BUILD IN PROGRESS" : "YOUR BUILD PLAN"}
+                  </span>
+                  <h2>
+                    {error || buildState.error
+                      ? "Let’s resolve this step"
+                      : paused
+                        ? "Ready when you are"
+                        : running || busy
+                          ? "Taking shape, step by step"
+                          : next
+                            ? "A little direction from you"
+                            : "From idea to preview"}
+                  </h2>
+                  <p>
+                    {running
+                      ? "Following the build sequence below."
+                      : next
+                        ? "Answer the question in chat to continue."
+                        : "Follow the progress here. Your product preview will appear when it is ready."}
+                  </p>
                 </div>
                 <ol className="agent-progress-list">
-                  {(running ? stages : [...phaseNames, "Generate application preview"]).map((label, index) => {
-                    const done = running ? index < step : index < (reviewed ? 4 : buildStage);
-                    const current = running ? index === step : index === (reviewed ? 4 : buildStage);
-                    const blocked = current && Boolean(error || buildState.error);
-                    const waiting = current && (paused || Boolean(next) || (!running && reviewed));
-                    return <li key={label} className={`agent-progress-row ${done ? "is-done" : current ? "is-current" : ""}`} aria-current={current ? "step" : undefined}>
-                      <span className="agent-progress-check" aria-hidden="true">{done ? "✓" : blocked ? "!" : current && !waiting ? "•" : ""}</span>
-                      <div><strong>{label}</strong><span>{done ? "Completed" : blocked ? "Needs attention" : waiting ? "Waiting for your input" : current ? "In progress" : "Upcoming"}</span></div>
-                      <span className="agent-progress-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                    </li>;
-                  })}
+                  {(running ? stages : [...phaseNames, "Generate application preview"]).map(
+                    (label, index) => {
+                      const done = running ? index < step : index < (reviewed ? 4 : buildStage);
+                      const current = running
+                        ? index === step
+                        : index === (reviewed ? 4 : buildStage);
+                      const blocked = current && Boolean(error || buildState.error);
+                      const waiting =
+                        current && (paused || Boolean(next) || (!running && reviewed));
+                      return (
+                        <li
+                          key={label}
+                          className={`agent-progress-row ${done ? "is-done" : current ? "is-current" : ""}`}
+                          aria-current={current ? "step" : undefined}
+                        >
+                          <span className="agent-progress-check" aria-hidden="true">
+                            {done ? "✓" : blocked ? "!" : current && !waiting ? "•" : ""}
+                          </span>
+                          <div>
+                            <strong>{label}</strong>
+                            <span>
+                              {done
+                                ? "Completed"
+                                : blocked
+                                  ? "Needs attention"
+                                  : waiting
+                                    ? "Waiting for your input"
+                                    : current
+                                      ? "In progress"
+                                      : "Upcoming"}
+                            </span>
+                          </div>
+                          <span className="agent-progress-number" aria-hidden="true">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                        </li>
+                      );
+                    },
+                  )}
                 </ol>
-                <p className="agent-progress-note">{buildConnection ? "Progress follows the connected build service." : demo ? "Demo workflow · Build steps are simulated." : "Planning progress · No generated application yet."}</p>
+                <p className="agent-progress-note">
+                  {buildConnection
+                    ? "Progress follows the connected build service."
+                    : demo
+                      ? "Demo workflow · Build steps are simulated."
+                      : "Planning progress · No generated application yet."}
+                </p>
               </section>
+            ) : liveUrl ? (
+              <>
+                <div className="build-address">
+                  <span className="build-window-dots">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <a href={liveUrl} target="_blank" rel="noopener noreferrer">
+                    {liveUrl.replace("https://", "")}
+                  </a>
+                  <span className="build-wireframe-tag">LIVE ON VERCEL</span>
+                </div>
+                <iframe
+                  key={refreshKey}
+                  title="Live application"
+                  src={liveUrl}
+                  sandbox="allow-scripts allow-forms allow-same-origin"
+                  referrerPolicy="no-referrer"
+                  style={{ width: "100%", flex: 1, border: 0, background: "white" }}
+                />
+              </>
             ) : (
               <div className="build-live-empty">
                 <div className="build-live-icon">↗</div>
                 <span className="build-small-label">DEPLOYMENT</span>
-                <h2>Your next stop: live.</h2>
+                <h2>{latest ? "Your build is on its way." : "Your next stop: live."}</h2>
                 <p>
-                  No application has been deployed yet. Connect the build and hosting services to
-                  turn your reviewed brief into a live URL.
+                  {!realBuild
+                    ? "No application has been deployed yet. Connect the build and hosting services to turn your reviewed brief into a live URL."
+                    : latest
+                      ? "Claude is writing and checking your app. It appears here when Vercel has deployed it."
+                      : "Build this reviewed brief: Claude writes the code, we check it, and Vercel hosts it at a live URL."}
                 </p>
                 <div>
                   <span>Build service</span>
-                  <b>Not connected</b>
+                  <b>
+                    {realBuild
+                      ? latest
+                        ? latest.status.replaceAll("_", " ")
+                        : "Ready"
+                      : "Not connected"}
+                  </b>
                   <span>Hosting provider</span>
-                  <b>Not connected</b>
+                  <b>{realBuild ? "Vercel" : "Not connected"}</b>
                   <span>Live URL</span>
-                  <b>Not available</b>
+                  <b>Not available yet</b>
                 </div>
+                {realBuild && latestHref && (
+                  <a href={latestHref} className="build-inline-button">
+                    Follow the build ↗
+                  </a>
+                )}
+                {realBuild && !latest && (
+                  <button onClick={startBuild} className="build-inline-button">
+                    Build for real ↗
+                  </button>
+                )}
                 <button onClick={() => setRightTab("preview")} className="build-inline-button">
                   Back to preview
                 </button>
@@ -758,12 +894,15 @@ export function BuildWorkspace({
                 <button
                   className="build-run"
                   onClick={() => {
-                    setModule("cost");
-                    setRightTab("modules");
+                    if (realBuild) startBuild();
+                    else {
+                      setModule("cost");
+                      setRightTab("modules");
+                    }
                   }}
                   disabled={running}
                 >
-                  {running ? "Running…" : "Review cost & run"}
+                  {running ? "Running…" : realBuild ? "Build for real ↗" : "Review cost & run"}
                 </button>
               </div>
               {consoleOpen && (
@@ -794,8 +933,7 @@ export function BuildWorkspace({
                   )}
                   {built && (
                     <p>
-                      <span className="terminal-green">PREVIEW</span> {appSlug}.provn.app ·
-                      simulated app, not deployed
+                      <span className="terminal-green">PREVIEW</span> simulated app, not deployed
                     </p>
                   )}
                   {attack.kind === "running" &&
