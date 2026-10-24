@@ -66,14 +66,16 @@ let claimFailures = 0;
 while (!stopping) {
   const claimed = await db.rpc("claim_studio_build", { p_worker: worker });
   if (claimed.error) {
-    // A network or database blip must not take the build service offline; a persistent error does.
-    claimFailures++;
+    // Network loss (Wi-Fi drop, laptop sleep) is waited out indefinitely; only repeated database
+    // errors, such as a missing migration, stop the worker.
+    const offline = /fetch failed|ECONN|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(claimed.error.message);
+    if (!offline) claimFailures++;
     console.error(
-      `[worker] claim failed (${claimFailures}/${MAX_CLAIM_FAILURES}): ${claimed.error.message}`,
+      `[worker] claim failed${offline ? " (offline, retrying)" : ` (${claimFailures}/${MAX_CLAIM_FAILURES})`}: ${claimed.error.message}`,
     );
     if (claimFailures >= MAX_CLAIM_FAILURES)
       throw new Error("Worker claim keeps failing. Verify migrations and database access.");
-    await delay(Math.min(60_000, 2_000 * 2 ** claimFailures));
+    await delay(offline ? 30_000 : Math.min(60_000, 2_000 * 2 ** claimFailures));
     continue;
   }
   claimFailures = 0;
