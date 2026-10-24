@@ -8,17 +8,14 @@ import {
   signInViaGeneratedLink,
 } from "./helpers";
 
-test("landing shows the pitch and Price my idea goes to sign-in", async ({ page }) => {
+test("landing shows PROVN onboarding and sign-in remains accessible", async ({ page }) => {
   await page.goto("/");
-  await expect(
-    page.getByRole("heading", { name: "Know the price before you build." }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      "Tell us your idea, see what it costs before you spend a rupee, approve it, and we build and deploy it securely.",
-    ),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "Price my idea" }).click();
+  await expect(page).toHaveURL(/\/prompt-studio-demo$/);
+  await expect(page.getByRole("heading", { name: "A workspace that fits you." })).toBeVisible();
+  await page.getByRole("button", { name: "Continue to my workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Every build, proven." })).toBeVisible();
+  await expect(page.getByLabel("Describe your product")).toBeVisible();
+  await page.getByRole("link", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/signin/);
 });
 
@@ -39,7 +36,7 @@ test("email sign-up through the form", async ({ page }) => {
   await expect(page).toHaveURL(/\/apps$/);
   await expect(page.getByRole("heading", { name: "My apps" })).toBeVisible();
   await expect(
-    page.getByText("No apps yet. Describe an idea and get a price in under a minute."),
+    page.getByText("Start with an idea. Shape it into a clear product brief."),
   ).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
 });
@@ -58,7 +55,7 @@ test("signed-in /signin redirects to /apps", async ({ page }) => {
 test("sign out returns to landing and /apps redirects again", async ({ page }) => {
   await signInViaGeneratedLink(page, freshEmail("signout"));
   await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/prompt-studio-demo$/);
   await page.goto("/apps");
   await expect(page).toHaveURL(/\/signin/);
 });
