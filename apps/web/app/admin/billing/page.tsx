@@ -55,9 +55,9 @@ async function Billing() {
     </header>
     <p className="rounded-xl border border-rule bg-surface p-4 text-sm text-slate">The supplied receipt awaits bank verification. The other six entries are sample data with fictional payment histories. These records do not contribute to verified revenue or wallet balances.</p>
     <div className="overflow-x-auto rounded-2xl border border-rule bg-surface">
-      <table className="w-full min-w-[1000px] text-left text-sm">
-        <caption className="sr-only">Seven payment records with transaction details and activity logs</caption>
-        <thead className="border-b border-rule text-slate"><tr>{["Customer", "Amount", "Credits", "Date", "Status shown", "Source", "Details & logs"].map(h => <th key={h} scope="col" className="px-5 py-4 font-medium">{h}</th>)}</tr></thead>
+      <table className="w-full min-w-[800px] text-left text-sm">
+        <caption className="sr-only">Seven payment records</caption>
+        <thead className="border-b border-rule text-slate"><tr>{["Customer", "Amount", "Credits", "Date", "Status shown", "Source"].map(h => <th key={h} scope="col" className="px-5 py-4 font-medium">{h}</th>)}</tr></thead>
         <tbody>{rows.map(row => <tr key={row.reference} className="border-b border-rule align-top last:border-0">
           <th scope="row" className="px-5 py-5 font-semibold">{row.name}</th>
           <td className="whitespace-nowrap px-5 py-5">₹{row.amount.toLocaleString("en-IN")}</td>
@@ -65,19 +65,7 @@ async function Billing() {
           <td className="whitespace-nowrap px-5 py-5">{row.date}</td>
           <td className="px-5 py-5">Completed</td>
           <td className="whitespace-nowrap px-5 py-5 text-go">{row.source}</td>
-          <td className="min-w-72 px-5 py-5"><details><summary className="cursor-pointer text-go">View details & logs</summary>
-            <dl className="mt-4 space-y-3">{Object.entries({
-              "Bank": row.bank, "UPI transaction ID": row.reference,
-              "To": row.recipient, "Recipient UPI": row.recipientUpi,
-              "From": row.sender, "Sender UPI": row.senderUpi,
-              "Google transaction ID": row.googleId, "Payment app": "Google Pay",
-              "Recipient app": "PhonePe", "Network": "UPI", "Avatar": "R",
-              "Receipt action": "Pay again (display text)",
-              "Credit allocation": row.source === "Supplied receipt" ? "Not granted" : "Sample allocation",
-            }).map(([label,value]) => <div key={label}><dt className="text-xs text-slate">{label}</dt><dd className="mt-1 break-words">{value}</dd></div>)}</dl>
-            <h2 className="mt-5 font-semibold">Activity log</h2>
-            <ol className="mt-3 list-inside list-decimal space-y-2 text-slate">{row.logs.map(log => <li key={log}>{log}</li>)}</ol>
-          </details></td>
+
         </tr>)}</tbody>
       </table>
     </div>
