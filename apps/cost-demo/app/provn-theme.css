@@ -1,0 +1,15 @@
+/* PROVN visual contract, matched to Prompt Studio's orbital theme.
+   Import in other module layouts; keep feature-specific layout rules separate. */
+:root {
+  --provn-bg: #151c24;
+  --provn-surface: #18222ce8;
+  --provn-surface-raised: #27323ee8;
+  --provn-text: #f3f0e9;
+  --provn-muted: #bbc3cc;
+  --provn-gold: #e5bd8b;
+  --provn-gold-light: #f0c79b;
+  --provn-rule: #e5bd8b30;
+  --provn-radius: 20px;
+  --provn-font: var(--font-studio), Inter, Arial, sans-serif;
+  --provn-shadow: 0 16px 60px #0003;
+}

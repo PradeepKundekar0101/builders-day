@@ -3,15 +3,13 @@
 }
 body {
   margin: 0;
-  background: #f7f8f5;
-  color: #172c28;
-  font:
-    15px/1.5 Arial,
-    Helvetica,
-    sans-serif;
+  background: var(--provn-bg);
+  color: var(--provn-text);
+  font: 14px/1.5 var(--provn-font);
 }
 button,
-input {
+input,
+select {
   font: inherit;
 }
 button,
@@ -21,27 +19,26 @@ input {
 }
 button {
   cursor: pointer;
-  border: 1px solid #d4ded6;
-  border-radius: 8px;
-  background: white;
+  border: 1px solid var(--provn-rule);
+  border-radius: 30px;
+  background: var(--provn-surface-raised);
   padding: 10px 14px;
-  color: #20463b;
-  font-weight: 600;
+  color: var(--provn-text);
+  font-weight: 500;
 }
 button:hover:not(:disabled) {
-  background: #edf4ec;
+  background: var(--provn-surface-raised);
 }
 button:disabled {
   opacity: 0.48;
   cursor: default;
 }
 header {
-  height: 80px;
-  border-bottom: 1px solid #dce3db;
+  min-height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5vw;
+  padding: 20px 48px;
   gap: 16px;
 }
 .brand {
@@ -51,72 +48,79 @@ header {
   color: inherit;
   text-decoration: none;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
 }
 .mark {
   display: grid;
   place-items: center;
-  background: #245744;
-  color: white;
+  background: var(--provn-gold);
+  color: var(--provn-bg);
   width: 30px;
   height: 30px;
   border-radius: 8px;
 }
 .divider {
-  color: #b9c8bc;
+  color: var(--provn-rule);
   margin: 0 10px;
 }
 .muted {
-  color: #65766a;
+  color: var(--provn-muted);
   font-weight: 400;
 }
 .badge {
   font-size: 10px;
   letter-spacing: 1.2px;
-  background: #e8eee4;
+  background: var(--provn-surface-raised);
   padding: 7px 10px;
   border-radius: 5px;
-  font-weight: 700;
+  font-weight: 500;
 }
 main {
   max-width: 1180px;
   margin: auto;
-  padding: 45px 28px;
+  padding: 16px 28px 36px;
 }
 .intro {
-  margin-bottom: 34px;
+  margin: 12px auto 36px;
+  text-align: center;
 }
 .eyebrow {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 1.8px;
-  color: #648270;
+  color: var(--provn-muted);
   margin: 0 0 14px;
 }
 h1 {
-  font-size: 48px;
+  font-size: clamp(38px, 4.4vw, 60px);
+  font-weight: 400;
   line-height: 1.08;
   letter-spacing: -2px;
   margin: 0 0 18px;
 }
 h2 {
   font-size: 23px;
+  font-weight: 400;
   letter-spacing: -0.6px;
   margin: 0;
 }
 .intro > p:last-child {
-  color: #65766a;
+  color: var(--provn-muted);
   max-width: 560px;
+  margin-inline: auto;
 }
 .workspace {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
+  align-items: start;
   gap: 24px;
 }
 .card {
-  border: 1px solid #dce3db;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--provn-rule);
+  border-radius: var(--provn-radius);
+  box-shadow: var(--provn-shadow);
+  backdrop-filter: blur(18px);
+  background: var(--provn-surface);
   padding: 28px;
 }
 .section-heading {
@@ -131,27 +135,27 @@ h2 {
 .tag {
   display: inline-block;
   font-size: 11px;
-  border: 1px solid #dce3db;
+  border: 1px solid var(--provn-rule);
   border-radius: 20px;
   padding: 5px 10px;
-  color: #536a58;
+  color: var(--provn-muted);
 }
 .feature {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 15px 0;
-  border-top: 1px solid #edf0ea;
+  border-top: 1px solid var(--provn-rule);
 }
 .feature input {
-  accent-color: #245744;
+  accent-color: var(--provn-gold);
   width: 17px;
   height: 17px;
 }
 .feature small {
   display: block;
   font-size: 11px;
-  color: #879185;
+  color: var(--provn-muted);
 }
 .feature-cost {
   margin-left: auto;
@@ -160,7 +164,7 @@ h2 {
 }
 .note {
   font-size: 12px;
-  color: #6d7c70;
+  color: var(--provn-muted);
 }
 .price {
   font-size: 64px;
@@ -169,14 +173,14 @@ h2 {
   margin-top: 18px;
 }
 .range {
-  color: #65766a;
+  color: var(--provn-muted);
   margin-top: 2px;
 }
 .metrics {
   display: flex;
   gap: 46px;
   padding: 18px 0;
-  border-top: 1px solid #e4e9e1;
+  border-top: 1px solid var(--provn-rule);
 }
 .metrics strong {
   display: block;
@@ -184,7 +188,7 @@ h2 {
 }
 .metrics span {
   font-size: 12px;
-  color: #65766a;
+  color: var(--provn-muted);
 }
 dl {
   margin: 8px 0 20px;
@@ -195,49 +199,49 @@ dl div {
   padding: 7px 0;
 }
 dd {
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
 }
 .budget-line {
-  border-top: 1px solid #e4e9e1;
+  border-top: 1px solid var(--provn-rule);
   margin-top: 9px;
   padding-top: 13px !important;
 }
 .primary {
   width: 100%;
-  background: #245744;
-  color: white;
+  background: var(--provn-gold);
+  color: var(--provn-bg);
   margin-top: 10px;
   padding: 13px;
 }
 .primary:hover:not(:disabled) {
-  background: #163f30;
+  background: var(--provn-gold-light);
 }
 .alternatives {
-  border-top: 1px solid #e4e9e1;
+  border-top: 1px solid var(--provn-rule);
   margin-top: 24px;
   padding-top: 20px;
 }
 .alternatives > label {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 13px;
 }
 .alternatives > input {
   width: 80px;
   padding: 6px;
-  border: 1px solid #cbd7cb;
+  border: 1px solid var(--provn-rule);
   border-radius: 6px;
   float: right;
 }
 .suggestion {
   margin-top: 16px;
   padding: 14px;
-  background: #f3f6ef;
+  background: var(--provn-surface-raised);
   border-radius: 8px;
   font-size: 13px;
 }
 .suggestion p {
-  color: #65766a;
+  color: var(--provn-muted);
 }
 .guard {
   margin-top: 24px;
@@ -250,7 +254,7 @@ dd {
 }
 .guard-grid span {
   display: block;
-  color: #65766a;
+  color: var(--provn-muted);
   font-size: 12px;
 }
 .guard-grid strong {
@@ -260,13 +264,13 @@ dd {
 }
 .meter {
   height: 7px;
-  background: #edf1e9;
+  background: var(--provn-surface-raised);
   border-radius: 8px;
   overflow: hidden;
 }
 .meter > div {
   height: 100%;
-  background: #659578;
+  background: var(--provn-gold);
   transition: width 0.25s;
 }
 .actions {
@@ -279,33 +283,33 @@ dd {
   font-size: 12px;
 }
 .log {
-  border-top: 1px solid #e4e9e1;
+  border-top: 1px solid var(--provn-rule);
   margin-top: 23px;
   font-size: 12px;
-  color: #65766a;
+  color: var(--provn-muted);
 }
 .log p {
   display: flex;
   gap: 14px;
 }
 .log span {
-  color: #93a08e;
+  color: var(--provn-muted);
   font-variant-numeric: tabular-nums;
 }
 .warning {
-  background: #fff1d7;
-  color: #865a0f;
+  background: #e5bd8b22;
+  color: var(--provn-gold-light);
 }
 .error {
-  color: #a33426;
+  color: #ffb8ac;
 }
 .success {
-  color: #245744;
+  color: var(--provn-gold);
   font-size: 13px;
 }
 footer {
   font-size: 12px;
-  color: #7c897b;
+  color: var(--provn-muted);
   margin: 25px 0;
   max-width: 800px;
 }
@@ -339,5 +343,217 @@ footer {
   }
   .price {
     font-size: 54px;
+  }
+}
+
+/* The same orbital art, wordmark, typography and controls as Prompt Studio. */
+body {
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, #151c2444, #151c2466 50%, #151c24dd),
+    url("/images/provn-orbit.jpg") center 30% / cover no-repeat;
+  pointer-events: none;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+nav a {
+  color: var(--provn-text);
+  text-decoration: none;
+  font-size: 13px;
+}
+nav a[aria-current] {
+  border: 1px solid #e5bd8b80;
+  border-radius: 30px;
+  padding: 10px 20px;
+}
+nav a span {
+  margin-left: 18px;
+}
+nav a:hover {
+  color: var(--provn-gold);
+}
+.provn-logo-mark {
+  color: var(--provn-gold);
+  flex-shrink: 0;
+}
+.provn-logo-word {
+  letter-spacing: 4px;
+  font-size: 20px;
+  font-weight: 400;
+}
+h1 em {
+  color: var(--provn-gold-light);
+  font-weight: 400;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.workspace-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 0 4px 16px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--provn-muted);
+}
+.badge {
+  border-radius: 30px;
+  border: 1px solid var(--provn-rule);
+  color: var(--provn-gold-light);
+}
+.estimate {
+  border-color: #e5bd8b70;
+}
+.price {
+  color: var(--provn-gold-light);
+  font-weight: 400;
+}
+.estimate > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--provn-muted);
+}
+select,
+input[type="number"] {
+  color: var(--provn-text);
+  background: var(--provn-surface-raised);
+  border: 1px solid #72808c;
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: 100%;
+}
+option {
+  background: var(--provn-bg);
+  color: var(--provn-text);
+}
+button {
+  min-height: 42px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+button:hover:not(:disabled) {
+  border-color: var(--provn-gold);
+}
+:focus-visible {
+  outline: 2px solid var(--provn-gold-light);
+  outline-offset: 4px;
+}
+.feature:has(input:checked) > span:first-of-type {
+  color: var(--provn-text);
+}
+.feature:has(input:not(:checked)) {
+  color: var(--provn-muted);
+}
+.primary {
+  color: var(--provn-bg);
+  border-color: var(--provn-gold);
+}
+.guard-grid strong {
+  font-variant-numeric: tabular-nums;
+}
+.section-heading + .guard-grid {
+  background: #151c2480;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--provn-rule);
+}
+footer {
+  line-height: 1.8;
+}
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  padding: 12px;
+  background: var(--provn-bg);
+  color: var(--provn-text);
+  z-index: 5;
+}
+.skip-link:focus {
+  top: 10px;
+}
+#cost-workspace {
+  scroll-margin-top: 24px;
+}
+@media (max-width: 720px) {
+  header {
+    padding: 16px 20px;
+  }
+  nav {
+    gap: 12px;
+  }
+  nav a {
+    font-size: 11px;
+  }
+  nav a[aria-current] {
+    padding: 8px 12px;
+  }
+  nav a span {
+    margin-left: 8px;
+  }
+  .provn-logo-word {
+    font-size: 16px;
+    letter-spacing: 3px;
+  }
+  .provn-logo-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .intro {
+    margin-top: 16px;
+  }
+  .intro > p:last-child {
+    font-size: 13px;
+  }
+  .workspace-bar {
+    font-size: 9px;
+  }
+  .card {
+    padding: 20px;
+  }
+  .guard-grid {
+    gap: 16px;
+  }
+  .guard-grid strong {
+    font-size: 25px;
+  }
+  .estimate > label {
+    flex-wrap: wrap;
+  }
+  .actions button {
+    flex: 1 1 150px;
+  }
+  .alternatives > input {
+    float: none;
+    display: block;
+    margin-top: 10px;
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
