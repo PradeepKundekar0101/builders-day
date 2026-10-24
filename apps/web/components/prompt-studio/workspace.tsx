@@ -890,7 +890,7 @@ export function BuildWorkspace({
                 <button onClick={() => setConsoleOpen(!consoleOpen)} aria-expanded={consoleOpen}>
                   <span>›_</span> Build console <span>{consoleOpen ? "⌄" : "⌃"}</span>
                 </button>
-                <span className="build-sim-label">SIMULATED OUTPUT</span>
+                {!realBuild && <span className="build-sim-label">SIMULATED OUTPUT</span>}
                 <button
                   className="build-run"
                   onClick={() => {
@@ -902,34 +902,69 @@ export function BuildWorkspace({
                   }}
                   disabled={running}
                 >
-                  {running ? "Running…" : realBuild ? "Build for real ↗" : "Review cost & run"}
+                  {running
+                    ? "Running…"
+                    : realBuild
+                      ? latest
+                        ? "Build again ↗"
+                        : "Build for real ↗"
+                      : "Review cost & run"}
                 </button>
               </div>
               {consoleOpen && (
                 <div className="build-terminal-output" role="log" aria-live="polite" ref={terminal}>
-                  <p>
-                    <span className="terminal-muted">provn / studio</span>{" "}
-                    <span className="terminal-green">$</span> preview --mock
-                  </p>
-                  <p className="terminal-muted">
-                    Build adapter is not connected. This console simulates lifecycle events.
-                  </p>
-                  {step < 0 ? (
-                    <p>
-                      <span className="terminal-amber">WAIT</span> Ready to simulate. No code
-                      execution, spending, or deployment.
-                    </p>
-                  ) : (
-                    stages.slice(0, step + 1).map((line, i) => (
-                      <p key={line}>
-                        <span
-                          className={i === stages.length - 1 ? "terminal-amber" : "terminal-green"}
-                        >
-                          [{i === stages.length - 1 ? "MOCK" : " OK "}]
-                        </span>{" "}
-                        {line}
+                  {realBuild ? (
+                    <>
+                      <p>
+                        <span className="terminal-muted">provn / studio</span>{" "}
+                        <span className="terminal-green">$</span> build
                       </p>
-                    ))
+                      {liveUrl ? (
+                        <p>
+                          <span className="terminal-green">LIVE</span>{" "}
+                          {liveUrl.replace("https://", "")}
+                        </p>
+                      ) : latest ? (
+                        <p>
+                          <span className="terminal-amber">BUILD</span>{" "}
+                          {latest.status.replaceAll("_", " ")} · follow it on the build page
+                        </p>
+                      ) : (
+                        <p>
+                          <span className="terminal-amber">WAIT</span> Ready. Build for real to have
+                          Claude write, check and deploy this app.
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p>
+                        <span className="terminal-muted">provn / studio</span>{" "}
+                        <span className="terminal-green">$</span> preview --mock
+                      </p>
+                      <p className="terminal-muted">
+                        Build adapter is not connected. This console simulates lifecycle events.
+                      </p>
+                      {step < 0 ? (
+                        <p>
+                          <span className="terminal-amber">WAIT</span> Ready to simulate. No code
+                          execution, spending, or deployment.
+                        </p>
+                      ) : (
+                        stages.slice(0, step + 1).map((line, i) => (
+                          <p key={line}>
+                            <span
+                              className={
+                                i === stages.length - 1 ? "terminal-amber" : "terminal-green"
+                              }
+                            >
+                              [{i === stages.length - 1 ? "MOCK" : " OK "}]
+                            </span>{" "}
+                            {line}
+                          </p>
+                        ))
+                      )}
+                    </>
                   )}
                   {built && (
                     <p>
@@ -989,9 +1024,20 @@ export function BuildWorkspace({
             <footer className="build-runtime-footer">
               <span>
                 <i />
-                {running ? "Simulation running" : "Local preview"}
+                {realBuild
+                  ? liveUrl
+                    ? "Live on Vercel"
+                    : latest
+                      ? `Build ${latest.status.replaceAll("_", " ")}`
+                      : "Ready to build"
+                  : running
+                    ? "Simulation running"
+                    : "Local preview"}
               </span>
-              <span>{demo ? "Demo workspace" : "Draft workspace"} · Nothing published</span>
+              <span>
+                {demo ? "Demo workspace" : "Draft workspace"} ·{" "}
+                {liveUrl ? `Published at ${liveUrl.replace("https://", "")}` : "Nothing published"}
+              </span>
             </footer>
           </section>
         </div>
