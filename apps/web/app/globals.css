@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-ink: #13203a;
+  --color-slate: #5a6478;
+  --color-rule: #d9dee7;
+  --color-go: #17795e;
+  --color-go-hover: #11604a;
+  --color-marker: #ffe066;
+  --color-danger: #b42318;
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-go);
+  outline-offset: 2px;
+}
