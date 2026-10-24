@@ -13,7 +13,9 @@ test("landing shows PROVN onboarding and sign-in remains accessible", async ({ p
   await expect(page).toHaveURL(/\/prompt-studio-demo$/);
   await expect(page.getByRole("heading", { name: "A workspace that fits you." })).toBeVisible();
   await page.getByRole("button", { name: "Continue to my workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Every build, proven." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Turn your ideas into production-grade platforms." }),
+  ).toBeVisible();
   await expect(page.getByLabel("Describe your product")).toBeVisible();
   await page.getByRole("link", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/signin/);
@@ -60,11 +62,12 @@ test("sign out returns to landing and /apps redirects again", async ({ page }) =
   await expect(page).toHaveURL(/\/signin/);
 });
 
-test("Continue with Google starts the OAuth flow", async ({ page }) => {
+test("email magic links are the only sign-in option", async ({ page }) => {
   await page.goto("/signin");
-  const authorize = page.waitForRequest(/\/auth\/v1\/authorize\?provider=google/);
-  await page.getByRole("button", { name: "Continue with Google" }).click();
-  await authorize;
+  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
 
 test("bad token shows an error", async ({ page }) => {

@@ -768,30 +768,9 @@ export function PromptStudio({
             <span aria-hidden="true">↗</span>
           </a>
         </nav>
-        <header className="studio-hero">
-          <p className="studio-eyebrow">
-            <span /> YOUR IDEAS. BEYOND POSSIBILITY.
-          </p>
-          <h1>
-            {draft ? (
-              <>
-                Good ideas grow
-                <br />
-                with <em>a little clarity.</em>
-              </>
-            ) : (
-              <>
-                Every build,
-                <br />
-                <em>proven.</em>
-              </>
-            )}
-          </h1>
-          <p className="studio-subtitle">
-            {draft
-              ? "A few thoughtful details. A brief that feels like you."
-              : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
-          </p>
+        <header className="studio-hero studio-hero-single">
+          <h1>Turn your ideas into production-grade platforms.</h1>
+          <h2 className="studio-build-subheading">What do you want to build?</h2>
         </header>
         <div className="studio-content">
           {error && (
@@ -808,7 +787,6 @@ export function PromptStudio({
           {
             <div className="studio-welcome">
               <div className="studio-input-panel">
-                <p className="portal-input-label">What do you want to build?</p>
                 <label className="studio-live-toggle">
                   <input
                     type="checkbox"
