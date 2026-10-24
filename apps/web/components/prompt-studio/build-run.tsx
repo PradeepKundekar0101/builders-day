@@ -21,6 +21,7 @@ type Status = {
   message: string;
   steps: { message: string }[];
   downloadUrl?: string;
+  liveUrl?: string;
   build: { spent_usd: number; budget_usd: number };
 };
 async function post(url: string, body: unknown) {
@@ -64,7 +65,7 @@ export default function BuildRun() {
         if (!res.ok) throw new Error(data.error);
         if (stopped) return;
         setStatus(data);
-        if (!["ready", "failed", "needs_review", "paused_budget"].includes(data.status))
+        if (!["ready", "live", "failed", "needs_review", "paused_budget"].includes(data.status))
           timer = setTimeout(poll, 1500);
       } catch (e) {
         if (!stopped) setError(e instanceof Error ? e.message : "Build connection failed");
@@ -97,8 +98,9 @@ export default function BuildRun() {
     resumed.current = key;
     void estimate();
   }, [resume, run, session, revision, estimate]);
+  const hasPrepared = prepared !== null;
   useEffect(() => {
-    if (!prepared || run) return;
+    if (!hasPrepared || run) return;
     let stopped = false;
     const refresh = async () => {
       try {
@@ -118,7 +120,7 @@ export default function BuildRun() {
       stopped = true;
       window.removeEventListener("focus", onFocus);
     };
-  }, [!!prepared, run]);
+  }, [hasPrepared, run]);
   async function start() {
     if (!prepared || !approved) return;
     setBusy(true);
@@ -170,11 +172,15 @@ export default function BuildRun() {
       <h1 className="mt-3 text-3xl font-semibold">
         {!run
           ? "Review and start your build"
-          : status?.status === "ready"
-            ? "Your product source is ready"
-            : status?.status === "needs_review"
-              ? "Your build needs review"
-              : "Your product is building"}
+          : status?.status === "live"
+            ? "Your app is live"
+            : status?.status === "deploying"
+              ? "Deploying your app"
+              : status?.status === "ready"
+                ? "Your product source is ready"
+                : status?.status === "needs_review"
+                  ? "Your build needs review"
+                  : "Your product is building"}
       </h1>
       <p className="mt-4 text-slate">
         Generate a downloadable Next.js app with pages, email login and private CRUD data.
@@ -278,6 +284,26 @@ export default function BuildRun() {
               <li key={i}>{step.message}</li>
             ))}
           </ol>
+          {status?.liveUrl && (
+            <div className="mt-6">
+              <a
+                className="studio-button inline-block"
+                href={status.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open live app ↗
+              </a>
+              <p className="mt-2 break-all text-sm text-slate">{status.liveUrl}</p>
+              <iframe
+                title="Live app preview"
+                src={status.liveUrl}
+                sandbox="allow-scripts allow-forms allow-same-origin"
+                referrerPolicy="no-referrer"
+                className="mt-4 h-[560px] w-full rounded-xl border border-rule bg-white"
+              />
+            </div>
+          )}
           {status?.downloadUrl && (
             <a className="studio-button mt-6 inline-block" href={status.downloadUrl}>
               Download product source
