@@ -23,6 +23,19 @@ export type Database = {
   };
   public: {
     Tables: {
+      prompt_studio_sessions: {
+        Row: { id: string; user_id: string; revision: number; created_at: string };
+        Insert: { id: string; user_id: string; revision?: number; created_at?: string };
+        Update: { id?: string; user_id?: string; revision?: number; created_at?: string };
+        Relationships: [];
+      };
+      prompt_studio_versions: {
+        Row: { session_id: string; revision: number; mutation_id: string; payload: Json; status: string; created_at: string };
+        Insert: { session_id: string; revision: number; mutation_id: string; payload: Json; status: string; created_at?: string };
+        Update: { session_id?: string; revision?: number; mutation_id?: string; payload?: Json; status?: string; created_at?: string };
+        Relationships: [];
+      };
+
       approvals: {
         Row: {
           decided_at: string | null;
@@ -511,6 +524,11 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      save_prompt_studio: {
+        Args: { p_session_id: string; p_user_id: string; p_expected_revision: number; p_mutation_id: string; p_payload: Json; p_status: string };
+        Returns: Json;
+      };
+
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
       released_url: { Args: { p_build_id: string }; Returns: string };
     };
