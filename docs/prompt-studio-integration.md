@@ -1,21 +1,21 @@
-# Conduit Prompt Studio integration
+# PROVN Prompt Studio integration
 
-Native integration for `PradeepKundekar0101/builders-day`, based on commit `39501f2ba9e3794cc703662f71affc28db650b2a`. This module is a working mock-backed intake interface, not a live AI product generator.
+Native integration for `PradeepKundekar0101/builders-day`, based on commit `39501f2ba9e3794cc703662f71affc28db650b2a`. This module includes mock intake, opt-in server-side OpenAI intake, versioned drafts, and a host build-event connector. It does not generate or deploy applications by itself.
 
 ## Run
 
 Use Node 26 and the repo's pnpm 12.4.2. Run `pnpm install --frozen-lockfile`. Configure the existing public Supabase URL, anon key, and site URL variables from `.env.example` in `apps/web/.env.local`, plus `SUPABASE_SERVICE_ROLE_KEY` on the server only. Run `pnpm --filter web dev`.
 
-- `/prompt-studio-demo`: public interactive demo; no persistence or model calls.
+- `/prompt-studio-demo`: public interactive demo with no persistence. Optional live AI still requires configured credentials and verified sign-in.
 - `/apps/new`: signed-in studio; saves require the migration and service-role key.
 - `/apps/new?session=<uuid>`: reload a saved draft. Keep its URL to return to it.
-- `/apps`: entry link to the studio.
+- `/apps`: entry link and owner-scoped saved-draft list.
 
 For an isolated UI preview only, localhost Supabase URL and a non-secret placeholder anon key are enough, as long as there is no signed-in session. They do not enable storage or authentication.
 
 ## User flow
 
-Describe an idea (50–2,000 characters), or use browser speech transcription. The browser may transmit audio to its speech service; voice is optional and capability-dependent. A clearly labeled mock suggests a starting page and three questions. Users edit the brief, pages, acceptance checks, and canonical Spec JSON. Answers feed directly into visible instructions; the mock does not infer new features from them.
+Describe an idea (50–2,000 characters), or use browser speech transcription. The browser may transmit audio to its speech service; voice is optional and capability-dependent. The labelled mock suggests a starting page and three staged questions. Live intake starts with a layout brief and asks at most one new blocking question per response. Users edit the brief, pages, acceptance checks, and canonical Spec JSON. Answers feed directly into visible instructions; the mock does not infer new features from them.
 
 Review requires valid fields, answers to every open question, and an explicit review checkbox. Export downloads a sanitized draft, or a reviewed instruction bundle when review is checked. Saving creates immutable versions and stores intake messages. User review does not approve an operator gate, quote, payment, deployment, or build.
 
@@ -30,7 +30,7 @@ Review requires valid fields, answers to every open question, and an explicit re
 - `createStudioReview`: downstream handoff (`status: user_reviewed`), not spending authorization.
 - `sanitizeStudioDraft`: baseline credential/contact masking and removal of link query credentials; not comprehensive DLP.
 
-Replace mock interpretation with a server endpoint to AgenticOrg. Keep provider credentials server-side. Validate agent responses with the shared schema, preserve unresolved decisions and bind server-issued provenance to the saved session. Saved `adapterMode` is editable display metadata, never trusted provenance or spending authority.
+To add another provider, implement it behind a server endpoint using the same validated draft contract. Keep provider credentials server-side. Validate agent responses with the shared schema, preserve unresolved decisions and bind server-issued provenance to the saved session. Saved `adapterMode` is editable display metadata, never trusted provenance or spending authority.
 
 Connect the estimator to the reviewed bundle only after implementing server-side budget and operator gates. Do not treat exported JSON or the user-review checkbox as trusted approval. The instruction preview covers this module's payload; downstream agents must expose any additional policy/context separately.
 
@@ -46,11 +46,11 @@ Database types include the new tables/RPC. Regenerate using `pnpm db:types` afte
 
 ## Validation
 
-- 36 shared/web unit tests pass, including input limits, canonical spec validation, open-decision gate, masking, origin checks, malformed JSON and byte limits.
+- 54 shared/web unit tests pass, including input limits, canonical spec validation, open-decision gate, masking, origin checks, malformed JSON and byte limits.
 - Web TypeScript checks, web ESLint and production Next build pass using placeholder public environment values.
 - Browser checked: example idea, clarification answers, editable fields, review gate, mock-only review notice and visible instruction payload.
 - Isolated PostgreSQL-compatible PGlite check validates migration execution, idempotency, stale-write conflicts, cross-owner rejection, owner read policies and blocked direct mutations/RPC for authenticated clients. Run `scripts/prompt-studio/check-migration.mjs` with `PGLITE_MODULE` pointing at an installed PGlite module. This uses minimal auth/ideas fixtures and does not replace the full Supabase suite.
-- Live Supabase authentication/save/reload, actual microphone transcription and real provider generation have not been verified. Docker/Supabase were not available for the full database suite.
+- Cloud Supabase, microphone transcription and real provider generation are not verified locally. The repository CI provides local Supabase coverage; see the follow-up PR for authenticated version-history browser results.
 
 ## Before production
 
@@ -76,4 +76,4 @@ Preview URLs must be HTTPS, have no embedded credentials, match a host-supplied 
 
 ## Current validation and activation
 
-Local environment has no live model or Supabase credentials. Unit tests cover save retry identities and build-event validation. The added Supabase browser test covers create, idempotent retry, version conflict, list/resume, non-destructive restore and cross-owner isolation. Run it in CI/local Supabase before rollout. Live-model relevance, real engine connectivity, cloud persistence and the Vercel deployment remain separate activation tasks. No migration to a remote database has been performed.
+Local environment has no live model or Supabase credentials. Unit tests cover save retry identities and build-event validation. The added Supabase browser test covers create, idempotent retry, version conflict, list/resume, non-destructive restore and cross-owner isolation. Passed in GitHub Actions on 2026-10-24 for implementation commit a10398a, on desktop and mobile, alongside the existing authentication and database suites. Cloud production verification is still required. Live-model relevance, real engine connectivity, cloud persistence and the Vercel deployment remain separate activation tasks. No migration to a remote database has been performed.
