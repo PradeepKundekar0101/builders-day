@@ -1,0 +1,16 @@
+{
+  "name": "@buildwise/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "echo 'db tests need local Supabase: run pnpm test:db'",
+    "test:db": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}

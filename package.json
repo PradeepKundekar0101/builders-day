@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:types": "supabase gen types typescript --local | prettier --stdin-filepath generated.ts > packages/db/src/database.types.ts",
+    "test:db": "pnpm --filter @buildwise/db test:db"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
