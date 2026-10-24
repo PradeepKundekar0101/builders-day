@@ -3,7 +3,7 @@ import { SpecSchema } from "./spec";
 
 /** Input limits match Phase 1. Text must be masked by the host before agent dispatch. */
 export const PromptStudioInputSchema = z.object({
-  idea: z.string().trim().min(50).max(2_000),
+  idea: z.string().trim().min(1).max(2_000),
   links: z
     .array(
       z

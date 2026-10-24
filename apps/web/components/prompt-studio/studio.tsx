@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ProvnLogo } from "@/components/provn-logo";
+import { WorkspaceNav } from "./workspace-nav";
 import { BuilderOnboarding } from "./onboarding";
 import { DEFAULT_PROFILE, type BuilderProfile } from "@/lib/provn-demo";
 import "./p0-panels.css";
 import "./design-system.css";
+import type { StudioBuildConnection } from "@/lib/prompt-studio/build-events";
+import {
+  StudioVersionSchema,
+  prepareSaveAttempt,
+  type StudioVersion,
+  type SaveAttempt,
+} from "@/lib/prompt-studio/history";
 import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
 import {
@@ -71,13 +79,34 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
   );
 }
 
-export function PromptStudio({ demo = false }: { demo?: boolean }) {
+const subscribeOnboarding = () => () => {};
+function onboardingWasDismissed() {
+  try {
+    return localStorage.getItem("provn-onboarding-dismissed") === "1";
+  } catch {
+    return false;
+  }
+}
+export function PromptStudio({
+  demo = false,
+  buildConnection,
+}: {
+  demo?: boolean;
+  buildConnection?: StudioBuildConnection;
+}) {
   const params = useSearchParams();
+  const onboardingDismissed = useSyncExternalStore(
+    subscribeOnboarding,
+    onboardingWasDismissed,
+    () => true,
+  );
   const [live, setLive] = useState(false);
+  const [history, setHistory] = useState<StudioVersion[]>([]);
+  const pendingSave = useRef<SaveAttempt | null>(null);
+  const [pauseRevision, setPauseRevision] = useState(0);
   const [modelTrace, setModelTrace] = useState("");
   const modelRequest = useRef<AbortController | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
-  const [onboarded, setOnboarded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => demo || !params.get("session"));
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState<PromptStudioDraft | null>(null);
@@ -92,7 +121,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const speech = useRef<Speech | null>(null);
   const loadId = params.get("session");
   useEffect(() => {
-    if (!loadId || demo) return;
+    if (!loadId || demo || session?.id === loadId) return;
     const controller = new AbortController();
     fetch(`/api/prompt-studio/sessions/${encodeURIComponent(loadId)}`, {
       signal: controller.signal,
@@ -102,6 +131,12 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         if (!r.ok) throw new Error(data.error);
         const loaded = PromptStudioDraftSchema.parse(data.draft);
         setDraft(loaded);
+        setHistory(StudioVersionSchema.array().parse(data.history));
+        setProfile(loaded.onboarding ?? DEFAULT_PROFILE);
+        setLive(loaded.adapterMode === "openai");
+        setPauseRevision((value) => value + 1);
+        setConfirmed(false);
+        setModelTrace("");
         setIdea(loaded.input.idea);
         setSpecText(JSON.stringify(loaded.spec, null, 2));
         setSession({ id: data.id, revision: data.revision });
@@ -111,7 +146,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [loadId, demo]);
+  }, [loadId, demo, session?.id]);
   useEffect(
     () => () => {
       speech.current?.stop();
@@ -119,16 +154,21 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     },
     [],
   );
+  function dismissOnboarding() {
+    setShowOnboarding(false);
+    try {
+      localStorage.setItem("provn-onboarding-dismissed", "1");
+    } catch {
+      /* Keep this session usable. */
+    }
+  }
   function change(next: PromptStudioDraft) {
     setDraft(next);
     setConfirmed(false);
     setNotice("Unsaved changes");
   }
   async function interpret(chosenProfile?: BuilderProfile) {
-    if (!onboarded && !chosenProfile) {
-      setShowOnboarding(true);
-      return;
-    }
+    if (busy || !idea.trim()) return;
     setError("");
     setBusy(true);
     try {
@@ -139,6 +179,9 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       setDraft({ ...next, onboarding: settings });
       setSpecText(JSON.stringify(next.spec, null, 2));
       setSession(null);
+      setHistory([]);
+      pendingSave.current = null;
+      setPauseRevision(0);
       setConfirmed(false);
       if (!live) setNotice("Mock scaffold created. Review all suggestions; no model was called.");
     } catch (e) {
@@ -238,21 +281,35 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         setNotice("Demo only: use Export JSON to keep this brief. Sign in to save versions.");
         return;
       }
-      const id = session?.id ?? crypto.randomUUID();
+      const attempt = prepareSaveAttempt(
+        pendingSave.current,
+        session,
+        clean,
+        review ? "user_reviewed" : "draft",
+      );
+      pendingSave.current = attempt;
+      const id = attempt.body.id;
       const response = await fetch(`/api/prompt-studio/sessions${session ? `/${id}` : ""}`, {
         method: session ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          mutationId: crypto.randomUUID(),
-          expectedRevision: session?.revision ?? 0,
-          draft: clean,
-          status: review ? "user_reviewed" : "draft",
-        }),
+        body: JSON.stringify(attempt.body),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setDraft(PromptStudioDraftSchema.parse(data.draft));
+      const saved = PromptStudioDraftSchema.parse(data.draft);
+      setDraft(saved);
+      pendingSave.current = null;
+      setHistory((old) =>
+        [
+          {
+            revision: data.revision,
+            payload: saved,
+            status: data.status,
+            created_at: new Date().toISOString(),
+          },
+          ...old.filter((v) => v.revision !== data.revision),
+        ].slice(0, 20),
+      );
       setSession({ id, revision: data.revision });
       window.history.replaceState(null, "", `?session=${id}`);
       setNotice(
@@ -281,6 +338,19 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       setError(e instanceof Error ? e.message : "Check the brief before exporting.");
     }
   }
+  function restoreVersion(version: StudioVersion) {
+    const restored = PromptStudioDraftSchema.parse(version.payload);
+    setDraft(restored);
+    setSpecText(JSON.stringify(restored.spec, null, 2));
+    setIdea(restored.input.idea);
+    setConfirmed(false);
+    setPauseRevision((value) => value + 1);
+    setModelTrace("");
+    setError("");
+    setNotice(
+      `Version ${version.revision} restored as an unsaved draft. Save to create a new version; progression is paused.`,
+    );
+  }
   const parsed = draft ? PromptStudioDraftSchema.safeParse(draft) : null;
   let instructionPreview = "Complete the brief fields to preview valid instructions.";
   if (parsed?.success) {
@@ -303,7 +373,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         maxLength={2000}
         onChange={(e) => setIdea(e.target.value)}
         onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length >= 50 && !busy) {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length > 0 && !busy) {
             e.preventDefault();
             void interpret();
           }
@@ -326,7 +396,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
         <button
           className={button}
           onClick={() => interpret()}
-          disabled={busy || idea.trim().length < 50}
+          disabled={busy || idea.trim().length === 0}
         >
           {busy ? "Shaping…" : draft ? "Start new brief" : "Shape my idea"}
           <StudioIcon name="arrow" />
@@ -334,9 +404,18 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       </div>
     </>
   );
+  if (loadId && !demo && session?.id !== loadId && !error)
+    return (
+      <p className="p-8" role="status">
+        Loading your saved workspace…
+      </p>
+    );
   if (draft)
     return (
       <BuildWorkspace
+        key={`${session?.id ?? "new"}:${pauseRevision}:${buildConnection?.runId ?? "demo"}`}
+        pauseRevision={pauseRevision}
+        buildConnection={buildConnection}
         onRefine={refine}
         onCancel={() => modelRequest.current?.abort()}
         reviewed={confirmed}
@@ -369,6 +448,39 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
                 </ul>
               </div>
             ) : null}
+            <details>
+              <summary>Saved versions & prompt history ({history.length})</summary>
+              <p>
+                Saving preserves a brief and its compiled instructions. Restoring creates an unsaved
+                copy; existing versions stay intact. Export current edits before restoring if you
+                want to keep them. This is not a log of actual provider requests.
+              </p>
+              {!history.length && (
+                <p>
+                  {demo
+                    ? "Sign in to save and resume versions. You can export this demo brief."
+                    : "Save your first version to start the history."}
+                </p>
+              )}
+              {history.map((version) => (
+                <details key={version.revision}>
+                  <summary>
+                    Version {version.revision} · {version.status} ·{" "}
+                    {new Date(version.created_at).toLocaleString()}
+                  </summary>
+                  <pre className="studio-code">
+                    {compileStudioInstructions(sanitizeStudioDraft(version.payload))}
+                  </pre>
+                  <button
+                    className="studio-button studio-button-secondary"
+                    disabled={busy}
+                    onClick={() => restoreVersion(version)}
+                  >
+                    Restore version {version.revision} as draft
+                  </button>
+                </details>
+              ))}
+            </details>
             {modelTrace && (
               <details>
                 <summary>Last model request · exact instructions and usage</summary>
@@ -621,131 +733,141 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       />
     );
   return (
-    <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
-      {showOnboarding && (
-        <BuilderOnboarding
-          onClose={() => setShowOnboarding(false)}
-          onComplete={(settings) => {
-            setProfile(settings);
-            setOnboarded(true);
-            setShowOnboarding(false);
-            if (idea.trim().length >= 50) void interpret(settings);
-          }}
-        />
-      )}
-      <div className="studio-landscape" aria-hidden="true"></div>
-      <nav className="studio-nav" aria-label="Prompt Studio navigation">
-        <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
-          <ProvnLogo />
-        </a>
-        <span className="studio-nav-divider" />
-        <a className="studio-nav-label" href="/signin">
-          Sign in
-        </a>
-        <a href="#idea" className="studio-nav-cta">
-          Start a build
-          <span aria-hidden="true">↗</span>
-        </a>
-      </nav>
-      <header className="studio-hero">
-        <p className="studio-eyebrow">
-          <span /> YOUR IDEAS. BEYOND POSSIBILITY.
-        </p>
-        <h1>
-          {draft ? (
-            <>
-              Good ideas grow
-              <br />
-              with <em>a little clarity.</em>
-            </>
-          ) : (
-            <>
-              Every build,
-              <br />
-              <em>proven.</em>
-            </>
-          )}
-        </h1>
-        <p className="studio-subtitle">
-          {draft
-            ? "A few thoughtful details. A brief that feels like you."
-            : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
-        </p>
-      </header>
-      <div className="studio-content">
-        {error && (
-          <p role="alert" className="studio-alert">
-            {error}
-          </p>
+    <div className="provn-home-shell">
+      <WorkspaceNav
+        project="Your next build"
+        onSelect={() => {
+          setNotice(
+            "Describe your idea to begin. Your prompts, preview and build tools will open in the workspace.",
+          );
+          document.getElementById("idea")?.focus();
+        }}
+      />
+      <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
+        {showOnboarding && !onboardingDismissed && (
+          <BuilderOnboarding
+            onClose={dismissOnboarding}
+            onComplete={(settings) => {
+              setProfile(settings);
+              dismissOnboarding();
+              if (idea.trim().length > 0) void interpret(settings);
+            }}
+          />
         )}
-        {notice && (
-          <p role="status" className="studio-notice">
-            <StudioIcon name="check" />
-            {notice}
+        <div className="studio-landscape" aria-hidden="true"></div>
+        <nav className="studio-nav" aria-label="Prompt Studio navigation">
+          <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
+            <ProvnLogo />
+          </a>
+          <span className="studio-nav-divider" />
+          <a className="studio-nav-label" href="/signin">
+            Sign in
+          </a>
+          <a href="#idea" className="studio-nav-cta">
+            Start a build
+            <span aria-hidden="true">↗</span>
+          </a>
+        </nav>
+        <header className="studio-hero">
+          <p className="studio-eyebrow">
+            <span /> YOUR IDEAS. BEYOND POSSIBILITY.
           </p>
-        )}
-        {
-          <div className="studio-welcome">
-            <div className="studio-input-panel">
-              <p className="portal-input-label">What do you want to build?</p>
-              <label className="studio-live-toggle">
-                <input
-                  type="checkbox"
-                  checked={live}
-                  disabled={busy}
-                  onChange={(e) => setLive(e.target.checked)}
-                />{" "}
-                Use live AI · requires sign-in; provider charges apply to replies and automatic
-                stage progression.
-              </label>
-              <div className="studio-composer">{composer}</div>
-              <div className="studio-examples">
-                <span>Try an example prompt</span>
-                <button onClick={() => setIdea(sample)} disabled={busy}>
-                  <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
-                </button>
-                <button
-                  onClick={() =>
-                    setIdea(
-                      "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
-                    )
-                  }
-                  disabled={busy}
-                >
-                  <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
-                </button>
-              </div>
-            </div>
-            {busy && (
-              <button className="studio-button" onClick={() => modelRequest.current?.abort()}>
-                Cancel model request
-              </button>
-            )}
-            <p className="studio-helper">
-              {live
-                ? "Live intake · each submission calls the configured cloud model"
-                : "Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used"}
-            </p>
-          </div>
-        }
-
-        <footer className="studio-footer">
-          <span>
-            <span className="studio-status-dot" />
-            {live
-              ? "Live AI selected · build services still simulated"
-              : "Mock adapter · No model charges"}
-          </span>
-          <span>
-            {demo ? (
+          <h1>
+            {draft ? (
               <>
-                Demo mode · <a href="/apps/new">Sign in to save your work ↗</a>
+                Good ideas grow
+                <br />
+                with <em>a little clarity.</em>
               </>
             ) : (
-              "Your idea stays yours."
+              <>
+                Every build,
+                <br />
+                <em>proven.</em>
+              </>
             )}
-          </span>
-        </footer>
+          </h1>
+          <p className="studio-subtitle">
+            {draft
+              ? "A few thoughtful details. A brief that feels like you."
+              : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
+          </p>
+        </header>
+        <div className="studio-content">
+          {error && (
+            <p role="alert" className="studio-alert">
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p role="status" className="studio-notice">
+              <StudioIcon name="check" />
+              {notice}
+            </p>
+          )}
+          {
+            <div className="studio-welcome">
+              <div className="studio-input-panel">
+                <p className="portal-input-label">What do you want to build?</p>
+                <label className="studio-live-toggle">
+                  <input
+                    type="checkbox"
+                    checked={live}
+                    disabled={busy}
+                    onChange={(e) => setLive(e.target.checked)}
+                  />{" "}
+                  Use live AI · requires sign-in; provider charges apply to replies and automatic
+                  stage progression.
+                </label>
+                <div className="studio-composer">{composer}</div>
+                <div className="studio-examples">
+                  <span>Try an example prompt</span>
+                  <button onClick={() => setIdea(sample)} disabled={busy}>
+                    <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setIdea(
+                        "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
+                      )
+                    }
+                    disabled={busy}
+                  >
+                    <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
+                  </button>
+                </div>
+              </div>
+              {busy && (
+                <button className="studio-button" onClick={() => modelRequest.current?.abort()}>
+                  Cancel model request
+                </button>
+              )}
+              <p className="studio-helper">
+                {live
+                  ? "Live intake · each submission calls the configured cloud model"
+                  : "Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used"}
+              </p>
+            </div>
+          }
+
+          <footer className="studio-footer">
+            <span>
+              <span className="studio-status-dot" />
+              {live
+                ? "Live AI selected · build services still simulated"
+                : "Mock adapter · No model charges"}
+            </span>
+            <span>
+              {demo ? (
+                <>
+                  Demo mode · <a href="/apps/new">Sign in to save your work ↗</a>
+                </>
+              ) : (
+                "Your idea stays yours."
+              )}
+            </span>
+          </footer>
+        </div>
       </div>
     </div>
   );

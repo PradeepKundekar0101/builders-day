@@ -111,14 +111,14 @@ describe("writes", () => {
     expect(count).toBe(1);
   });
 
-  test.each([49, 2001])("idea text of %i chars is rejected", async (length) => {
+  test.each([0, 2001])("idea text of %i chars is rejected", async (length) => {
     const { error } = await serviceClient()
       .from("ideas")
       .insert({ user_id: owner.userId, text: "x".repeat(length) });
     expect(error?.code).toBe("23514");
   });
 
-  test.each([50, 2000])("idea text of %i chars is accepted", async (length) => {
+  test.each([1, 49, 50, 2000])("idea text of %i chars is accepted", async (length) => {
     const { error } = await serviceClient()
       .from("ideas")
       .insert({ user_id: other.userId, text: "x".repeat(length) });
