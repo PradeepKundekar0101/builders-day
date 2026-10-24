@@ -16,7 +16,7 @@ Set these build-time variables on the existing Vercel `conch-s-team / buildwise`
 
 Redeploy after setting variables; Next.js embeds them at build time. Missing configuration disables analytics without preventing startup. Localhost and all other hostnames are excluded by default. For QA use a separate PostHog test project and explicitly allow the preview hostname.
 
-The source branch for this change is based on `phase-0-foundation`. Confirm the actual production source before merging; `phase-1-intake-estimator` has later work. The deployment runbook establishes the production team/project, but current Vercel access cannot inspect it.
+Production is confirmed as `conch-s-team / buildwise`, deploying `phase-0-foundation`. The analytics branch includes the latest production prompt-studio changes. Preview builds fall back to Vercel's branch URL when `NEXT_PUBLIC_SITE_URL` is unset; the explicit production URL takes precedence.
 
 ## Metrics
 
