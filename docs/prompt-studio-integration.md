@@ -24,19 +24,19 @@ Review requires valid fields, answers to every open question, and an explicit re
 `packages/shared/src/prompt-studio.ts` exports:
 
 - `PromptStudioAdapter.interpret(input, signal)` -> `PromptStudioDraft`.
-- `MockPromptStudioAdapter`, currently the sole wired adapter.
+- `MockPromptStudioAdapter` for offline demos; the server-side OpenAI adapter is opt-in.
 - Zod input/draft schemas wrapping the existing canonical `SpecSchema`.
 - `compileStudioInstructions`: deterministic visible instruction text, retaining full idea, reference links, decisions, spec and checks.
 - `createStudioReview`: downstream handoff (`status: user_reviewed`), not spending authorization.
 - `sanitizeStudioDraft`: baseline credential/contact masking and removal of link query credentials; not comprehensive DLP.
 
-Replace mock interpretation with a server endpoint to AgenticOrg. Keep provider credentials server-side. Validate agent responses with the shared schema, preserve unresolved decisions and bind server-issued provenance to the saved session. The current save API forces `adapterMode: mock` to prevent client claims of live generation. Do not simply remove that protection when wiring an agent.
+Replace mock interpretation with a server endpoint to AgenticOrg. Keep provider credentials server-side. Validate agent responses with the shared schema, preserve unresolved decisions and bind server-issued provenance to the saved session. Saved `adapterMode` is editable display metadata, never trusted provenance or spending authority.
 
 Connect the estimator to the reviewed bundle only after implementing server-side budget and operator gates. Do not treat exported JSON or the user-review checkbox as trusted approval. The instruction preview covers this module's payload; downstream agents must expose any additional policy/context separately.
 
 ## Persistence API
 
-`POST /api/prompt-studio/sessions` creates; `PUT /api/prompt-studio/sessions/:id` versions an existing draft. JSON body: `{id, mutationId, expectedRevision, draft, status}`. Creation expects revision 0. Updates expect the last saved revision. Reuse an identical mutation ID and body for an idempotent retry. Response: `{id, revision, draft, status}`. `GET .../:id` returns the latest draft and up to 20 history records. UI uses the saved URL to reload; a version restore/history picker is future work.
+`POST /api/prompt-studio/sessions` creates; `PUT /api/prompt-studio/sessions/:id` versions an existing draft. JSON body: `{id, mutationId, expectedRevision, draft, status}`. Creation expects revision 0. Updates expect the last saved revision. Reuse an identical mutation ID and body for an idempotent retry. Response: `{id, revision, draft, status}`. `GET .../:id` returns the latest draft and up to 20 history records. The UI lists saved sessions on `/apps`, shows up to 20 saved versions with compiled instructions, and can restore a prior version as an unsaved draft. Saving that copy creates a new version. Resumed/restored workspaces start paused. Exact provider-request audit history is not persisted by this mechanism.
 
 Requests require a verified Supabase user; owner ID comes from auth, never the body. Writes require the configured site origin and a JSON body no larger than 64 KiB. Stale writes return 409, other owners get 404, and new drafts are capped at 50 per user per day. Existing-session update rate limiting should be added at the platform gateway before production.
 
@@ -64,3 +64,16 @@ After intake, `BuildWorkspace` renders guided chat on the left and a preview/dep
 The right panel is explicitly a local React layout scaffold derived from the canonical spec. It is not generated application code. Page navigation, preview width and refresh are functional. Build console events are simulated and do not execute code, spend credits or deploy. Live shows disconnected services and Publish remains disabled. The team must supply a sandboxed preview runtime, authenticated build event stream and deployment workflow before enabling live publishing. Keep previews isolated from the host and never trust arbitrary user-provided preview URLs.
 
 Browser verification: sequential chat answers, handoff to visible instructions, simulated build completion, disconnected Live state and 390px mobile layout without horizontal overflow. Production build, TypeScript and web lint passed.
+
+
+## Build engine connector
+
+Pass a stable `buildConnection: StudioBuildConnection` prop to `PromptStudio` from the host client wrapper. Import the type and validator from `apps/web/lib/prompt-studio/build-events.ts`. The connection has `runId`, `allowedPreviewOrigins`, and `subscribe(receive, fail)`, returning an unsubscribe function. Optional `onDraftChange(draft)` receives updated requirements so the host can coordinate its builder; it must not treat those client edits as execution or spending approval. The host must authenticate the stream, enforce session ownership, and reconnect/replay in sequence. This module does not implement a build server or approve paid execution.
+
+Events contain `{runId, sequence, stage, type, previewUrl?}`. Stages 0–3 are layout, primary journey, data/connections, and review. Types are `started`, `completed`, `failed`, and `preview`. Reject malformed, other-run, stale and non-current-stage events; hosts should replay stage events after the draft advances. Completed current stages advance only when current questions are answered. Failures and disconnects block progression until a new valid event clears the failure. Without a connector, the labelled demo timer remains active. Supply a new stable connection object to switch runs.
+
+Preview URLs must be HTTPS, have no embedded credentials, match a host-supplied origin allowlist, and be on a different origin from PROVN. The iframe permits scripts and forms but has no same-origin or parent-navigation capability. Applications requiring cookies/storage may need a dedicated preview authentication design. Never put secrets into preview URLs. Publish remains disabled; the connector does not bypass release/security/budget gates.
+
+## Current validation and activation
+
+Local environment has no live model or Supabase credentials. Unit tests cover save retry identities and build-event validation. The added Supabase browser test covers create, idempotent retry, version conflict, list/resume, non-destructive restore and cross-owner isolation. Run it in CI/local Supabase before rollout. Live-model relevance, real engine connectivity, cloud persistence and the Vercel deployment remain separate activation tasks. No migration to a remote database has been performed.
