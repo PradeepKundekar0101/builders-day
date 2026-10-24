@@ -25,6 +25,16 @@ describe("parsePublicEnv", () => {
       supabaseUrl: "http://127.0.0.1:54321",
       supabaseAnonKey: "anon-key",
       siteUrl: "http://localhost:3000",
+      googleAuthEnabled: false,
     });
+  });
+
+  test("Google sign-in is enabled only by the explicit flag", () => {
+    expect(
+      parsePublicEnv({ ...valid, NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "true" }).googleAuthEnabled,
+    ).toBe(true);
+    expect(
+      parsePublicEnv({ ...valid, NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "yes" }).googleAuthEnabled,
+    ).toBe(false);
   });
 });

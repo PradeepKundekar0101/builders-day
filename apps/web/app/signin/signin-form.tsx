@@ -7,7 +7,11 @@ import { safeNext } from "@/lib/safe-next";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Status =
-  { kind: "idle" } | { kind: "sending" } | { kind: "sent" } | { kind: "error"; message: string };
+  | { kind: "idle" }
+  | { kind: "sending" }
+  | { kind: "redirecting" }
+  | { kind: "sent" }
+  | { kind: "error"; message: string };
 
 const LINK_ERROR = "That sign-in link is invalid or expired. Request a new one.";
 
@@ -24,12 +28,16 @@ export function SignInForm() {
     setStatus({ kind: "sending" });
     const { error } = await createSupabaseBrowserClient().auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true, emailRedirectTo: `${publicEnv.siteUrl}${next}` },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${publicEnv.siteUrl}/auth/confirm?next=${encodeURIComponent(next)}`,
+      },
     });
     setStatus(error ? { kind: "error", message: error.message } : { kind: "sent" });
   }
 
   async function continueWithGoogle() {
+    setStatus({ kind: "redirecting" });
     const { error } = await createSupabaseBrowserClient().auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -38,6 +46,8 @@ export function SignInForm() {
     });
     if (error) setStatus({ kind: "error", message: error.message });
   }
+
+  const busy = status.kind === "sending" || status.kind === "redirecting";
 
   if (status.kind === "sent") {
     return (
@@ -60,20 +70,25 @@ export function SignInForm() {
           {status.message}
         </p>
       )}
-      <button
-        type="button"
-        onClick={continueWithGoogle}
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-rule bg-surface font-semibold hover:border-ink"
-      >
-        <GoogleMark />
-        Continue with Google
-      </button>
+      {publicEnv.googleAuthEnabled && (
+        <>
+          <button
+            type="button"
+            onClick={continueWithGoogle}
+            disabled={busy}
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-rule bg-surface font-semibold hover:border-ink disabled:opacity-60"
+          >
+            <GoogleMark />
+            Continue with Google
+          </button>
 
-      <div className="my-6 flex items-center gap-3 text-sm text-slate" aria-hidden="true">
-        <span className="h-px flex-1 bg-rule" />
-        or
-        <span className="h-px flex-1 bg-rule" />
-      </div>
+          <div className="my-6 flex items-center gap-3 text-sm text-slate" aria-hidden="true">
+            <span className="h-px flex-1 bg-rule" />
+            or
+            <span className="h-px flex-1 bg-rule" />
+          </div>
+        </>
+      )}
 
       <form onSubmit={sendLink}>
         <label htmlFor="email" className="text-sm font-medium">
@@ -90,7 +105,7 @@ export function SignInForm() {
         />
         <button
           type="submit"
-          disabled={status.kind === "sending"}
+          disabled={busy}
           className="mt-4 h-12 w-full rounded-lg bg-go font-semibold text-white hover:bg-go-hover disabled:opacity-60"
         >
           {status.kind === "sending" ? "Sending link" : "Email me a sign-in link"}

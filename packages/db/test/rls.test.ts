@@ -40,13 +40,34 @@ describe("profiles", () => {
   });
 
   test("user cannot update own profile role", async () => {
-    await owner.client.from("profiles").update({ role: "admin" }).eq("id", owner.userId);
+    const { error } = await owner.client
+      .from("profiles")
+      .update({ role: "admin" })
+      .eq("id", owner.userId);
+    expect(error?.code).toBe("42501");
     const { data } = await serviceClient()
       .from("profiles")
       .select("role")
       .eq("id", owner.userId)
       .single();
     expect(data?.role).toBe("user");
+  });
+
+  test("profile email follows an auth email change", async () => {
+    const user = await createUserClient("rename");
+    const email = `renamed-${randomUUID()}@test.buildwise.local`;
+    await serviceClient().auth.admin.updateUserById(user.userId, { email, email_confirm: true });
+    const { data } = await serviceClient()
+      .from("profiles")
+      .select("email")
+      .eq("id", user.userId)
+      .single();
+    expect(data?.email).toBe(email);
+  });
+
+  test("anon cannot call is_staff", async () => {
+    const { error } = await anonClient().rpc("is_staff");
+    expect(error?.code).toBe("42501");
   });
 });
 
@@ -103,7 +124,7 @@ describe("writes", () => {
     const { error } = await owner.client
       .from("ideas")
       .insert({ user_id: owner.userId, text: IDEA_TEXT });
-    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
     const { count } = await serviceClient()
       .from("ideas")
       .select("id", { count: "exact", head: true })
@@ -145,6 +166,21 @@ describe("deployment url", () => {
       .from("deployments")
       .select("url")
       .eq("id", ids.deploymentId);
+    expect(error?.code).toBe("42501");
+  });
+
+  test("staff cannot read deployments.url either", async () => {
+    const staff = await createUserClient("staff-url");
+    await serviceClient().from("profiles").update({ role: "admin" }).eq("id", staff.userId);
+    const { error } = await staff.client
+      .from("deployments")
+      .select("url")
+      .eq("id", ids.deploymentId);
+    expect(error?.code).toBe("42501");
+  });
+
+  test("anon cannot call released_url", async () => {
+    const { error } = await anonClient().rpc("released_url", { p_build_id: ids.buildId });
     expect(error?.code).toBe("42501");
   });
 

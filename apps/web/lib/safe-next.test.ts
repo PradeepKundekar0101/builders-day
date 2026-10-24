@@ -11,3 +11,14 @@ test.each([null, "", "//evil.com", "/\\evil.com", "https://evil.com", "apps"])(
     expect(safeNext(raw)).toBe("/apps");
   },
 );
+
+test.each(["/\t/evil.com", "/\n/evil.com", "/\r/evil.com", "/\\/evil.com", "/%5C/evil.com"])(
+  "rejects control-character and backslash tricks: %j",
+  (raw) => {
+    expect(new URL(safeNext(raw), "http://site.test").origin).toBe("http://site.test");
+  },
+);
+
+test("keeps query and hash", () => {
+  expect(safeNext("/apps?x=1#top")).toBe("/apps?x=1#top");
+});

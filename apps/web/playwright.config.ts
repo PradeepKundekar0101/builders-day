@@ -40,6 +40,7 @@ export default defineConfig({
           NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_URL ?? "",
           NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? "",
           NEXT_PUBLIC_SITE_URL: baseURL,
+          NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "true",
         },
       },
 });

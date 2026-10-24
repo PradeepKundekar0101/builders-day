@@ -9,7 +9,7 @@ export function SiteHeader() {
         <Link href="/" className="text-lg font-bold tracking-tight">
           Buildwise
         </Link>
-        <Suspense fallback={null}>
+        <Suspense fallback={<span aria-hidden="true" className="h-8 w-20" />}>
           <HeaderAccount />
         </Suspense>
       </div>
