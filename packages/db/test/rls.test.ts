@@ -21,7 +21,7 @@ beforeAll(async () => {
 });
 
 const ownerScoped = [
-  { table: "ideas", key: "ideaId" },
+  { table: "ideas", key: "ideaId", select: "id" },
   { table: "intake_messages", key: "ideaId", column: "idea_id" },
   { table: "specs", key: "specId" },
   { table: "quotes", key: "quoteId" },
@@ -132,14 +132,16 @@ describe("writes", () => {
     expect(count).toBe(1);
   });
 
-  test.each([49, 2001])("idea text of %i chars is rejected", async (length) => {
+  // The 50 to 2,000 rule applies to the original text in the server; the database stores
+  // masked text, whose placeholders can be longer than the values they replace.
+  test.each([0, 8001])("stored idea text of %i chars is rejected", async (length) => {
     const { error } = await serviceClient()
       .from("ideas")
       .insert({ user_id: owner.userId, text: "x".repeat(length) });
     expect(error?.code).toBe("23514");
   });
 
-  test.each([50, 2000])("idea text of %i chars is accepted", async (length) => {
+  test.each([1, 8000])("stored idea text of %i chars is accepted", async (length) => {
     const { error } = await serviceClient()
       .from("ideas")
       .insert({ user_id: other.userId, text: "x".repeat(length) });

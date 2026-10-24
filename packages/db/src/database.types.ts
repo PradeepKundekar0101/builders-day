@@ -236,6 +236,8 @@ export type Database = {
           created_at: string;
           id: string;
           links: string[];
+          mask_map_enc: string;
+          question_count: number;
           status: string;
           text: string;
           user_id: string;
@@ -245,6 +247,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           links?: string[];
+          mask_map_enc?: string;
+          question_count?: number;
           status?: string;
           text: string;
           user_id: string;
@@ -253,6 +257,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           links?: string[];
+          mask_map_enc?: string;
+          question_count?: number;
           status?: string;
           text?: string;
           user_id?: string;
@@ -265,6 +271,7 @@ export type Database = {
           created_at: string;
           id: string;
           idea_id: string;
+          kind: string;
           role: string;
         };
         ComputedFields: never;
@@ -273,6 +280,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           idea_id: string;
+          kind: string;
           role: string;
         };
         Update: {
@@ -280,6 +288,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           idea_id?: string;
+          kind?: string;
           role?: string;
         };
         Relationships: [
@@ -511,8 +520,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_question_slot: { Args: { p_idea_id: string }; Returns: boolean };
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
       released_url: { Args: { p_build_id: string }; Returns: string };
+      shared_estimate: { Args: { p_slug: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;
