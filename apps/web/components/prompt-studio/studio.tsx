@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BuildWorkspace } from "./workspace";
 import { useSearchParams } from "next/navigation";
 import {
   MockPromptStudioAdapter,
@@ -224,7 +225,6 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     }
   }
   const ready = !!parsed?.success && !!draft && draft.questions.every((q) => q.answer?.trim());
-  const answered = draft?.questions.filter((q) => q.answer?.trim()).length ?? 0;
   const composer = (
     <>
       <label htmlFor="idea" className="sr-only">
@@ -257,6 +257,269 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       </div>
     </>
   );
+  if (draft)
+    return (
+      <BuildWorkspace
+        draft={draft}
+        onChange={change}
+        busy={busy}
+        error={error}
+        notice={notice}
+        onSave={() => save()}
+        onExport={download}
+        demo={demo}
+        editor={
+          <section className="studio-panel studio-editor">
+            <div className="studio-section-heading">
+              <p className="studio-kicker">YOUR IDEA, TAKING SHAPE</p>
+              <span className="studio-small-badge">
+                <span className="studio-status-dot" />
+                {confirmed ? "Reviewed" : "Draft"}
+                {session ? ` · v${session.revision}` : ""}
+              </span>
+            </div>
+            <h2>A shared starting point.</h2>
+            <p className="studio-section-copy">
+              Make it yours. Every detail is open for a second thought.
+            </p>
+            <div className="studio-tabs" role="tablist" aria-label="Brief views">
+              {(["brief", "prompt", "schema"] as const).map((t) => (
+                <button
+                  key={t}
+                  role="tab"
+                  aria-selected={tab === t}
+                  aria-controls={`studio-${t}`}
+                  id={`tab-${t}`}
+                  onClick={() => {
+                    setTab(t);
+                    if (t === "schema") setSpecText(JSON.stringify(draft.spec, null, 2));
+                  }}
+                >
+                  {t === "brief"
+                    ? "Product brief"
+                    : t === "prompt"
+                      ? "Model instructions"
+                      : "Advanced spec"}
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel" id={`studio-${tab}`} aria-labelledby={`tab-${tab}`}>
+              {tab === "brief" && (
+                <fieldset disabled={busy} className="space-y-5 pt-5">
+                  <label className="block text-sm font-semibold">
+                    Product name
+                    <input
+                      className={field}
+                      maxLength={60}
+                      value={draft.spec.name}
+                      onChange={(e) =>
+                        change({ ...draft, spec: { ...draft.spec, name: e.target.value } })
+                      }
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold">
+                    Product summary
+                    <textarea
+                      className={field}
+                      rows={4}
+                      maxLength={500}
+                      value={draft.spec.summary}
+                      onChange={(e) =>
+                        change({ ...draft, spec: { ...draft.spec, summary: e.target.value } })
+                      }
+                    />
+                  </label>
+                  <div>
+                    <h3 className="text-sm font-semibold">Pages & user journeys</h3>
+                    {draft.spec.pages.map((p, i) => (
+                      <div key={i} className="studio-page-card">
+                        <label className="text-xs">
+                          Page name
+                          <input
+                            className={field}
+                            value={p.name}
+                            onChange={(e) =>
+                              change({
+                                ...draft,
+                                spec: {
+                                  ...draft.spec,
+                                  pages: draft.spec.pages.map((v, j) =>
+                                    j === i ? { ...v, name: e.target.value } : v,
+                                  ),
+                                },
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="text-xs">
+                          What can users do here?
+                          <textarea
+                            className={field}
+                            value={p.purpose}
+                            onChange={(e) =>
+                              change({
+                                ...draft,
+                                spec: {
+                                  ...draft.spec,
+                                  pages: draft.spec.pages.map((v, j) =>
+                                    j === i ? { ...v, purpose: e.target.value } : v,
+                                  ),
+                                },
+                              })
+                            }
+                          />
+                        </label>
+                        <button
+                          className="mt-2 text-xs underline"
+                          disabled={draft.spec.pages.length === 1}
+                          onClick={() =>
+                            change({
+                              ...draft,
+                              spec: {
+                                ...draft.spec,
+                                pages: draft.spec.pages.filter((_, j) => j !== i),
+                              },
+                            })
+                          }
+                        >
+                          Remove page
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      className="mt-3 text-sm font-semibold text-go"
+                      onClick={() =>
+                        change({
+                          ...draft,
+                          spec: {
+                            ...draft.spec,
+                            pages: [
+                              ...draft.spec.pages,
+                              {
+                                name: "New page",
+                                purpose: "Describe the user journey",
+                                mustHave: true,
+                              },
+                            ],
+                          },
+                        })
+                      }
+                    >
+                      + Add a page
+                    </button>
+                  </div>
+                  <label className="block text-sm font-semibold">
+                    Acceptance checks <span className="font-normal text-slate">(one per line)</span>
+                    <textarea
+                      className={field}
+                      rows={4}
+                      value={draft.acceptanceCriteria.join("\n")}
+                      onChange={(e) =>
+                        change({ ...draft, acceptanceCriteria: e.target.value.split("\n") })
+                      }
+                    />
+                  </label>
+                  <p className="text-xs text-slate">
+                    Use Advanced spec to configure storage entities, authentication, and
+                    integrations using the team’s shared schema.
+                  </p>
+                </fieldset>
+              )}
+              {tab === "prompt" && (
+                <div className="pt-5">
+                  <p className="mb-3 text-sm text-slate">
+                    This is the instruction payload compiled from your brief. The build service may
+                    add its own policies. No model is running.
+                  </p>
+                  <pre className="studio-code">{instructionPreview}</pre>
+                </div>
+              )}
+              {tab === "schema" && (
+                <div className="pt-5">
+                  <p className="text-sm text-slate">
+                    Edit the canonical Spec JSON, then apply it. Changes here are not saved until
+                    applied.
+                  </p>
+                  <button
+                    className="mt-3 text-sm underline"
+                    onClick={() => setSpecText(JSON.stringify(draft.spec, null, 2))}
+                  >
+                    Load current spec
+                  </button>
+                  <textarea
+                    aria-label="Spec JSON"
+                    className={`${field} font-mono`}
+                    rows={20}
+                    value={specText}
+                    onChange={(e) => setSpecText(e.target.value)}
+                    disabled={busy}
+                  />
+                  <button
+                    className={button}
+                    disabled={busy}
+                    onClick={() => {
+                      try {
+                        const next = PromptStudioDraftSchema.parse({
+                          ...draft,
+                          spec: JSON.parse(specText),
+                        });
+                        change(next);
+                        setError("");
+                        setNotice("Spec applied. Review the updated instructions.");
+                      } catch {
+                        setError(
+                          "Invalid spec. Check field types, required values, and entity names.",
+                        );
+                      }
+                    }}
+                  >
+                    Apply spec
+                  </button>
+                </div>
+              )}
+              <div className="mt-6 border-t border-rule pt-5">
+                <label className="flex gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    disabled={!ready || busy}
+                    onChange={(e) => setConfirmed(e.target.checked)}
+                  />
+                  <span>I reviewed the requirements, suggestions, and acceptance checks.</span>
+                </label>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    className={button}
+                    disabled={!confirmed || busy}
+                    onClick={() => save(true)}
+                  >
+                    Mark reviewed
+                  </button>
+                  <button
+                    className="studio-button studio-button-secondary"
+                    disabled={busy || !parsed?.success}
+                    onClick={() => save()}
+                  >
+                    Save draft
+                  </button>
+                  <button
+                    className="studio-button studio-button-secondary"
+                    disabled={busy || !parsed?.success}
+                    onClick={download}
+                  >
+                    Export JSON
+                  </button>
+                </div>
+                <p className="mt-3 text-xs text-slate">
+                  Answer all questions to mark reviewed. Estimation, operator approval, and builds
+                  are separate steps and are not connected yet.
+                </p>
+              </div>
+            </div>
+          </section>
+        }
+      />
+    );
   return (
     <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
       <div className="studio-landscape" aria-hidden="true" />
@@ -337,7 +600,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
             {notice}
           </p>
         )}
-        {!draft ? (
+        {
           <div className="studio-welcome">
             <div className="studio-input-panel">
               <div className="studio-composer">{composer}</div>
@@ -383,322 +646,8 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
               </span>
             </div>
           </div>
-        ) : (
-          <div className="studio-workspace">
-            <aside className="studio-sidebar">
-              <section className="studio-panel studio-origin">
-                <div className="studio-section-heading">
-                  <p className="studio-kicker">THE STARTING POINT</p>
-                  <span className="studio-small-badge">Your idea</span>
-                </div>
-                <h2>A thought worth building.</h2>
-                <details>
-                  <summary>
-                    Edit your original idea<span aria-hidden="true">+</span>
-                  </summary>
-                  <div className="studio-composer studio-composer-compact">{composer}</div>
-                  <p className="studio-helper">
-                    Starting a new brief replaces your unsaved draft. Export it first if you want to
-                    keep it.
-                  </p>
-                  <p className="studio-helper">
-                    Voice may send audio to your browser’s transcription provider. Avoid credentials
-                    and personal data.
-                  </p>
-                </details>
-                <p className="studio-original-text">{draft.input.idea}</p>
-              </section>
-              <section className="studio-panel studio-questions">
-                <div className="studio-section-heading">
-                  <p className="studio-kicker">A LITTLE CLARITY</p>
-                  <span className="studio-small-badge">
-                    {answered}/{draft.questions.length} answered
-                  </span>
-                </div>
-                <h2>Let’s fill in the gaps.</h2>
-                <p className="studio-section-copy">Small decisions. A much clearer direction.</p>
-                <fieldset disabled={busy}>
-                  {draft.questions.map((q, i) => (
-                    <label key={q.id} className="studio-question">
-                      <span className="studio-question-number">0{i + 1}</span>
-                      <span>{q.question}</span>
-                      <textarea
-                        className={field}
-                        rows={3}
-                        maxLength={2000}
-                        value={q.answer ?? ""}
-                        placeholder="A few words are a good start…"
-                        onChange={(e) =>
-                          change({
-                            ...draft,
-                            questions: draft.questions.map((item) =>
-                              item.id === q.id
-                                ? { ...item, answer: e.target.value || undefined }
-                                : item,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                  ))}
-                </fieldset>
-                <p className="studio-helper">
-                  Your answers go into the instructions. The mock doesn’t infer new features from
-                  them.
-                </p>
-              </section>
-            </aside>
-            <section className="studio-panel studio-editor">
-              <div className="studio-section-heading">
-                <p className="studio-kicker">YOUR IDEA, TAKING SHAPE</p>
-                <span className="studio-small-badge">
-                  <span className="studio-status-dot" />
-                  {confirmed ? "Reviewed" : "Draft"}
-                  {session ? ` · v${session.revision}` : ""}
-                </span>
-              </div>
-              <h2>A shared starting point.</h2>
-              <p className="studio-section-copy">
-                Make it yours. Every detail is open for a second thought.
-              </p>
-              <div className="studio-tabs" role="tablist" aria-label="Brief views">
-                {(["brief", "prompt", "schema"] as const).map((t) => (
-                  <button
-                    key={t}
-                    role="tab"
-                    aria-selected={tab === t}
-                    aria-controls={`studio-${t}`}
-                    id={`tab-${t}`}
-                    onClick={() => {
-                      setTab(t);
-                      if (t === "schema") setSpecText(JSON.stringify(draft.spec, null, 2));
-                    }}
-                  >
-                    {t === "brief"
-                      ? "Product brief"
-                      : t === "prompt"
-                        ? "Model instructions"
-                        : "Advanced spec"}
-                  </button>
-                ))}
-              </div>
-              <div role="tabpanel" id={`studio-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === "brief" && (
-                  <fieldset disabled={busy} className="space-y-5 pt-5">
-                    <label className="block text-sm font-semibold">
-                      Product name
-                      <input
-                        className={field}
-                        maxLength={60}
-                        value={draft.spec.name}
-                        onChange={(e) =>
-                          change({ ...draft, spec: { ...draft.spec, name: e.target.value } })
-                        }
-                      />
-                    </label>
-                    <label className="block text-sm font-semibold">
-                      Product summary
-                      <textarea
-                        className={field}
-                        rows={4}
-                        maxLength={500}
-                        value={draft.spec.summary}
-                        onChange={(e) =>
-                          change({ ...draft, spec: { ...draft.spec, summary: e.target.value } })
-                        }
-                      />
-                    </label>
-                    <div>
-                      <h3 className="text-sm font-semibold">Pages & user journeys</h3>
-                      {draft.spec.pages.map((p, i) => (
-                        <div key={i} className="studio-page-card">
-                          <label className="text-xs">
-                            Page name
-                            <input
-                              className={field}
-                              value={p.name}
-                              onChange={(e) =>
-                                change({
-                                  ...draft,
-                                  spec: {
-                                    ...draft.spec,
-                                    pages: draft.spec.pages.map((v, j) =>
-                                      j === i ? { ...v, name: e.target.value } : v,
-                                    ),
-                                  },
-                                })
-                              }
-                            />
-                          </label>
-                          <label className="text-xs">
-                            What can users do here?
-                            <textarea
-                              className={field}
-                              value={p.purpose}
-                              onChange={(e) =>
-                                change({
-                                  ...draft,
-                                  spec: {
-                                    ...draft.spec,
-                                    pages: draft.spec.pages.map((v, j) =>
-                                      j === i ? { ...v, purpose: e.target.value } : v,
-                                    ),
-                                  },
-                                })
-                              }
-                            />
-                          </label>
-                          <button
-                            className="mt-2 text-xs underline"
-                            disabled={draft.spec.pages.length === 1}
-                            onClick={() =>
-                              change({
-                                ...draft,
-                                spec: {
-                                  ...draft.spec,
-                                  pages: draft.spec.pages.filter((_, j) => j !== i),
-                                },
-                              })
-                            }
-                          >
-                            Remove page
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        className="mt-3 text-sm font-semibold text-go"
-                        onClick={() =>
-                          change({
-                            ...draft,
-                            spec: {
-                              ...draft.spec,
-                              pages: [
-                                ...draft.spec.pages,
-                                {
-                                  name: "New page",
-                                  purpose: "Describe the user journey",
-                                  mustHave: true,
-                                },
-                              ],
-                            },
-                          })
-                        }
-                      >
-                        + Add a page
-                      </button>
-                    </div>
-                    <label className="block text-sm font-semibold">
-                      Acceptance checks{" "}
-                      <span className="font-normal text-slate">(one per line)</span>
-                      <textarea
-                        className={field}
-                        rows={4}
-                        value={draft.acceptanceCriteria.join("\n")}
-                        onChange={(e) =>
-                          change({ ...draft, acceptanceCriteria: e.target.value.split("\n") })
-                        }
-                      />
-                    </label>
-                    <p className="text-xs text-slate">
-                      Use Advanced spec to configure storage entities, authentication, and
-                      integrations using the team’s shared schema.
-                    </p>
-                  </fieldset>
-                )}
-                {tab === "prompt" && (
-                  <div className="pt-5">
-                    <p className="mb-3 text-sm text-slate">
-                      This is the instruction payload compiled from your brief. The build service
-                      may add its own policies. No model is running.
-                    </p>
-                    <pre className="studio-code">{instructionPreview}</pre>
-                  </div>
-                )}
-                {tab === "schema" && (
-                  <div className="pt-5">
-                    <p className="text-sm text-slate">
-                      Edit the canonical Spec JSON, then apply it. Changes here are not saved until
-                      applied.
-                    </p>
-                    <button
-                      className="mt-3 text-sm underline"
-                      onClick={() => setSpecText(JSON.stringify(draft.spec, null, 2))}
-                    >
-                      Load current spec
-                    </button>
-                    <textarea
-                      aria-label="Spec JSON"
-                      className={`${field} font-mono`}
-                      rows={20}
-                      value={specText}
-                      onChange={(e) => setSpecText(e.target.value)}
-                      disabled={busy}
-                    />
-                    <button
-                      className={button}
-                      disabled={busy}
-                      onClick={() => {
-                        try {
-                          const next = PromptStudioDraftSchema.parse({
-                            ...draft,
-                            spec: JSON.parse(specText),
-                          });
-                          change(next);
-                          setError("");
-                          setNotice("Spec applied. Review the updated instructions.");
-                        } catch {
-                          setError(
-                            "Invalid spec. Check field types, required values, and entity names.",
-                          );
-                        }
-                      }}
-                    >
-                      Apply spec
-                    </button>
-                  </div>
-                )}
-                <div className="mt-6 border-t border-rule pt-5">
-                  <label className="flex gap-3 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={confirmed}
-                      disabled={!ready || busy}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                    />
-                    <span>I reviewed the requirements, suggestions, and acceptance checks.</span>
-                  </label>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      className={button}
-                      disabled={!confirmed || busy}
-                      onClick={() => save(true)}
-                    >
-                      Mark reviewed
-                    </button>
-                    <button
-                      className="studio-button studio-button-secondary"
-                      disabled={busy || !parsed?.success}
-                      onClick={() => save()}
-                    >
-                      Save draft
-                    </button>
-                    <button
-                      className="studio-button studio-button-secondary"
-                      disabled={busy || !parsed?.success}
-                      onClick={download}
-                    >
-                      Export JSON
-                    </button>
-                  </div>
-                  <p className="mt-3 text-xs text-slate">
-                    Answer all questions to mark reviewed. Estimation, operator approval, and builds
-                    are separate steps and are not connected yet.
-                  </p>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
+        }
+
         <footer className="studio-footer">
           <span>
             <span className="studio-status-dot" />

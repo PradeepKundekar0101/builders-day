@@ -55,3 +55,12 @@ Database types include the new tables/RPC. Regenerate using `pnpm db:types` afte
 ## Before production
 
 Wire the real intake adapter, test against staging Supabase, add platform rate limits/monitoring and complete the estimator/approval handoff. Expand secret detection and browser voice privacy controls for your requirements. The prompt text itself is not a security boundary; execution must remain sandboxed and policy-controlled in the build service.
+
+
+## Dark build workspace
+
+After intake, `BuildWorkspace` renders guided chat on the left and a preview/deployment area on the right. The chat uses the existing draft questions sequentially; answers update the same shared draft and compiled instructions. Further requirements are appended to the original intent within the 2,000-character limit. Brief & prompts exposes the existing editors, review gate, save and export controls.
+
+The right panel is explicitly a local React layout scaffold derived from the canonical spec. It is not generated application code. Page navigation, preview width and refresh are functional. Build console events are simulated and do not execute code, spend credits or deploy. Live shows disconnected services and Publish remains disabled. The team must supply a sandboxed preview runtime, authenticated build event stream and deployment workflow before enabling live publishing. Keep previews isolated from the host and never trust arbitrary user-provided preview URLs.
+
+Browser verification: sequential chat answers, handoff to visible instructions, simulated build completion, disconnected Live state and 390px mobile layout without horizontal overflow. Production build, TypeScript and web lint passed.
