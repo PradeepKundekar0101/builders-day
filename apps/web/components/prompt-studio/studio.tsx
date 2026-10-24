@@ -73,7 +73,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
   const params = useSearchParams();
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
   const [onboarded, setOnboarded] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => demo || !params.get("session"));
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState<PromptStudioDraft | null>(null);
   const [specText, setSpecText] = useState("");
@@ -550,7 +550,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
             setProfile(settings);
             setOnboarded(true);
             setShowOnboarding(false);
-            void interpret(settings);
+            if (idea.trim().length >= 50) void interpret(settings);
           }}
         />
       )}
