@@ -52,6 +52,8 @@ describe("live intake adapter", () => {
     const request = sentBody(f);
     expect(request.model).toBe("configured-model");
     expect(request.system).toBe(r.trace.instructions);
+    // The intake designs within what the builder can make, so reviewed briefs are buildable.
+    expect(request.system).toContain("Always set integrations to []");
     expect(request.messages).toEqual([{ role: "user", content: r.trace.input }]);
     expect(request.output_config.format.type).toBe("json_schema");
     expect(request.fallbacks).toBe("default");

@@ -20,6 +20,7 @@ import { readHandoff, writeHandoff, handoffKey, studioSignInPath } from "@/lib/s
 import {
   MockPromptStudioAdapter,
   PromptStudioDraftSchema,
+  buildScopeIssues,
   compileStudioInstructions,
   createStudioReview,
   isLiveAdapterMode,
@@ -523,6 +524,7 @@ export function PromptStudio({
         "After masking sensitive information, some fields need more detail. Update the brief before saving.";
     }
   }
+  const scopeIssues = parsed?.success ? buildScopeIssues(parsed.data.spec) : [];
   const ready = !!parsed?.success && !!draft && draft.questions.every((q) => q.answer?.trim());
   const composer = (
     <>
@@ -873,6 +875,34 @@ export function PromptStudio({
                 </div>
               )}
               <div className="mt-6 border-t border-rule pt-5">
+                {draft && scopeIssues.length > 0 && (
+                  <div role="status" className="mb-4 rounded-xl border border-rule p-3 text-sm">
+                    <p className="text-amber-200">
+                      This brief can&apos;t be built automatically yet:
+                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {scopeIssues.map((issue) => (
+                        <li key={issue}>{issue}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2">
+                      The builder makes pages, email sign-in, and data each signed-in user owns.
+                    </p>
+                    {draft.spec.integrations.length > 0 && (
+                      <button
+                        className="studio-button studio-button-secondary mt-3"
+                        disabled={busy}
+                        onClick={() => {
+                          const next = { ...draft, spec: { ...draft.spec, integrations: [] } };
+                          change(next);
+                          setSpecText(JSON.stringify(next.spec, null, 2));
+                        }}
+                      >
+                        Remove unsupported integrations
+                      </button>
+                    )}
+                  </div>
+                )}
                 {draft && !parsed?.success && (
                   <p role="status" className="mb-4 text-sm text-amber-200">
                     Fix the highlighted brief fields before marking it reviewed.

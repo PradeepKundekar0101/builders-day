@@ -12,6 +12,7 @@ async function savedDraft(
   baseURL: string,
   status: "draft" | "user_reviewed",
   answered = true,
+  integrations: { kind: "admin_dashboard"; mustHave: boolean; notes?: string }[] = [],
 ) {
   const raw = await new MockPromptStudioAdapter().interpret({
     idea: "Build a booking portal for fitness coaches where clients can browse and reserve sessions.",
@@ -20,6 +21,7 @@ async function savedDraft(
   // A reviewed version must have every open question answered.
   const draft = {
     ...raw,
+    spec: { ...raw.spec, integrations },
     questions: raw.questions.map((q, i) => ({
       ...q,
       answer: answered || i > 0 ? (q.answer ?? "Yes") : undefined,
@@ -107,4 +109,24 @@ test("the brief explains and clears what blocks marking it reviewed", async ({ p
   await review.check();
   await page.getByRole("button", { name: "Mark reviewed" }).click();
   await expect(page.getByText(/marked user reviewed/)).toBeVisible();
+});
+
+test("an unbuildable brief is flagged before review and can be fixed in one click", async ({
+  page,
+  baseURL,
+}) => {
+  await signInViaGeneratedLink(page, freshEmail("live-scope"));
+  const id = await savedDraft(page, baseURL!, "draft", true, [
+    { kind: "admin_dashboard", mustHave: true, notes: "Owner-only bookings page" },
+  ]);
+  await builds(page, []);
+  await page.goto(`/apps/new?session=${id}`);
+  await page
+    .getByRole("button", { name: /Brief & prompts/ })
+    .first()
+    .click();
+  await expect(page.getByText("This brief can't be built automatically yet:")).toBeVisible();
+  await expect(page.getByText(/admin or owner dashboard/)).toBeVisible();
+  await page.getByRole("button", { name: "Remove unsupported integrations" }).click();
+  await expect(page.getByText("This brief can't be built automatically yet:")).toHaveCount(0);
 });
