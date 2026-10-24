@@ -12,10 +12,10 @@ const receipt = {
 };
 const samples = [
   { name: "MEERA SHAH", amount: 100, time: "5:40 pm", bank: "ICICI Bank 1021" },
-  { name: "ARJUN NAIR", amount: 500, time: "5:32 pm", bank: "HDFC Bank 2042" },
-  { name: "KAVYA RAO", amount: 1000, time: "5:18 pm", bank: "Axis Bank 3063" },
+  { name: "ARJUN NAIR", amount: 150, time: "5:32 pm", bank: "HDFC Bank 2042" },
+  { name: "KAVYA RAO", amount: 200, time: "5:18 pm", bank: "Axis Bank 3063" },
   { name: "ROHAN MEHTA", amount: 250, time: "4:56 pm", bank: "SBI 4084" },
-  { name: "NEHA IYER", amount: 750, time: "4:35 pm", bank: "ICICI Bank 5105" },
+  { name: "NEHA IYER", amount: 175, time: "4:35 pm", bank: "ICICI Bank 5105" },
   { name: "VIKRAM SEN", amount: 200, time: "4:12 pm", bank: "HDFC Bank 6126" },
 ];
 export default function Page() {
