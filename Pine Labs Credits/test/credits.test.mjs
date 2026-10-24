@@ -97,3 +97,29 @@ test("mock end to end: link -> pay -> signed webhook -> credits granted once -> 
     server.close();
   }
 });
+
+test("agent runs charge credits only when completed, and need a balance", async () => {
+  const config = readConfig({ PINELABS_MODE: "mock", PORT: "0", AGENT_RUN_CREDITS: "10" });
+  const { server, credits } = createApp(config);
+  await new Promise((r) => server.listen(0, r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  config.publicBaseUrl = base;
+  try {
+    const agents = await fetch(`${base}/api/agents`).then((r) => r.json());
+    assert.equal(agents.live, false);
+    const id = agents.agents[0].id;
+    const broke = await fetch(`${base}/api/agents/${id}/run`, { method: "POST", body: JSON.stringify({ email: "a@b.co", task: "hi" }) });
+    assert.equal(broke.status, 402);
+    const link = await credits.createTopup({ email: "a@b.co", usd: 1 });
+    await fetch(`${base}/mock/checkout/${link.id}`, { method: "POST", redirect: "manual" });
+    const run = await fetch(`${base}/api/agents/${id}/run`, { method: "POST", body: JSON.stringify({ email: "a@b.co", task: "portfolio summary" }) }).then((r) => r.json());
+    assert.equal(run.status, "completed");
+    assert.equal(run.charged, 10);
+    assert.equal(run.balance, 90);
+    assert.equal(credits.summary().runs.length, 1);
+    const bad = await fetch(`${base}/api/agents/ap_processor/run`, { method: "POST", body: JSON.stringify({ email: "a@b.co", task: "x" }) });
+    assert.equal(bad.status, 400);
+  } finally {
+    server.close();
+  }
+});

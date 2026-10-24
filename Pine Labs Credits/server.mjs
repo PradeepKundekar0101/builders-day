@@ -10,6 +10,7 @@ import { createPineLabsClient, signWebhook } from "./lib/pinelabs.js";
 import { createMockPineLabsClient } from "./lib/mock-pinelabs.js";
 import { createCreditsService } from "./lib/credits.js";
 import { formatMinor } from "./lib/pricing.js";
+import { createAgenticOrgClient, createMockAgenticOrgClient } from "./lib/agenticorg.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +19,9 @@ export function createApp(config) {
   const store = createFileStore(config.dataFile);
   const mock = config.mode === "mock" ? createMockPineLabsClient({ publicBaseUrl: config.publicBaseUrl }) : null;
   const client = mock || createPineLabsClient(config);
-  const credits = createCreditsService({ store, client, config, log });
+  const agentsLive = !!config.agents.apiKey;
+  const agentClient = agentsLive ? createAgenticOrgClient(config.agents) : createMockAgenticOrgClient();
+  const credits = createCreditsService({ store, client, config, log, agentClient });
   const page = (f) => readFileSync(join(here, "public", f));
 
   const send = (res, status, body, type = "application/json") => {
@@ -101,6 +104,13 @@ export function createApp(config) {
           const email = decodeURIComponent(m[1]);
           return send(res, 200, { email, balance: credits.balance(email) });
         }
+        if (req.method === "GET" && p === "/api/agents") {
+          return send(res, 200, { live: agentsLive, runCredits: config.agents.runCredits, agents: await agentClient.listAgents() });
+        }
+        if (req.method === "POST" && (m = p.match(/^\/api\/agents\/([^/]+)\/run$/))) {
+          const body = JSON.parse((await readBody(req)) || "{}");
+          return send(res, 200, await credits.runAgent({ agentId: decodeURIComponent(m[1]), ...body }));
+        }
         if (req.method === "POST" && p === "/api/credits/spend") {
           const body = JSON.parse((await readBody(req)) || "{}");
           return send(res, 200, credits.spend(body));
@@ -110,7 +120,7 @@ export function createApp(config) {
     } catch (e) {
       const status = e.status && e.status < 500 ? e.status : 500;
       if (status === 500) log(`error ${req.method} ${p}: ${e.message}`);
-      send(res, e.body ? 502 : status, { error: e.message });
+      send(res, e.body || e.upstream ? 502 : status, { error: e.message });
     }
   });
 

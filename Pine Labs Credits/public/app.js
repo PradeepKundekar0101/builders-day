@@ -29,6 +29,32 @@ function pill(link) {
   return `<span class="pill ${cls}">${esc(link.grantedAt ? "PAID" : s)}</span>`;
 }
 
+function runPill(r) {
+  const cls = r.status === "completed" ? "paid" : r.status === "hitl_triggered" ? "open" : "problem";
+  return `<span class="pill ${cls}" title="${esc(r.error || "")}">${esc(r.status.toUpperCase())}</span>`;
+}
+
+function renderPayers() {
+  const sel = $("#payer"), cur = sel.value;
+  sel.innerHTML = state.users.length
+    ? state.users.map((u) => `<option value="${esc(u.email)}">${esc(u.email)} · ${int(u.balance)} credits</option>`).join("")
+    : `<option value="">No users yet: create a top-up first</option>`;
+  if (cur) sel.value = cur;
+}
+
+async function loadAgents() {
+  try {
+    const a = await api("/api/agents");
+    $("#agent-mode").textContent = a.live ? `live · ${a.runCredits} credits per run` : `demo agent · ${a.runCredits} credits per run`;
+    $("#agent-select").innerHTML = a.agents.length
+      ? a.agents.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}${x.type ? " · " + esc(x.type) : ""}</option>`).join("")
+      : `<option value="">No agents listed: paste a UUID below</option>`;
+  } catch (e) {
+    $("#agent-select").innerHTML = `<option value="">Couldn't list agents: paste a UUID below</option>`;
+    $("#aerr").textContent = e.message;
+  }
+}
+
 function renderQuote() {
   if (!state) return;
   const p = state.pricing, v = Number($("#f").usd.value);
@@ -50,6 +76,7 @@ function render() {
   if (!$("#chips").children.length)
     $("#chips").innerHTML = [1, 5, 10, 25, 50].map((n) => `<button type="button" class="chip" data-usd="${n}">$${n} · ${int(n * s.pricing.creditsPerUsd)}</button>`).join("");
   renderQuote();
+  renderPayers();
 
   $("#users").innerHTML = s.users.length
     ? s.users.map((u) => `<tr class="user ${selected === u.email ? "sel" : ""}" data-email="${esc(u.email)}">
@@ -63,7 +90,7 @@ function render() {
     : `<tr><td colspan="7" class="empty">No users yet. Create a payment link to add one.</td></tr>`;
 
   $("#clear").hidden = !selected;
-  $("#links-title").textContent = selected ? `Activity · ${selected}` : view === "links" ? "Payment links" : view === "ledger" ? "Credit ledger" : "Webhook log";
+  $("#links-title").textContent = selected ? `Activity · ${selected}` : { links: "Payment links", ledger: "Credit ledger", runs: "Agent runs", webhooks: "Webhook log" }[view];
   const mine = (x) => !selected || x.email === selected;
   let html;
   if (view === "links") {
@@ -86,6 +113,12 @@ function render() {
       <td class="num bal" style="color:${e.type === "grant" ? "var(--ok)" : "var(--bad)"}">${e.type === "grant" ? "+" : "−"}${int(e.credits)}</td>
       <td class="mono">${esc(e.source || "api")}</td></tr>`).join("")}</tbody></table>`
       : `<div class="empty">No credits granted yet.</div>`;
+  } else if (view === "runs") {
+    const rows = (s.runs || []).filter(mine);
+    html = rows.length ? `<table><thead><tr><th>When</th><th>User</th><th>Task</th><th>Status</th><th class="num">Credits</th></tr></thead><tbody>${rows.map((r) => `<tr>
+      <td>${when(r.at)}<br><small class="mono">${esc(r.agentId.slice(0, 8))} · ${(r.ms / 1000).toFixed(1)}s</small></td><td>${esc(r.email)}</td>
+      <td>${esc(r.task.slice(0, 80))}</td><td>${runPill(r)}</td><td class="num bal">${r.charged ? "−" + int(r.charged) : "0"}</td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">No agent runs yet.</div>`;
   } else {
     html = s.webhooks.length ? `<table><thead><tr><th>Received</th><th>Event</th><th>Link</th><th>Signature</th></tr></thead><tbody>${s.webhooks.map((w) => `<tr>
       <td>${when(w.at)}</td><td class="mono">${esc(w.event)}</td><td class="mono">${esc(w.paymentLinkId || w.reference || "–")}</td>
@@ -128,8 +161,27 @@ document.addEventListener("click", async (e) => {
   const tab = t.closest(".tab");
   if (tab) { view = tab.dataset.v; document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === tab)); render(); }
 });
+$("#af").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target, btn = $("#run");
+  const id = f.uuid.value.trim() || f.agent.value;
+  $("#aerr").textContent = ""; btn.disabled = true; btn.textContent = "Running… (up to 2 min)";
+  try {
+    const r = await api(`/api/agents/${encodeURIComponent(id)}/run`, { method: "POST", body: JSON.stringify({ email: f.email.value, task: f.task.value }) });
+    const out = typeof r.output === "string" ? r.output : JSON.stringify(r.output, null, 2);
+    $("#aresult").className = "result show";
+    $("#aresult").innerHTML = `${runPill(r)} ${r.confidence != null ? `confidence ${Math.round(r.confidence * 100)}%` : ""} · ${r.charged ? `−${int(r.charged)} credits, ${int(r.balance)} left` : "not charged"}
+      ${r.status === "hitl_triggered" ? "<div class='small'>Waiting for a human to approve it in AgenticOrg.</div>" : ""}
+      <pre class="out">${esc(r.error || out || "(no output)")}</pre>`;
+    view = "runs";
+    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x.dataset.v === "runs"));
+    await refresh();
+  } catch (err) { $("#aerr").textContent = err.message; }
+  btn.disabled = false; btn.textContent = "Run agent";
+});
 $("#clear").addEventListener("click", () => { selected = null; render(); });
 $("#recheck").addEventListener("click", async () => { $("#recheck").textContent = "Checking…"; await api("/api/reconcile", { method: "POST" }).catch((e) => alert(e.message)); $("#recheck").textContent = "Recheck open"; refresh(); });
 
 refresh();
+loadAgents();
 setInterval(refresh, 5000);

@@ -20,7 +20,7 @@ export const toWalletTopup = (link) => ({
   paymentRef: link.id,
 });
 
-export function createCreditsService({ store, client, config, log = () => {} }) {
+export function createCreditsService({ store, client, config, log = () => {}, agentClient = null }) {
   const { pricing } = config;
 
   function upsertUser(db, { email, name, phone }) {
@@ -173,6 +173,48 @@ export function createCreditsService({ store, client, config, log = () => {} }) 
     });
   }
 
+  /** Runs an AgenticOrg agent for a user; charges agents.runCredits only when the run completes. */
+  async function runAgent({ agentId, email, task, inputs }) {
+    if (!agentClient) throw Object.assign(new Error("Agents are not configured"), { status: 400 });
+    email = String(email || "").trim().toLowerCase();
+    if (!EMAIL.test(email)) throw Object.assign(new Error("Pick the user who pays for this run"), { status: 400 });
+    if (!/^[0-9a-f-]{36}$/i.test(String(agentId))) throw Object.assign(new Error("Agent id must be the agent's UUID"), { status: 400 });
+    const cost = config.agents?.runCredits ?? 0;
+    const bal = balanceOf(store.read(), email);
+    if (bal < cost) throw Object.assign(new Error(`${email} has ${bal} credits; a run costs ${cost}. Top up first.`), { status: 402 });
+    const runInputs = inputs && typeof inputs === "object" ? inputs : { task: String(task || "") };
+    const started = Date.now();
+    let result, error = null;
+    try {
+      result = await agentClient.runAgent(agentId, runInputs);
+    } catch (e) {
+      error = e.message;
+    }
+    const run = {
+      id: "run_" + randomBytes(6).toString("hex"),
+      agentId,
+      email,
+      task: String(runInputs.task ?? JSON.stringify(runInputs)).slice(0, 500),
+      status: error ? "error" : result?.status || "unknown",
+      confidence: result?.confidence ?? null,
+      output: error ? null : result?.output ?? result,
+      error,
+      ms: Date.now() - started,
+      charged: 0,
+      at: now(),
+    };
+    if (run.status === "completed" && cost > 0) {
+      spend({ email, credits: cost, reason: `Agent run ${agentId.slice(0, 8)}`, idempotencyKey: run.id });
+      run.charged = cost;
+    }
+    store.tx((db) => {
+      (db.runs ||= []).unshift(run);
+      db.runs.length = Math.min(db.runs.length, 200);
+    });
+    log(`agent ${agentId} for ${email}: ${run.status}${run.charged ? `, -${run.charged} credits` : ""}`);
+    return { ...run, balance: balanceOf(store.read(), email) };
+  }
+
   function balanceOf(db, email) {
     return db.ledger
       .filter((e) => e.email === email)
@@ -216,8 +258,9 @@ export function createCreditsService({ store, client, config, log = () => {} }) 
       links,
       ledger: [...db.ledger].reverse().slice(0, 200),
       webhooks: db.webhooks.slice(0, 50),
+      runs: (db.runs || []).slice(0, 50),
     };
   }
 
-  return { createTopup, syncLink, handleWebhook, reconcileOpen, spend, summary, balance: (e) => balanceOf(store.read(), String(e).toLowerCase()) };
+  return { createTopup, syncLink, handleWebhook, reconcileOpen, spend, runAgent, summary, balance: (e) => balanceOf(store.read(), String(e).toLowerCase()) };
 }

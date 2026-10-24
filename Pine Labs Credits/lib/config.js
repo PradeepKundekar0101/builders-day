@@ -31,6 +31,12 @@ export function readConfig(env = process.env) {
     adminToken: env.ADMIN_TOKEN || "",
     linkExpiryHours: num(env.LINK_EXPIRY_HOURS, 24),
     dataFile: env.DATA_FILE || "",
+    agents: {
+      baseUrl: (env.AGENTICORG_BASE_URL || "https://agenticorg.hackathon.pinelabs.com").replace(/\/$/, ""),
+      apiKey: env.AGENTICORG_API_KEY || "",
+      // Provn credits charged for each completed agent run.
+      runCredits: num(env.AGENT_RUN_CREDITS, 10),
+    },
     pricing: {
       creditsPerUsd: num(env.CREDITS_PER_USD, 100),
       minTopupUsd: num(env.MIN_TOPUP_USD, 1),

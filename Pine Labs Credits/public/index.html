@@ -34,6 +34,9 @@
   .card h2 .hint { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 12px; }
   form { padding: 16px; display: grid; gap: 12px; }
   label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  select, textarea { font: inherit; color: var(--ink); padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--soft); width: 100%; }
+  textarea { resize: vertical; }
+  pre.out { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, Menlo, monospace; background: var(--paper); border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 320px; overflow: auto; }
   input { font: inherit; color: var(--ink); padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--soft); }
   input:focus { outline: 2px solid var(--cobalt); outline-offset: -1px; background: #fff; }
   .amounts { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -97,6 +100,7 @@
   </section>
 
   <div class="grid">
+    <div class="stack">
     <section class="card">
       <h2>New payment link</h2>
       <form id="f">
@@ -114,6 +118,24 @@
       <div class="result" id="result"></div>
     </section>
 
+    <section class="card">
+      <h2>Run an agent <span class="hint" id="agent-mode">AgenticOrg</span></h2>
+      <form id="af">
+        <label>Agent
+          <select name="agent" id="agent-select"></select>
+        </label>
+        <label>Or paste an agent UUID<input name="uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
+        <label>Charged to
+          <select name="email" id="payer"></select>
+        </label>
+        <label>Task<textarea name="task" rows="3" required placeholder="e.g. share landbank portfolio summary"></textarea></label>
+        <button class="primary" id="run">Run agent</button>
+        <div class="err" id="aerr"></div>
+      </form>
+      <div class="result" id="aresult"></div>
+    </section>
+    </div>
+
     <div class="stack">
       <section class="card">
         <h2>Users <span class="hint">click a user to filter payments</span></h2>
@@ -130,6 +152,7 @@
           <div class="tabs" id="tabs">
             <button class="tab on" data-v="links">Links</button>
             <button class="tab" data-v="ledger">Ledger</button>
+            <button class="tab" data-v="runs">Agent runs</button>
             <button class="tab" data-v="webhooks">Webhooks</button>
           </div>
           <button class="btn" id="recheck" title="Ask Pine Labs for the status of every open link">Recheck open</button>

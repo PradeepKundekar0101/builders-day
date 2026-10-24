@@ -78,6 +78,16 @@ Suggested route mapping for Next.js: `app/api/credits/topups/route.ts` → `crea
 `app/api/webhooks/pinelabs/route.ts` → `handleWebhook` (read the raw body with `await req.text()` before
 parsing), and a cron or queue job → `reconcileOpen`.
 
+## Agents (AgenticOrg)
+
+The console's "Run an agent" card calls the Pine Labs hackathon agent platform server-side
+(`POST /api/v1/agents/{uuid}/run` with `{action:"process", inputs:{task}, context:{}}`) and charges
+`AGENT_RUN_CREDITS` (default 10) from the chosen user's balance, only when the run returns `completed`.
+`hitl_triggered`, `failed` and `budget_exceeded` runs are logged but not charged; a user without enough credits
+gets a 402 before the agent is called. With no `AGENTICORG_API_KEY` a built-in demo agent answers, so the flow can
+be shown offline. Code: `lib/agenticorg.js`, `runAgent` in `lib/credits.js`, routes `GET /api/agents` and
+`POST /api/agents/:uuid/run`.
+
 ## Pine Labs references
 
 - Create payment link: https://www.pinelabs.com/docs/online-payments/api/payment-links/create-payment-link
