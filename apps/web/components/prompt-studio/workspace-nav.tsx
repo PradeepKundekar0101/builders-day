@@ -99,16 +99,25 @@ export function WorkspaceNav({
         ))}
       </nav>
       <div className="provn-nav-bottom">
-        <button
+        <a className="provn-nav-item" href="/credits" title="Buy credits"><span className="provn-nav-label">Buy credits</span></a>
+        <a
           className="provn-nav-item"
-          aria-current={active === "wallet" ? "page" : undefined}
+          href="/credits"
           title="Credits & plan"
           aria-label="Credits & plan"
-          onClick={() => onSelect("wallet")}
         >
           <Icon path="M3 6h18v14H3V6 M16 11h5v5h-5v-5 M3 6l14-3v3" />
           <span className="provn-nav-label">Credits & plan</span>
-        </button>
+        </a>
+        <a
+          className="provn-nav-item"
+          href="/admin/billing"
+          title="Billing"
+          aria-label="Billing"
+        >
+          <Icon path="M6 3h12v18l-3-2-3 2-3-2-3 2V3 M9 7h6 M9 11h6 M9 15h4" />
+          <span className="provn-nav-label">Billing</span>
+        </a>
         <span className="provn-nav-label provn-nav-status">Demo workspace</span>
       </div>
     </aside>
