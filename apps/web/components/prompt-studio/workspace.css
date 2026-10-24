@@ -1170,7 +1170,8 @@ body:has(.conduit-build-workspace) > header {
 }
 .provn-journey-numbers {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Three across when the chat column is wide; wraps instead of clipping when it is narrow. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
   margin-top: 12px;
 }
@@ -1301,4 +1302,34 @@ body:has(.conduit-build-workspace) > header {
   padding-left: 18px;
   list-style: decimal;
   color: #bbc3cc;
+}
+
+/* Simulated estimate: values shimmer until their step is priced. */
+.provn-journey-pending {
+  display: block;
+  height: 19px;
+  width: 70%;
+  margin-top: 6px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #232c36 25%, #34404c 50%, #232c36 75%);
+  background-size: 200% 100%;
+  animation: provn-shimmer 1.3s ease-in-out infinite;
+}
+.provn-journey-pending.is-line {
+  width: 88px;
+  height: 14px;
+  margin-top: 3px;
+}
+@keyframes provn-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .provn-journey-pending {
+    animation: none;
+  }
 }
