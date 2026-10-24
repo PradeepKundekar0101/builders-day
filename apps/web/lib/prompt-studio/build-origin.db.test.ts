@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { beforeAll, expect, test } from "vitest";
+import { STUDIO_PRICING_VERSION } from "@buildwise/estimator";
 import { quoteFromReviewedStudio } from "./build-origin";
 
 const db = createClient(
@@ -44,7 +45,7 @@ beforeAll(async () => {
       high_usd: 1,
       hours: 1,
       model_budget_usd: 1,
-      weights_version: "source-v1",
+      weights_version: STUDIO_PRICING_VERSION,
       share_slug: randomUUID(),
     })
     .select("id")
@@ -56,6 +57,6 @@ beforeAll(async () => {
 test("the reviewed-version check runs against the real schema", async () => {
   // This quote exists but has no Studio version, so the check reaches studio_build_specs.
   // Selecting a column that table lacks used to fail here and block every real build.
-  await expect(quoteFromReviewedStudio(db, quoteId, userId)).resolves.toBe(false);
-  await expect(quoteFromReviewedStudio(db, randomUUID(), userId)).resolves.toBe(false);
+  await expect(quoteFromReviewedStudio(db, quoteId, userId)).resolves.toBe("not_studio");
+  await expect(quoteFromReviewedStudio(db, randomUUID(), userId)).resolves.toBe("not_studio");
 });

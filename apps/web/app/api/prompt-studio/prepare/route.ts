@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createStudioReview, flagReasons } from "@buildwise/shared";
-import { estimateSpec, PricingSchema } from "@buildwise/estimator";
+import { estimateSpec, PricingSchema, STUDIO_PRICING_VERSION } from "@buildwise/estimator";
 import { supportedSpec } from "@buildwise/build-engine";
 import { studioUser, studioDb, studioError } from "@/lib/prompt-studio/server";
 import { requireSameOrigin, costService } from "@/lib/cost/server";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const { data: pricing } = await service.db
       .from("cost_pricing_versions")
       .select("config")
-      .eq("version", "source-v1")
+      .eq("version", STUDIO_PRICING_VERSION)
       .single();
     if (!pricing) throw new StudioHttpError(503, "Build pricing is not configured.");
     const estimate = estimateSpec({
