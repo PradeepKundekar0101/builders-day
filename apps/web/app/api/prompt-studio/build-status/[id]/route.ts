@@ -34,15 +34,38 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         .createSignedUrl(output.artifact_path, 60, { download: "provn-product.zip" });
       downloadUrl = data?.signedUrl;
     }
+    // Same rule as released_url(): the owner sees the live URL only once the build is released.
+    let liveUrl: string | undefined;
+    if (build.status === "released") {
+      const { data: deployment } = await db
+        .from("deployments")
+        .select("url")
+        .eq("build_id", id)
+        .eq("status", "ready")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      liveUrl =
+        deployment?.url && /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(deployment.url)
+          ? deployment.url
+          : undefined;
+    }
     return Response.json(
       {
         build,
         status:
-          build.status === "paused_budget" ? "needs_review" : (output?.status ?? build.status),
+          build.status === "paused_budget"
+            ? "needs_review"
+            : build.status === "deploying"
+              ? "deploying"
+              : build.status === "released"
+                ? "live"
+                : (output?.status ?? build.status),
         message: output?.message ?? "Waiting for the build worker.",
         checks: output?.checks ?? {},
         steps: (events ?? []).map((e) => e.payload),
         downloadUrl,
+        liveUrl,
       },
       { headers: { "Cache-Control": "no-store" } },
     );

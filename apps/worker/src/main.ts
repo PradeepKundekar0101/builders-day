@@ -15,6 +15,7 @@ import {
 import { supportedSpec } from "@buildwise/build-engine";
 import { AgentConfig, runCodeAgent } from "./agent";
 import { prepareProduct, verifyProduct } from "./generate";
+import { VercelConfig, deployToVercel, projectName } from "./vercel";
 function required(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing ${name}`);
@@ -29,6 +30,16 @@ const agent = AgentConfig.parse({
   model: process.env.PROVN_BUILD_MODEL || undefined,
   maxBudgetUsd: maxUsd * 0.8,
 });
+// Deployment is optional: without a token the worker delivers the source ZIP only.
+const vercel = process.env.VERCEL_TOKEN
+  ? VercelConfig.parse({
+      token: process.env.VERCEL_TOKEN,
+      teamId: process.env.VERCEL_TEAM_ID || undefined,
+      embedOrigin: process.env.PROVN_SITE_URL
+        ? new URL(process.env.PROVN_SITE_URL).origin
+        : undefined,
+    })
+  : null;
 const db = createClient(
   required("NEXT_PUBLIC_SUPABASE_URL"),
   required("SUPABASE_SERVICE_ROLE_KEY"),
@@ -69,7 +80,7 @@ while (!stopping) {
     if (
       error ||
       data?.claimed_by !== worker ||
-      !["running", "building_fix"].includes(data.status)
+      !["running", "building_fix", "deploying"].includes(data.status)
     ) {
       leaseLost = true;
       abort.abort();
@@ -203,6 +214,15 @@ while (!stopping) {
       chargeUnits: Math.round(Number(quote.cost_usd) * 1e6),
     });
     if (!settled.allowed) throw new Error("Settlement denied");
+    const finished = () => new Date().toISOString();
+    if (vercel)
+      await checked(
+        await db
+          .from("builds")
+          .update({ status: "deploying" })
+          .eq("id", build.id)
+          .eq("claimed_by", worker),
+      );
     await checked(
       await db
         .from("build_outputs")
@@ -210,15 +230,59 @@ while (!stopping) {
           status: "ready",
           artifact_path: attempt.value.path,
           checks: attempt.value.report,
-          message: "Product source is ready. Connect its database and review before deployment.",
-          updated_at: new Date().toISOString(),
+          message: vercel
+            ? "Product source is ready. Deploying it to Vercel."
+            : "Product source is ready. Connect its database and review before deployment.",
+          updated_at: finished(),
         })
         .eq("build_id", build.id),
     );
+    let released = false;
+    if (vercel) {
+      // The build is paid for and its source delivered; a failed deploy must not reopen billing.
+      const name = projectName(build.id);
+      let message: string;
+      try {
+        await step("Deploying the app to Vercel.");
+        const live = await deployToVercel({
+          directory: resolve(root, build.id),
+          name,
+          config: vercel,
+          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(15 * 60_000)]),
+          onStep: step,
+        });
+        await checked(
+          await db.from("deployments").insert({
+            build_id: build.id,
+            vercel_project_id: live.projectId,
+            url: live.url,
+            status: "ready",
+          }),
+        );
+        await step(`Live at ${live.url}`);
+        message = "Your app is live. Data and sign-in need a connected Supabase project.";
+        released = true;
+      } catch (error) {
+        if (leaseLost) throw error;
+        await db.from("deployments").insert({ build_id: build.id, status: "failed" });
+        message = `Product source is ready, but deployment failed: ${error instanceof Error ? error.message.slice(0, 300) : "unknown error"}`;
+      }
+      await checked(
+        await db
+          .from("build_outputs")
+          .update({ message, updated_at: finished() })
+          .eq("build_id", build.id),
+      );
+    }
+    // No security audit exists yet, so a ready deployment is released to its owner immediately.
     await checked(
       await db
         .from("builds")
-        .update({ status: "auditing", finished_at: new Date().toISOString(), claimed_by: null })
+        .update({
+          status: released ? "released" : "auditing",
+          finished_at: finished(),
+          claimed_by: null,
+        })
         .eq("id", build.id)
         .eq("claimed_by", worker),
     );
