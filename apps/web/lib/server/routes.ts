@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { serverEnv } from "./env";
 import { isUuid } from "./ids";
@@ -42,6 +43,8 @@ export function userRoute<P extends Params>(
       if (!params) return notFound();
       return await handler(request, user, params);
     } catch (error) {
+      // Next signals dynamic rendering and redirects by throwing; those must reach the framework.
+      unstable_rethrow(error);
       return errorResponse(error);
     }
   };
@@ -63,6 +66,8 @@ export function agentRoute<P extends Params>(
       if (!params) return notFound();
       return await handler(request, params);
     } catch (error) {
+      // Next signals dynamic rendering and redirects by throwing; those must reach the framework.
+      unstable_rethrow(error);
       return errorResponse(error);
     }
   };
