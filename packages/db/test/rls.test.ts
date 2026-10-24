@@ -56,7 +56,7 @@ describe("owner-scoped tables", () => {
     async ({ table, key, ...rest }) => {
       const column = "column" in rest ? rest.column : "id";
       const select = "select" in rest ? rest.select : "*";
-      const read = (c: Client) => c.from(table).select(select).eq(column, ids[key]);
+      const read = (c: Client) => c.from(table).select(select).filter(column, "eq", ids[key]);
 
       const mine = await read(owner.client);
       expect(mine.error).toBeNull();
