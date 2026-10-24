@@ -60,11 +60,16 @@ test("sign out returns to landing and /apps redirects again", async ({ page }) =
   await expect(page).toHaveURL(/\/signin/);
 });
 
-test("Continue with Google starts the OAuth flow", async ({ page }) => {
+test("email magic links are the only sign-in option", async ({ page }) => {
   await page.goto("/signin");
-  const authorize = page.waitForRequest(/\/auth\/v1\/authorize\?provider=google/);
-  await page.getByRole("button", { name: "Continue with Google" }).click();
-  await authorize;
+  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Email me a sign-in link" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Continue with Google" }),
+  ).toHaveCount(0);
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
 
 test("bad token shows an error", async ({ page }) => {
