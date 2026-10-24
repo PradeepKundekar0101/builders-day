@@ -88,8 +88,8 @@ export function BuildWorkspace({
   return (
     <div className="conduit-build-workspace">
       <header className="build-topbar">
-        <a href="/prompt-studio-demo" className="build-wordmark" aria-label="Conduit home">
-          c<span>conduit</span>
+        <a href="/prompt-studio-demo" className="build-wordmark" aria-label="PROVN home">
+          P<span>PROVN</span>
         </a>
         <span className="build-top-divider" />
         <div className="build-project">
@@ -156,7 +156,7 @@ export function BuildWorkspace({
                 </article>
                 <article className="build-message">
                   <div className="build-message-label">
-                    <span className="build-avatar">✦</span>Conduit
+                    <span className="build-avatar">✦</span>PROVN
                     <span className="build-agent-tag">GUIDE · MOCK</span>
                   </div>
                   <p>
@@ -182,7 +182,7 @@ export function BuildWorkspace({
                     <div key={q.id}>
                       <article className="build-message">
                         <div className="build-message-label">
-                          <span className="build-avatar">✦</span>Conduit
+                          <span className="build-avatar">✦</span>PROVN
                           <span>Decision {i + 1}</span>
                         </div>
                         <div className="build-question-bubble">
@@ -217,7 +217,7 @@ export function BuildWorkspace({
                 {!next && (
                   <article className="build-message">
                     <div className="build-message-label">
-                      <span className="build-avatar">✦</span>Conduit
+                      <span className="build-avatar">✦</span>PROVN
                       <span>Ready for your review</span>
                     </div>
                     <p>
@@ -260,7 +260,7 @@ export function BuildWorkspace({
                   {next ? "Agent is waiting for your answer" : "Your brief is ready to refine"}
                 </div>
                 <label htmlFor="agent-message" className="sr-only">
-                  Message Conduit
+                  Message PROVN
                 </label>
                 <textarea
                   id="agent-message"
@@ -274,7 +274,7 @@ export function BuildWorkspace({
                     }
                   }}
                   placeholder={
-                    next ? "Tell Conduit what you have in mind…" : "Add another requirement…"
+                    next ? "Tell PROVN what you have in mind…" : "Add another requirement…"
                   }
                   rows={3}
                   disabled={busy}
@@ -444,7 +444,7 @@ export function BuildWorkspace({
             {consoleOpen && (
               <div className="build-terminal-output" role="log" aria-live="polite">
                 <p>
-                  <span className="terminal-muted">conduit / studio</span>{" "}
+                  <span className="terminal-muted">provn / studio</span>{" "}
                   <span className="terminal-green">$</span> preview --mock
                 </p>
                 <p className="terminal-muted">

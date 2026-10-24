@@ -207,7 +207,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       );
       const a = document.createElement("a");
       a.href = url;
-      a.download = "conduit-prompt-brief.json";
+      a.download = "provn-prompt-brief.json";
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -524,7 +524,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
     <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
       <div className="studio-landscape" aria-hidden="true" />
       <nav className="studio-nav" aria-label="Prompt Studio navigation">
-        <a href="/prompt-studio-demo" className="studio-brand" aria-label="Conduit home">
+        <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
           <svg width="26" height="27" viewBox="0 0 28 28" fill="none" aria-hidden="true">
             <path
               d="M20 6C17 2 10 3 7 8L3 15c-3 6 5 10 8 5l4-7"
@@ -534,7 +534,7 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
             />
             <path d="m17 11 5 9" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
           </svg>
-          conduit
+          PROVN
         </a>
         <span className="studio-nav-divider" />
         <span className="studio-nav-label">Prompt Studio</span>
