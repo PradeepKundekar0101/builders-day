@@ -16,8 +16,9 @@ Secrets live only in `.env.deploy.local` (git-ignored) and in the Vercel and Sup
 3. Push auth settings: `pnpm exec supabase config push --project-ref bxnmselwdjodquzuzglo`.
    Production overrides live under `[remotes.production]` in `supabase/config.toml`.
    Review the printed diff before answering yes.
-4. Custom email templates are refused until a custom SMTP provider is configured (free-tier rule).
-   Configure Resend SMTP first, then push the auth config.
+4. Custom email templates are refused until a custom SMTP provider is configured (free-tier rule), and the refusal rejects the whole auth push.
+   Until Resend SMTP is configured, push from a temporary copy of `supabase/` with the two `[auth.email.template.*]` sections removed (`--workdir <copy>`).
+   With the default templates, email links return to `/auth/confirm` with a PKCE `code`, which the route also accepts.
 
 ## Vercel
 
