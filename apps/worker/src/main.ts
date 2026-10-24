@@ -13,7 +13,7 @@ import {
   runCreditAttempt,
 } from "@buildwise/cost-guard";
 import { supportedSpec } from "@buildwise/build-engine";
-import { AgentConfig, runCodeAgent } from "./agent";
+import { AgentConfig, agentBudget, runCodeAgent } from "./agent";
 import { prepareProduct, verifyProduct } from "./generate";
 import { VercelConfig, deployToVercel, projectName } from "./vercel";
 function required(name: string) {
@@ -24,7 +24,7 @@ function required(name: string) {
 if (process.env.PROVN_LIVE_BUILDS !== "true")
   throw new Error("Worker disabled. Enable only after deployment and spending approval.");
 const maxUsd = Number(required("PROVN_BUILD_MAX_USD"));
-// The SDK checks its budget between turns, so leave headroom for the last turn inside the reservation.
+// Per-build reservations come from agentBudget(); this cap only bounds them.
 const agent = AgentConfig.parse({
   apiKey: required("ANTHROPIC_API_KEY"),
   model: process.env.PROVN_BUILD_MODEL || undefined,
@@ -168,24 +168,27 @@ while (!stopping) {
           template,
           onStep: step,
         });
+        const budget = agentBudget(Number(build.budget_usd), maxUsd);
         await step("Claude is writing the product code within the approved budget.");
         const call = await runBoundedCall({
           guard,
           buildId: build.id,
           callId: `${build.id}:code`,
           taskId: "code",
-          maxMicros: Math.ceil(maxUsd * 1e6),
+          maxMicros: budget.reserveMicros,
           execute: () =>
             runCodeAgent({
               spec,
               requirements: version.payload,
               directory,
-              config: agent,
+              config: { ...agent, maxBudgetUsd: budget.agentUsd },
               signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20 * 60_000)]),
               onStep: step,
             }),
         });
-        if (!call.executed || !call.settlement.allowed) throw new Error("Budget requires review");
+        if (!call.executed) throw new Error(`Budget requires review: ${call.reason}`);
+        if (!call.settlement.allowed)
+          throw new Error(`Budget requires review: ${call.settlement.reason}`);
         if (!call.value.ok) throw new Error(`Code agent stopped: ${call.value.subtype}`);
         await owns();
         const result = await verifyProduct({
@@ -286,7 +289,11 @@ while (!stopping) {
         .eq("id", build.id)
         .eq("claimed_by", worker),
     );
-  } catch {
+  } catch (error) {
+    // Operators need the cause; messages carry no secrets or user content.
+    console.error(
+      `[worker] build ${build.id} stopped: ${error instanceof Error ? error.message : String(error)}`,
+    );
     // Never automatically retry a possibly billed request or silently refund unknown usage.
     if (!leaseLost) {
       await db

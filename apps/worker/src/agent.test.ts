@@ -1,7 +1,7 @@
 import { it, expect, vi } from "vitest";
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
 import { supportedSpec } from "@buildwise/build-engine";
-import { agentPathDecision, agentPrompt, runCodeAgent } from "./agent";
+import { agentBudget, agentPathDecision, agentPrompt, runCodeAgent } from "./agent";
 const dir = "/work/build-1";
 const spec = supportedSpec({
   name: "Site",
@@ -92,4 +92,14 @@ it("refuses to treat a missing result as free", async () => {
       run: run as never,
     }),
   ).rejects.toThrow("reconcile");
+});
+
+it("reserves no more than the approved build budget", () => {
+  // A $3 operator cap must not exceed a $1.86 approved budget, or the cost guard refuses the call.
+  expect(agentBudget(1.86, 3).reserveMicros).toBe(1_860_000);
+  expect(agentBudget(1.86, 3).agentUsd).toBeCloseTo(1.488, 6);
+  expect(agentBudget(5, 3).reserveMicros).toBe(3_000_000);
+  expect(agentBudget(5, 3).agentUsd).toBeCloseTo(2.4, 6);
+  expect(() => agentBudget(Number("not a number"), 3)).toThrow("no approved provider budget");
+  expect(() => agentBudget(0, 3)).toThrow("no approved provider budget");
 });
