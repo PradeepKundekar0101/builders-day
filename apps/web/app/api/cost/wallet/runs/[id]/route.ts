@@ -30,9 +30,15 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (input.action === "start") {
       if (process.env.PROVN_LIVE_BUILDS !== "true") throw new Error("Live builds disabled");
       const { db } = costService();
-      if (!(await quoteFromReviewedStudio(db, runId, userId)))
+      const origin = await quoteFromReviewedStudio(db, runId, userId);
+      if (origin !== "ok")
         return Response.json(
-          { error: "Build must originate from a reviewed Prompt Studio version." },
+          {
+            error:
+              origin === "stale_pricing"
+                ? "This estimate uses outdated pricing. Get a new build estimate and approve it again."
+                : "Build must originate from a reviewed Prompt Studio version.",
+          },
           { status: 409 },
         );
       const { data: workers, error } = await db

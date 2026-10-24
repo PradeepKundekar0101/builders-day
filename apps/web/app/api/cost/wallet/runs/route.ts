@@ -1,6 +1,11 @@
 import { supportedSpec } from "@buildwise/build-engine";
 import { z } from "zod";
-import { estimateSpec, PricingSchema, SelectionSchema } from "@buildwise/estimator";
+import {
+  estimateSpec,
+  PricingSchema,
+  SelectionSchema,
+  STUDIO_PRICING_VERSIONS,
+} from "@buildwise/estimator";
 import { creditsToUnits } from "@buildwise/cost-guard";
 import { SpecSchema } from "@buildwise/shared";
 import { costIdentity, costService, costError, requireSameOrigin } from "@/lib/cost/server";
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
     // but accepting a client assertion here would permit free platform-funded model calls.
     if (input.billingMode === "byok")
       throw new Error("BYOK execution requires a verified provider-key integration");
-    if (input.pricingVersion === "source-v1") {
+    if ((STUDIO_PRICING_VERSIONS as readonly string[]).includes(input.pricingVersion)) {
       const canonical = supportedSpec(spec.spec);
       const selected = new Set(input.selection.selectedIds);
       supportedSpec({

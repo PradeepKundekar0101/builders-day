@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import "./build-run.css";
+import { AGENT_BASE_LABEL } from "@buildwise/estimator";
 import { checkoutUrl, readBuildContext } from "@/lib/payments/build-context";
 type Prepared = {
   availableCredits: number;
@@ -13,6 +14,7 @@ type Prepared = {
     selection: unknown;
     weightsVersion: string;
     featureCosts: { id: string; label: string }[];
+    agentBaseTokens?: number;
   };
   sessionId: string;
   revision: number;
@@ -209,8 +211,12 @@ export default function BuildRun() {
             <>
               <h2 className="mt-6 text-xl">Up to {prepared.quote.costCredits} credits</h2>
               <p className="mt-3">
-                Included: {prepared.quote.featureCosts?.map((f) => f.label).join(", ")}. Optional
-                features are deferred. No deployment fee is charged.
+                Included:{" "}
+                {[
+                  ...(prepared.quote.agentBaseTokens ? [AGENT_BASE_LABEL] : []),
+                  ...(prepared.quote.featureCosts?.map((f) => f.label) ?? []),
+                ].join(", ")}
+                . Optional features are deferred. No deployment fee is charged.
               </p>
               <p>Available balance: {prepared.availableCredits} credits.</p>
               {prepared.availableCredits < prepared.quote.costCredits && (

@@ -18,6 +18,8 @@ export const PricingSchema = z.object({
   margin: nonnegative,
   deployUsd: nonnegative,
   rangeFraction: nonnegative.max(1),
+  /** Fixed tokens per build for the Claude code agent: its harness, reading the template and checks. */
+  agentBaseTokens: z.number().int().nonnegative().optional(),
   features: z.record(
     FeatureKindSchema,
     z.object({
@@ -70,7 +72,8 @@ export function calculate(
         integrationUsd: f.integrationUsd * i.quantity,
       };
     });
-  const tokens = lines.reduce((s, i) => s + i.tokens, 0),
+  const agentBaseTokens = config.agentBaseTokens ?? 0,
+    tokens = lines.reduce((s, i) => s + i.tokens, 0) + agentBaseTokens,
     modelBudgetUsd = round((tokens * config.usdPerMillionTokens) / 1e6, 6),
     integrationUsd = round(
       lines.reduce((s, i) => s + i.integrationUsd, 0),
@@ -90,6 +93,8 @@ export function calculate(
   return {
     lines,
     tokens,
+    agentBaseTokens,
+    agentBaseUsd: round((agentBaseTokens * config.usdPerMillionTokens) / 1e6, 6),
     modelBudgetUsd,
     costUsd,
     lowUsd,

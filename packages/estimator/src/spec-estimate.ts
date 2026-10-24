@@ -11,6 +11,11 @@ import {
   type BillingMode,
 } from "./pricing";
 export { DEFAULT_PRICING, PricingSchema };
+/** The pricing snapshot every Prompt Studio build is quoted, approved and started with. */
+export const STUDIO_PRICING_VERSION = "source-v2";
+/** Studio snapshots whose quotes describe a source build (older ones may no longer be startable). */
+export const STUDIO_PRICING_VERSIONS = ["source-v1", STUDIO_PRICING_VERSION] as const;
+export const AGENT_BASE_LABEL = "AI code build and checks";
 export type { Pricing };
 export const SelectionSchema = z.object({
   specRevision: z.string().min(1),

@@ -61,3 +61,23 @@ describe("estimate", () => {
     expect(FEATURES_V1.static_page).toMatchObject({ tokens: 15_000, hours: 0.25 });
   });
 });
+
+describe("agent base", () => {
+  test("adds a fixed per-build line to tokens, provider budget and price", async () => {
+    const { calculate, DEFAULT_PRICING } = await import("./pricing");
+    const items = [{ kind: "static_page" as const, quantity: 1 }];
+    const without = calculate(items, DEFAULT_PRICING);
+    const withBase = calculate(items, { ...DEFAULT_PRICING, agentBaseTokens: 100_000 });
+    // One page: 15k tokens ($0.09) before; plus 100k agent tokens ($0.60) after.
+    expect(without.modelBudgetUsd).toBe(0.09);
+    expect(withBase.modelBudgetUsd).toBe(0.69);
+    expect(withBase.agentBaseUsd).toBe(0.6);
+    expect(withBase.tokens).toBe(115_000);
+    expect(withBase.costCredits - without.costCredits).toBeCloseTo(120, 4);
+  });
+  test("keeps older pricing snapshots without the field unchanged", async () => {
+    const { calculate, DEFAULT_PRICING, PricingSchema } = await import("./pricing");
+    const legacy = PricingSchema.parse({ ...DEFAULT_PRICING });
+    expect(calculate([{ kind: "static_page", quantity: 1 }], legacy).agentBaseTokens).toBe(0);
+  });
+});
