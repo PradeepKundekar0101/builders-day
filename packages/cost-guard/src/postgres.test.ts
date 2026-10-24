@@ -45,7 +45,7 @@ beforeAll(async () => {
   );
   await db.exec(
     await readFile(
-      new URL("../../../supabase/migrations/20261024010000_cost_guard.sql", import.meta.url),
+      new URL("../../../supabase/migrations/20261024011000_cost_guard.sql", import.meta.url),
       "utf8",
     ),
   );

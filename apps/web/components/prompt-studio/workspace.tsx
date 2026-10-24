@@ -12,6 +12,7 @@ import "./workspace.css";
 import { P0Panels, useProvnDemo, type P0Module } from "./p0-panels";
 
 type Props = {
+  buildHref?: string;
   pauseOnOpen?: boolean;
   message: string;
   onMessageChange: (value: string) => void;
@@ -38,6 +39,7 @@ const stages = [
   "Simulation complete. No application deployed.",
 ];
 export function BuildWorkspace({
+  buildHref,
   pauseOnOpen = false,
   message,
   onMessageChange: setMessage,
@@ -217,8 +219,13 @@ export function BuildWorkspace({
         </div>
         <span className="build-mode">
           <i />
-          {draft.adapterMode === "openai" ? "Live intake · mock build" : "Mock environment"}
+          {draft.adapterMode === "openai" ? "Live intake · draft preview" : "Mock environment"}
         </span>
+        {buildHref && (
+          <a className="build-export" href={buildHref}>
+            Build product ↗
+          </a>
+        )}
         <button onClick={onSave} disabled={busy} className="build-quiet-button">
           Save draft
         </button>
@@ -305,7 +312,7 @@ export function BuildWorkspace({
                     <small>
                       {buildConnection
                         ? "Progression follows build-engine completion events."
-                        : "Preview simulation · real build engine not connected"}
+                        : "Draft preview · use Build product for a real run"}
                     </small>
                     {buildStage < 3 && (
                       <button className="build-inline-button" onClick={() => setPaused(!paused)}>

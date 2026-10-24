@@ -1,3 +1,11 @@
+# Current local status, 24 October 2026
+
+Email-only magic-link login was published and verified separately in PRs #10 and #11. The earlier Google and email findings below are historical.
+
+The local `codex/provn-live-build` branch now contains an executable constrained template worker, reviewed-version handoff, credit approval/start page, build history and private source artifacts. See [the integration and activation guide](provn-live-build-integration.md) for tested behavior and remaining deployment requirements. No live build worker has been deployed or paid model build exercised by this change. Automatic deployment and arbitrary custom workflow generation are not implemented.
+
+---
+
 # PROVN live-flow verification, 24 October 2026
 
 ## Verified sources

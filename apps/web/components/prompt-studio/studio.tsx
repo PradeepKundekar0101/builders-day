@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ProvnLogo } from "@/components/provn-logo";
+import { WorkspaceNav } from "./workspace-nav";
 import { BuilderOnboarding } from "./onboarding";
 import { DEFAULT_PROFILE, type BuilderProfile } from "@/lib/provn-demo";
 import "./p0-panels.css";
@@ -79,6 +80,14 @@ function StudioIcon({ name }: { name: "arrow" | "mic" | "spark" | "check" | "cod
   );
 }
 
+const subscribeOnboarding = () => () => {};
+function onboardingWasDismissed() {
+  try {
+    return localStorage.getItem("provn-onboarding-dismissed") === "1";
+  } catch {
+    return false;
+  }
+}
 export function PromptStudio({
   demo = false,
   buildConnection,
@@ -87,6 +96,11 @@ export function PromptStudio({
   buildConnection?: StudioBuildConnection;
 }) {
   const params = useSearchParams();
+  const onboardingDismissed = useSyncExternalStore(
+    subscribeOnboarding,
+    onboardingWasDismissed,
+    () => true,
+  );
   const [live, setLive] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
   const [history, setHistory] = useState<StudioVersion[]>([]);
@@ -198,13 +212,22 @@ export function PromptStudio({
     },
     [],
   );
+  function dismissOnboarding() {
+    setShowOnboarding(false);
+    setOnboarded(true);
+    try {
+      localStorage.setItem("provn-onboarding-dismissed", "1");
+    } catch {
+      /* Browser storage may be disabled. */
+    }
+  }
   function change(next: PromptStudioDraft) {
     setDraft(next);
     setConfirmed(false);
     setNotice("Unsaved changes");
   }
   async function interpret(chosenProfile?: BuilderProfile) {
-    if (!onboarded && !chosenProfile) {
+    if (!onboarded && !onboardingDismissed && !chosenProfile) {
       setShowOnboarding(true);
       return;
     }
@@ -428,7 +451,7 @@ export function PromptStudio({
         maxLength={2000}
         onChange={(e) => setIdea(e.target.value)}
         onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length >= 50 && !busy) {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && idea.trim().length > 0 && !busy) {
             e.preventDefault();
             void interpret();
           }
@@ -451,7 +474,7 @@ export function PromptStudio({
         <button
           className={button}
           onClick={() => interpret()}
-          disabled={busy || idea.trim().length < 50}
+          disabled={busy || idea.trim().length < 1}
         >
           {busy ? "Shaping…" : draft ? "Start new brief" : "Shape my idea"}
           <StudioIcon name="arrow" />
@@ -468,6 +491,11 @@ export function PromptStudio({
   if (draft)
     return (
       <BuildWorkspace
+        buildHref={
+          !demo && session
+            ? `/apps/build?session=${session.id}&revision=${session.revision}`
+            : undefined
+        }
         pauseOnOpen={Boolean(resumeId)}
         message={pendingMessage}
         onMessageChange={setPendingMessage}
@@ -780,9 +808,17 @@ export function PromptStudio({
                     Export JSON
                   </button>
                 </div>
+                {!demo && session && (
+                  <a
+                    className="studio-button mt-4 inline-block"
+                    href={`/apps/build?session=${session.id}&revision=${session.revision}`}
+                  >
+                    Continue to product build
+                  </a>
+                )}
                 <p className="mt-3 text-xs text-slate">
-                  Answer all questions and review the brief, then open Cost Guard to approve a
-                  simulated run. Real billing and build services are not connected.
+                  Save a reviewed version, then open the build page to estimate and approve a real
+                  product build.
                 </p>
               </div>
             </div>
@@ -791,134 +827,126 @@ export function PromptStudio({
       />
     );
   return (
-    <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
-      {showOnboarding && (
-        <BuilderOnboarding
-          onClose={() => setShowOnboarding(false)}
-          onComplete={(settings) => {
-            setProfile(settings);
-            setOnboarded(true);
-            setShowOnboarding(false);
-            if (idea.trim().length >= 50) void interpret(settings);
-          }}
-        />
-      )}
-      <div className="studio-landscape" aria-hidden="true"></div>
-      <nav className="studio-nav" aria-label="Prompt Studio navigation">
-        <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
-          <ProvnLogo />
-        </a>
-        <span className="studio-nav-divider" />
-        <a className="studio-nav-label" href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
-          Sign in
-        </a>
-        <a href="#idea" className="studio-nav-cta">
-          Start a build
-          <span aria-hidden="true">↗</span>
-        </a>
-      </nav>
-      <header className="studio-hero">
-        <p className="studio-eyebrow">
-          <span /> YOUR IDEAS. BEYOND POSSIBILITY.
-        </p>
-        <h1>
-          {draft ? (
-            <>
-              Good ideas grow
-              <br />
-              with <em>a little clarity.</em>
-            </>
-          ) : (
-            <>
-              Every build,
-              <br />
-              <em>proven.</em>
-            </>
-          )}
-        </h1>
-        <p className="studio-subtitle">
-          {draft
-            ? "A few thoughtful details. A brief that feels like you."
-            : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
-        </p>
-      </header>
-      <div className="studio-content">
-        {error && (
-          <p role="alert" className="studio-alert">
-            {error}
-          </p>
+    <div className="provn-home-shell">
+      <WorkspaceNav
+        project="Your next build"
+        onSelect={() => {
+          setNotice(
+            "Describe your idea to begin. Your prompts, preview and build tools will open in the workspace.",
+          );
+          document.getElementById("idea")?.focus();
+        }}
+      />
+      <div className={`conduit-studio ${draft ? "has-draft" : "is-welcome"}`}>
+        {showOnboarding && !onboardingDismissed && (
+          <BuilderOnboarding
+            onClose={dismissOnboarding}
+            onComplete={(settings) => {
+              setProfile(settings);
+              dismissOnboarding();
+              if (idea.trim().length > 0) void interpret(settings);
+            }}
+          />
         )}
-        {notice && (
-          <p role="status" className="studio-notice">
-            <StudioIcon name="check" />
-            {notice}
-          </p>
-        )}
-        {
-          <div className="studio-welcome">
-            <div className="studio-input-panel">
-              <p className="portal-input-label">What do you want to build?</p>
-              <label className="studio-live-toggle">
-                <input
-                  type="checkbox"
-                  checked={live}
-                  disabled={busy}
-                  onChange={(e) => setLive(e.target.checked)}
-                />{" "}
-                Use live AI · requires sign-in; provider charges apply to replies and automatic
-                stage progression.
-              </label>
-              <div className="studio-composer">{composer}</div>
-              <div className="studio-examples">
-                <span>Try an example prompt</span>
-                <button onClick={() => setIdea(sample)} disabled={busy}>
-                  <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
-                </button>
-                <button
-                  onClick={() =>
-                    setIdea(
-                      "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
-                    )
-                  }
-                  disabled={busy}
-                >
-                  <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
-                </button>
-              </div>
-            </div>
-            {busy && (
-              <button className="studio-button" onClick={() => modelRequest.current?.abort()}>
-                Cancel model request
-              </button>
-            )}
-            <p className="studio-helper">
-              {live
-                ? "Live intake · each submission calls the configured cloud model"
-                : "Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used"}
+        <div className="studio-landscape" aria-hidden="true"></div>
+        <nav className="studio-nav" aria-label="Prompt Studio navigation">
+          <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
+            <ProvnLogo />
+          </a>
+          <span className="studio-nav-divider" />
+          <a
+            className="studio-nav-label"
+            href="/signin?next=%2Fapps%2Fnew"
+            onClick={signInToStudio}
+          >
+            Sign in
+          </a>
+          <a href="#idea" className="studio-nav-cta">
+            Start a build
+            <span aria-hidden="true">↗</span>
+          </a>
+        </nav>
+        <header className="studio-hero studio-hero-single">
+          <h1>Turn your ideas into production-grade platforms.</h1>
+          <h2 className="studio-build-subheading">What do you want to build?</h2>
+        </header>
+        <div className="studio-content">
+          {error && (
+            <p role="alert" className="studio-alert">
+              {error}
             </p>
-          </div>
-        }
+          )}
+          {notice && (
+            <p role="status" className="studio-notice">
+              <StudioIcon name="check" />
+              {notice}
+            </p>
+          )}
+          {
+            <div className="studio-welcome">
+              <div className="studio-input-panel">
+                <label className="studio-live-toggle">
+                  <input
+                    type="checkbox"
+                    checked={live}
+                    disabled={busy}
+                    onChange={(e) => setLive(e.target.checked)}
+                  />{" "}
+                  Use live AI · requires sign-in; provider charges apply to replies and automatic
+                  stage progression.
+                </label>
+                <div className="studio-composer">{composer}</div>
+                <div className="studio-examples">
+                  <span>Try an example prompt</span>
+                  <button onClick={() => setIdea(sample)} disabled={busy}>
+                    <StudioIcon name="spark" />A booking platform<span aria-hidden="true">↗</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setIdea(
+                        "Build a private client portal for a small design agency. Clients should see project progress, approve designs, and share feedback. Team members should manage their own projects.",
+                      )
+                    }
+                    disabled={busy}
+                  >
+                    <StudioIcon name="code" />A client portal<span aria-hidden="true">↗</span>
+                  </button>
+                </div>
+              </div>
+              {busy && (
+                <button className="studio-button" onClick={() => modelRequest.current?.abort()}>
+                  Cancel model request
+                </button>
+              )}
+              <p className="studio-helper">
+                {live
+                  ? "Live intake · each submission calls the configured cloud model"
+                  : "Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used"}
+              </p>
+            </div>
+          }
 
-        <footer className="studio-footer">
-          <span>
-            <span className="studio-status-dot" />
-            {live
-              ? "Live AI selected · build services still simulated"
-              : "Mock adapter · No model charges"}
-          </span>
-          <span>
-            {demo ? (
-              <>
-                Demo mode ·{" "}
-                <a href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
-                  Sign in to save your work ↗
-                </a>
-              </>
-            ) : (
-              "Your idea stays yours."
-            )}
-          </span>
-        </footer>
+          <footer className="studio-footer">
+            <span>
+              <span className="studio-status-dot" />
+              {live
+                ? "Live intake · review and approve a build separately"
+                : "Mock adapter · No model charges"}
+            </span>
+            <span>
+              {demo ? (
+                <>
+                  Demo mode ·{" "}
+                  <a href="/signin?next=%2Fapps%2Fnew" onClick={signInToStudio}>
+                    Sign in to save your work ↗
+                  </a>
+                </>
+              ) : (
+                "Your idea stays yours."
+              )}
+            </span>
+          </footer>
+        </div>
       </div>
     </div>
   );

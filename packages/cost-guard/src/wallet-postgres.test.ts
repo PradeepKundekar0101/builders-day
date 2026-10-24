@@ -48,8 +48,8 @@ beforeAll(async () => {
   for (const file of [
     "20261024000000_init.sql",
     "20261024000100_hardening.sql",
-    "20261024010000_cost_guard.sql",
-    "20261024020000_credit_wallet.sql",
+    "20261024011000_cost_guard.sql",
+    "20261024021000_credit_wallet.sql",
   ]) {
     const sql = await readFile(
       new URL(`../../../supabase/migrations/${file}`, import.meta.url),
