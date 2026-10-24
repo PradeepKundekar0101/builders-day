@@ -31,8 +31,13 @@ export function ManualCredits() {
     try {
       const r = await fetch("/api/credits/manual", { cache: "no-store" });
       const d = await r.json();
-      setSignedIn(r.ok);
+      if (r.status === 401) {
+        setSignedIn(false);
+        setMessage("");
+        return;
+      }
       if (!r.ok) throw new Error(d.error);
+      setSignedIn(true);
       setPayments(d.purchases);
       setBalance(d.wallet.availableCredits);
       const pending = d.purchases.find((p: Payment) => p.status === "pending");
