@@ -9,7 +9,10 @@ import {
   setRole,
 } from "./helpers";
 
-test.skip(remote, "Intake tests need the local agent token and service role.");
+test.skip(
+  remote && !process.env.AGENT_API_TOKEN,
+  "Intake tests against a deployment need its AGENT_API_TOKEN and service role.",
+);
 
 const IDEA =
   "A tiffin order tracker for my home kitchen. Customers pick meals for the week and I see each day's orders.";
