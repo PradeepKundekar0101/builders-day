@@ -54,6 +54,7 @@ test("reviewed draft requires explicit credit approval and opens real build stat
   await page.goto(`/apps/build?session=${session}&revision=1`);
   await page.getByRole("button", { name: "Get build estimate" }).click();
   await expect(page.getByRole("button", { name: "Approve and build product" })).toBeDisabled();
+  await expect(page.getByText("Tick the approval box above to enable this button.")).toBeVisible();
   expect(started).toBe(false);
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Approve and build product" }).click();

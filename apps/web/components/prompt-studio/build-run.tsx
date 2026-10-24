@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import "./build-run.css";
 import { checkoutUrl, readBuildContext } from "@/lib/payments/build-context";
 type Prepared = {
   availableCredits: number;
@@ -164,7 +165,7 @@ export default function BuildRun() {
     }
   }
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="provn-build-run mx-auto max-w-3xl px-6 py-12">
       <Link href={`/apps/new?session=${encodeURIComponent(session ?? "")}`}>
         ← Back to Prompt Studio
       </Link>
@@ -265,6 +266,17 @@ export default function BuildRun() {
               >
                 Approve and build product
               </button>
+              {prepared.availableCredits < prepared.quote.costCredits ? (
+                <p className="mt-2 text-sm text-slate">
+                  Add credits to enable this button. Your balance must cover the full estimate.
+                </p>
+              ) : (
+                !approved && (
+                  <p className="mt-2 text-sm text-slate">
+                    Tick the approval box above to enable this button.
+                  </p>
+                )
+              )}
             </>
           )}
         </section>

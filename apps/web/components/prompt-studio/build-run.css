@@ -1,0 +1,33 @@
+/* The build page sits outside the Studio shell, so it carries the Studio's button look itself. */
+.provn-build-run {
+  --provn-accent: #e5bd8b;
+}
+.provn-build-run .studio-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--provn-accent);
+  border-radius: 8px;
+  background: var(--provn-accent);
+  color: #171d25;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    transform 0.18s;
+}
+.provn-build-run .studio-button:hover:not(:disabled) {
+  background: #f3d3ac;
+  transform: translateY(-1px);
+}
+.provn-build-run .studio-button:focus-visible {
+  outline: 2px solid var(--provn-accent);
+  outline-offset: 3px;
+}
+.provn-build-run .studio-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
