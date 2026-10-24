@@ -23,6 +23,7 @@ async function Payments() {
   return (
     <div className="mx-auto w-full max-w-4xl p-8">
       <h1 className="text-3xl font-bold">Verify UPI payments</h1>
+      <a href="/admin/billing" className="mt-4 inline-block text-go underline">Billing records & activity logs</a>
       <p className="my-4">
         Check each reference, received amount and payer against your bank or UPI app. A submitted
         reference is not proof of receipt.
