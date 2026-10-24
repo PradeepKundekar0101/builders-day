@@ -63,7 +63,7 @@ export async function seedOwnedRows(userId: string): Promise<SeededIds> {
   must(
     await db
       .from("intake_messages")
-      .insert({ idea_id: idea.id, role: "agent", content: "Who orders?" })
+      .insert({ idea_id: idea.id, role: "agent", kind: "question", content: "Who orders?" })
       .select("id")
       .single(),
   );

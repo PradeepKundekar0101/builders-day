@@ -205,6 +205,135 @@ export type Database = {
           },
         ];
       };
+      cost_guard_accounts: {
+        Row: {
+          build_id: string;
+          state: NonNullable<Json>;
+          updated_at: string;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          build_id: string;
+          state: NonNullable<Json>;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          build_id?: string;
+          state?: NonNullable<Json>;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cost_guard_accounts_build_id_fkey";
+            columns: ["build_id"];
+            isOneToOne: true;
+            referencedRelation: "builds";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cost_guard_journal: {
+        Row: {
+          build_id: string;
+          command: NonNullable<Json>;
+          created_at: string;
+          id: number;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          build_id: string;
+          command: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          version: number;
+        };
+        Update: {
+          build_id?: string;
+          command?: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cost_guard_journal_build_id_fkey";
+            columns: ["build_id"];
+            isOneToOne: false;
+            referencedRelation: "builds";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cost_pricing_versions: {
+        Row: {
+          config: NonNullable<Json>;
+          created_at: string;
+          version: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          config: NonNullable<Json>;
+          created_at?: string;
+          version: string;
+        };
+        Update: {
+          config?: NonNullable<Json>;
+          created_at?: string;
+          version?: string;
+        };
+        Relationships: [];
+      };
+      cost_wallet_accounts: {
+        Row: {
+          account_id: string;
+          state: NonNullable<Json>;
+          updated_at: string;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_id: string;
+          state: NonNullable<Json>;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          account_id?: string;
+          state?: NonNullable<Json>;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [];
+      };
+      cost_wallet_journal: {
+        Row: {
+          account_id: string;
+          command: NonNullable<Json>;
+          created_at: string;
+          id: number;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_id: string;
+          command: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          version: number;
+        };
+        Update: {
+          account_id?: string;
+          command?: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          version?: number;
+        };
+        Relationships: [];
+      };
       deployments: {
         Row: {
           build_id: string;
@@ -249,6 +378,8 @@ export type Database = {
           created_at: string;
           id: string;
           links: string[];
+          mask_map_enc: string;
+          question_count: number;
           status: string;
           text: string;
           user_id: string;
@@ -258,6 +389,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           links?: string[];
+          mask_map_enc?: string;
+          question_count?: number;
           status?: string;
           text: string;
           user_id: string;
@@ -266,6 +399,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           links?: string[];
+          mask_map_enc?: string;
+          question_count?: number;
           status?: string;
           text?: string;
           user_id?: string;
@@ -278,6 +413,7 @@ export type Database = {
           created_at: string;
           id: string;
           idea_id: string;
+          kind: string;
           role: string;
         };
         ComputedFields: never;
@@ -286,6 +422,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           idea_id: string;
+          kind: string;
           role: string;
         };
         Update: {
@@ -293,6 +430,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           idea_id?: string;
+          kind?: string;
           role?: string;
         };
         Relationships: [
@@ -378,6 +516,7 @@ export type Database = {
       quotes: {
         Row: {
           amount_inr: number | null;
+          billing_mode: string;
           cost_usd: number;
           created_at: string;
           fx_rate: number | null;
@@ -390,6 +529,7 @@ export type Database = {
           selected_features: NonNullable<Json>;
           share_slug: string;
           spec_id: string;
+          spec_revision: string | null;
           status: string;
           user_id: string;
           weights_version: string;
@@ -397,6 +537,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           amount_inr?: number | null;
+          billing_mode?: string;
           cost_usd: number;
           created_at?: string;
           fx_rate?: number | null;
@@ -409,12 +550,14 @@ export type Database = {
           selected_features?: NonNullable<Json>;
           share_slug: string;
           spec_id: string;
+          spec_revision?: string | null;
           status?: string;
           user_id: string;
           weights_version: string;
         };
         Update: {
           amount_inr?: number | null;
+          billing_mode?: string;
           cost_usd?: number;
           created_at?: string;
           fx_rate?: number | null;
@@ -427,6 +570,7 @@ export type Database = {
           selected_features?: NonNullable<Json>;
           share_slug?: string;
           spec_id?: string;
+          spec_revision?: string | null;
           status?: string;
           user_id?: string;
           weights_version?: string;
@@ -529,8 +673,20 @@ export type Database = {
         Returns: Json;
       };
 
+      claim_question_slot: { Args: { p_idea_id: string }; Returns: boolean };
+      cost_guard_cas: {
+        Args: { p_build_id: string; p_command: Json; p_expected_version: number; p_state: Json };
+        Returns: boolean;
+      };
+      cost_guard_read: { Args: { p_build_id: string }; Returns: Json };
+      cost_wallet_cas: {
+        Args: { p_account_id: string; p_command: Json; p_expected_version: number; p_state: Json };
+        Returns: boolean;
+      };
+      cost_wallet_read: { Args: { p_account_id: string }; Returns: Json };
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
       released_url: { Args: { p_build_id: string }; Returns: string };
+      shared_estimate: { Args: { p_slug: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;

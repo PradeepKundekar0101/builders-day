@@ -1,0 +1,25 @@
+{
+  "name": "@buildwise/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "fixture": "tsx src/fixture.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@buildwise/build-engine": "workspace:*",
+    "@buildwise/cost-guard": "workspace:*",
+    "@buildwise/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
+    "tsx": "^4.20.0",
+    "zod": "^4.6.7",
+    "@electric-sql/pglite": "^0.3.14"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

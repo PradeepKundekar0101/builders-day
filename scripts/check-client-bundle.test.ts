@@ -38,6 +38,11 @@ describe("scanClientBundle", () => {
     ]);
   });
 
+  test.each(["MASK_MAP_KEY", "AGENT_API_TOKEN"])("the %s name is reported", (name) => {
+    writeFileSync(join(dir, "app.js"), `process.env.${name}`);
+    expect(scanClientBundle(dir, [])).toEqual([{ file: "app.js", reason: name }]);
+  });
+
   test("nested directories are scanned", () => {
     mkdirSync(join(dir, "chunks", "deep"), { recursive: true });
     writeFileSync(join(dir, "chunks", "deep", "x.js"), serviceJwt);

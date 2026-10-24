@@ -56,3 +56,10 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 }
+
+/** Sets a user's role directly, as a PROVN admin would. */
+export async function setRole(email: string, role: "user" | "operator" | "admin"): Promise<void> {
+  const db = admin();
+  const { error } = await db.from("profiles").update({ role }).eq("email", email);
+  if (error) throw error;
+}
