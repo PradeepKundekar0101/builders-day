@@ -1,22 +1,22 @@
 body:has(.conduit-studio) {
-  background: #F3F0E9;
+  background: #f3f0e9;
 }
 body:has(.conduit-studio) > header {
   display: none;
 }
 .conduit-studio {
-  --color-ink: #1D2630;
-  --color-slate: #BBC3CC;
-  --color-paper: #F3F0E9;
-  --color-rule: #F3F0E9;
-  --color-go: #BBC3CC;
-  --color-go-hover: #3C4855;
-  --color-danger: #382B30;
+  --color-ink: #1d2630;
+  --color-slate: #bbc3cc;
+  --color-paper: #f3f0e9;
+  --color-rule: #f3f0e9;
+  --color-go: #bbc3cc;
+  --color-go-hover: #3c4855;
+  --color-danger: #382b30;
   position: relative;
   isolation: isolate;
   min-height: 100svh;
   overflow: clip;
-  background: #F3F0E9;
+  background: #f3f0e9;
   color: var(--color-ink);
   font-family: var(--font-studio), Arial, Helvetica, sans-serif;
   padding: 32px 32px 0;
@@ -35,14 +35,14 @@ body:has(.conduit-studio) > header {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #fff0 60%, #fff0 85%, #F3F0E9 100%);
+  background: linear-gradient(180deg, #fff0 60%, #fff0 85%, #f3f0e9 100%);
 }
 .has-draft .studio-landscape {
   height: 930px;
   opacity: 0.55;
 }
 .has-draft .studio-landscape::after {
-  background: linear-gradient(180deg, #fff0 20%, #F3F0E930 45%, #F3F0E9 100%);
+  background: linear-gradient(180deg, #fff0 20%, #f3f0e930 45%, #f3f0e9 100%);
 }
 .studio-nav {
   display: flex;
@@ -52,9 +52,9 @@ body:has(.conduit-studio) > header {
   margin: 0 auto;
   padding: 7px 8px 7px 19px;
   border-radius: 100px;
-  background: #F3F0E9cf;
-  border: 1px solid #F3F0E9;
-  box-shadow: 0 3px 18px #1D263009;
+  background: #f3f0e9cf;
+  border: 1px solid #f3f0e9;
+  box-shadow: 0 3px 18px #1d263009;
   backdrop-filter: blur(20px);
 }
 .studio-brand {
@@ -66,29 +66,29 @@ body:has(.conduit-studio) > header {
   font-weight: 500;
 }
 .studio-brand svg {
-  color: #1D2630;
+  color: #1d2630;
 }
 .studio-nav-divider {
   width: 1px;
   height: 18px;
-  background: #F3F0E9;
+  background: #f3f0e9;
 }
 .studio-nav-label {
   font-size: 12px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-nav-cta {
   display: flex;
   gap: 16px;
   align-items: center;
   padding: 12px 18px;
-  background: #BBC3CC;
+  background: #bbc3cc;
   color: white;
   border-radius: 100px;
   font-size: 12px;
 }
 .studio-nav-cta:hover {
-  background: #3C4855;
+  background: #3c4855;
 }
 .studio-hero {
   text-align: center;
@@ -102,12 +102,12 @@ body:has(.conduit-studio) > header {
   font-size: 9px;
   letter-spacing: 2px;
   font-weight: 500;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-eyebrow > span {
   width: 5px;
   height: 5px;
-  background: #BBC3CC;
+  background: #bbc3cc;
   border-radius: 50%;
 }
 .studio-hero h1 {
@@ -119,11 +119,11 @@ body:has(.conduit-studio) > header {
 }
 .studio-hero h1 em {
   font-weight: 400;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-subtitle {
   font-size: 14px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   letter-spacing: -0.2px;
 }
 .studio-content {
@@ -144,7 +144,7 @@ body:has(.conduit-studio) > header {
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-steps li > span {
   display: grid;
@@ -152,37 +152,37 @@ body:has(.conduit-studio) > header {
   width: 23px;
   height: 23px;
   border-radius: 50%;
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
   font-size: 8px;
 }
 .studio-steps li > span svg {
   width: 12px;
 }
 .studio-steps .is-current {
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-steps .is-current > span {
-  background: #BBC3CC;
+  background: #bbc3cc;
   color: white;
-  border-color: #BBC3CC;
+  border-color: #bbc3cc;
 }
 .studio-steps .is-complete > span {
-  background: #F3F0E9;
-  color: #BBC3CC;
+  background: #f3f0e9;
+  color: #bbc3cc;
 }
 .studio-welcome {
   max-width: 660px;
   margin: auto;
 }
 .studio-composer {
-  border: 1px solid #F3F0E9;
+  border: 1px solid #f3f0e9;
   border-radius: 23px;
   padding: 21px;
-  background: #F3F0E9ec;
+  background: #f3f0e9ec;
   box-shadow:
-    0 5px 10px #3C485504,
-    0 16px 60px #BBC3CC0b;
+    0 5px 10px #3c485504,
+    0 16px 60px #bbc3cc0b;
   backdrop-filter: blur(18px);
 }
 .studio-composer > textarea {
@@ -197,16 +197,16 @@ body:has(.conduit-studio) > header {
   font-size: 16px;
   line-height: 1.7;
   outline: none;
-  color: #3C4855;
+  color: #3c4855;
 }
 .studio-composer > textarea::placeholder {
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-composer:focus-within {
-  border-color: #BBC3CC;
+  border-color: #bbc3cc;
   box-shadow:
-    0 0 0 3px #BBC3CC09,
-    0 16px 60px #BBC3CC0b;
+    0 0 0 3px #bbc3cc09,
+    0 16px 60px #bbc3cc0b;
 }
 .studio-composer-bottom {
   display: flex;
@@ -219,21 +219,21 @@ body:has(.conduit-studio) > header {
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  color: #BBC3CC;
-  border: 1px solid #F3F0E9;
+  color: #bbc3cc;
+  border: 1px solid #f3f0e9;
   border-radius: 30px;
   padding: 9px 12px;
 }
 .studio-voice:hover {
-  background: #F3F0E9;
+  background: #f3f0e9;
 }
 .studio-voice.is-listening {
-  background: #F3F0E9;
-  color: #3C4855;
+  background: #f3f0e9;
+  color: #3c4855;
 }
 .studio-count {
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   margin-left: auto;
 }
 .studio-button {
@@ -243,8 +243,8 @@ body:has(.conduit-studio) > header {
   gap: 13px;
   border-radius: 100px;
   padding: 12px 19px;
-  background: #BBC3CC;
-  color: #F3F0E9;
+  background: #bbc3cc;
+  color: #f3f0e9;
   font-size: 12px;
   font-weight: 450;
   border: 1px solid transparent;
@@ -254,7 +254,7 @@ body:has(.conduit-studio) > header {
     transform 0.18s;
 }
 .studio-button:hover:not(:disabled) {
-  background: #3C4855;
+  background: #3c4855;
   transform: translateY(-1px);
 }
 .conduit-studio button:disabled {
@@ -262,12 +262,12 @@ body:has(.conduit-studio) > header {
   cursor: not-allowed;
 }
 .studio-button-secondary {
-  background: #F3F0E9;
-  border-color: #F3F0E9;
-  color: #BBC3CC;
+  background: #f3f0e9;
+  border-color: #f3f0e9;
+  color: #bbc3cc;
 }
 .studio-button-secondary:hover:not(:disabled) {
-  background: #F3F0E9;
+  background: #f3f0e9;
 }
 .studio-examples {
   display: flex;
@@ -278,7 +278,7 @@ body:has(.conduit-studio) > header {
   margin-top: 22px;
 }
 .studio-examples > span {
-  color: #BBC3CC;
+  color: #bbc3cc;
   font-size: 10px;
 }
 .studio-examples button {
@@ -287,9 +287,9 @@ body:has(.conduit-studio) > header {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 30px;
-  background: #F3F0E9d9;
-  border: 1px solid #F3F0E9;
-  color: #BBC3CC;
+  background: #f3f0e9d9;
+  border: 1px solid #f3f0e9;
+  color: #bbc3cc;
   font-size: 10px;
   backdrop-filter: blur(10px);
 }
@@ -298,12 +298,12 @@ body:has(.conduit-studio) > header {
   height: 13px;
 }
 .studio-examples button:hover {
-  background: #F3F0E9;
+  background: #f3f0e9;
 }
 .studio-helper {
   font-size: 10px;
   line-height: 1.7;
-  color: #BBC3CC;
+  color: #bbc3cc;
   margin-top: 14px;
 }
 .studio-welcome > .studio-helper {
@@ -314,14 +314,14 @@ body:has(.conduit-studio) > header {
   max-width: 430px;
   text-align: center;
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-privacy summary {
   cursor: pointer;
 }
 .studio-privacy p {
   padding: 12px;
-  background: #F3F0E9f0;
+  background: #f3f0e9f0;
   border-radius: 10px;
   line-height: 1.8;
 }
@@ -332,7 +332,7 @@ body:has(.conduit-studio) > header {
   gap: 34px;
   margin-top: 45px;
   padding: 15px 0;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-assurances > span {
   display: flex;
@@ -352,13 +352,13 @@ body:has(.conduit-studio) > header {
   flex-wrap: wrap;
   padding: 24px 0 22px;
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .is-welcome .studio-footer {
   margin-top: 65px;
-  border-top: 1px solid #F3F0E942;
-  color: #F3F0E9;
-  text-shadow: 0 1px 4px #3C4855;
+  border-top: 1px solid #f3f0e942;
+  color: #f3f0e9;
+  text-shadow: 0 1px 4px #3c4855;
 }
 .studio-footer > span {
   display: flex;
@@ -373,7 +373,7 @@ body:has(.conduit-studio) > header {
   display: inline-block;
   width: 5px;
   height: 5px;
-  background: #BBC3CC;
+  background: #bbc3cc;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -389,14 +389,14 @@ body:has(.conduit-studio) > header {
   border-radius: 13px;
   font-size: 11px;
   line-height: 1.7;
-  background: #F3F0E9ed;
-  border: 1px solid #F3F0E9;
-  color: #BBC3CC;
+  background: #f3f0e9ed;
+  border: 1px solid #f3f0e9;
+  color: #bbc3cc;
 }
 .studio-alert {
-  color: #382B30;
-  border-color: #F3F0E9;
-  background: #F3F0E9;
+  color: #382b30;
+  border-color: #f3f0e9;
+  background: #f3f0e9;
 }
 .studio-notice svg {
   flex-shrink: 0;
@@ -422,9 +422,9 @@ body:has(.conduit-studio) > header {
 .studio-panel {
   padding: 28px;
   border-radius: 24px;
-  background: #F3F0E9f2;
-  border: 1px solid #F3F0E9;
-  box-shadow: 0 6px 30px #BBC3CC06;
+  background: #f3f0e9f2;
+  border: 1px solid #f3f0e9;
+  box-shadow: 0 6px 30px #bbc3cc06;
   backdrop-filter: blur(18px);
   min-width: 0;
 }
@@ -439,7 +439,7 @@ body:has(.conduit-studio) > header {
   font-size: 8px;
   font-weight: 500;
   letter-spacing: 1.7px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-small-badge {
   display: inline-flex;
@@ -447,8 +447,8 @@ body:has(.conduit-studio) > header {
   gap: 5px;
   padding: 5px 8px;
   font-size: 8px;
-  color: #BBC3CC;
-  border: 1px solid #F3F0E9;
+  color: #bbc3cc;
+  border: 1px solid #f3f0e9;
   border-radius: 40px;
   white-space: nowrap;
 }
@@ -461,7 +461,7 @@ body:has(.conduit-studio) > header {
 .studio-section-copy {
   font-size: 11px;
   line-height: 1.7;
-  color: #BBC3CC;
+  color: #bbc3cc;
   margin-top: 10px;
 }
 .studio-origin summary {
@@ -469,17 +469,17 @@ body:has(.conduit-studio) > header {
   justify-content: space-between;
   gap: 10px;
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   cursor: pointer;
   padding-top: 20px;
 }
 .studio-original-text {
   padding-top: 15px;
   margin-top: 13px;
-  border-top: 1px solid #F3F0E9;
+  border-top: 1px solid #f3f0e9;
   font-size: 12px;
   line-height: 1.85;
-  color: #BBC3CC;
+  color: #bbc3cc;
   overflow-wrap: anywhere;
 }
 .studio-composer-compact {
@@ -505,39 +505,39 @@ body:has(.conduit-studio) > header {
 .studio-question {
   display: block;
   padding-top: 23px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   font-size: 12px;
   line-height: 1.7;
 }
 .studio-question-number {
   display: block;
   font-size: 9px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   margin-bottom: 6px;
 }
 .studio-field {
   display: block;
   width: 100%;
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
   border-radius: 12px;
   padding: 12px 14px;
   margin-top: 8px;
   font-size: 12px;
   font-weight: 400;
-  color: #BBC3CC;
+  color: #bbc3cc;
   line-height: 1.75;
   transition:
     border-color 0.2s,
     background 0.2s;
 }
 .studio-field::placeholder {
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-field:focus {
-  background: #F3F0E9;
-  border-color: #BBC3CC;
-  outline: 2px solid #BBC3CC25;
+  background: #f3f0e9;
+  border-color: #bbc3cc;
+  outline: 2px solid #bbc3cc25;
   outline-offset: 1px;
 }
 .conduit-studio textarea.studio-field {
@@ -546,8 +546,8 @@ body:has(.conduit-studio) > header {
 .studio-tabs {
   display: flex;
   gap: 4px;
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
   padding: 5px;
   border-radius: 30px;
   margin-top: 24px;
@@ -557,19 +557,19 @@ body:has(.conduit-studio) > header {
   padding: 9px 10px;
   border-radius: 30px;
   font-size: 10px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   white-space: nowrap;
 }
 .studio-tabs > button[aria-selected="true"] {
   background: white;
-  color: #BBC3CC;
-  box-shadow: 0 2px 6px #3C48550b;
+  color: #bbc3cc;
+  box-shadow: 0 2px 6px #3c48550b;
 }
 .studio-editor label,
 .studio-editor h3 {
   font-weight: 400;
   font-size: 12px;
-  color: #BBC3CC;
+  color: #bbc3cc;
 }
 .studio-editor .text-sm {
   font-size: 12px;
@@ -581,13 +581,13 @@ body:has(.conduit-studio) > header {
 }
 .studio-page-card {
   margin-top: 12px;
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
   padding: 15px;
   border-radius: 16px;
 }
 .studio-page-card .studio-field {
-  background: #F3F0E9;
+  background: #f3f0e9;
   margin-bottom: 10px;
 }
 .studio-code {
@@ -597,21 +597,21 @@ body:has(.conduit-studio) > header {
   overflow-wrap: anywhere;
   font-size: 11px;
   line-height: 1.9;
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
-  color: #BBC3CC;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
+  color: #bbc3cc;
   padding: 20px;
   border-radius: 16px;
 }
 .conduit-studio input[type="checkbox"] {
-  accent-color: #BBC3CC;
+  accent-color: #bbc3cc;
   width: 14px;
   height: 14px;
   flex-shrink: 0;
   margin-top: 3px;
 }
 .conduit-studio :focus-visible {
-  outline: 2px solid #BBC3CC;
+  outline: 2px solid #bbc3cc;
   outline-offset: 4px;
 }
 .conduit-studio button,
@@ -733,10 +733,10 @@ body:has(.conduit-studio) > header {
 .studio-examples > span {
   width: fit-content;
   margin-inline: auto;
-  background: #F3F0E9e8;
+  background: #f3f0e9e8;
   border-radius: 30px;
   padding: 5px 11px;
-  color: #BBC3CC;
+  color: #bbc3cc;
   backdrop-filter: blur(8px);
 }
 .studio-assurances {
@@ -744,19 +744,19 @@ body:has(.conduit-studio) > header {
   max-width: 100%;
   margin-inline: auto;
   padding: 13px 21px;
-  background: #F3F0E9e8;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9e8;
+  border: 1px solid #f3f0e9;
   border-radius: 40px;
   backdrop-filter: blur(8px);
 }
 .is-welcome .studio-footer {
-  color: #BBC3CC;
+  color: #bbc3cc;
   text-shadow: none;
   border-top: none;
 }
 .is-welcome .studio-footer > span {
   border-radius: 30px;
-  background: #F3F0E9f0;
+  background: #f3f0e9f0;
   padding: 7px 12px;
 }
 @media (max-width: 760px) {
@@ -783,14 +783,14 @@ body:has(.conduit-studio) > header {
   margin-bottom: 18px;
 }
 .studio-input-panel {
-  background: #F3F0E9;
-  border: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border: 1px solid #f3f0e9;
   border-radius: 23px;
-  box-shadow: 0 12px 40px #3C485514;
+  box-shadow: 0 12px 40px #3c485514;
   overflow: hidden;
 }
 .studio-input-panel .studio-composer {
-  background: #F3F0E9;
+  background: #f3f0e9;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -802,8 +802,8 @@ body:has(.conduit-studio) > header {
 .studio-input-panel .studio-examples {
   margin: 0;
   padding: 15px 20px 18px;
-  background: #F3F0E9;
-  border-top: 1px solid #F3F0E9;
+  background: #f3f0e9;
+  border-top: 1px solid #f3f0e9;
   justify-content: flex-start;
   gap: 10px;
 }
@@ -815,7 +815,7 @@ body:has(.conduit-studio) > header {
   padding: 0 0 3px;
   background: none;
   text-align: left;
-  color: #BBC3CC;
+  color: #bbc3cc;
   font-size: 12px;
   font-weight: 500;
   border-radius: 0;
@@ -823,14 +823,14 @@ body:has(.conduit-studio) > header {
 .studio-input-panel .studio-examples button {
   padding: 10px 15px;
   font-size: 13px;
-  color: #3C4855;
-  background: #F3F0E9;
-  border: 1px solid #BBC3CC;
+  color: #3c4855;
+  background: #f3f0e9;
+  border: 1px solid #bbc3cc;
   gap: 9px;
 }
 .studio-input-panel .studio-examples button:hover {
-  background: #F3F0E9;
-  border-color: #BBC3CC;
+  background: #f3f0e9;
+  border-color: #bbc3cc;
 }
 .studio-input-panel .studio-examples button svg {
   width: 16px;

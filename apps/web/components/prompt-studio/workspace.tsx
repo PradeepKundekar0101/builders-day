@@ -40,7 +40,9 @@ export function BuildWorkspace({
   demo,
   editor,
 }: Props) {
-  const [leftTab, setLeftTab] = useState<"chat" | "brief">(draft.onboarding?.mode === "dev" ? "brief" : "chat");
+  const [leftTab, setLeftTab] = useState<"chat" | "brief">(
+    draft.onboarding?.mode === "dev" ? "brief" : "chat",
+  );
   const [rightTab, setRightTab] = useState<"preview" | "live" | "modules">("preview");
   const journey = useProvnDemo(draft, reviewed);
   const [module, setModule] = useState<P0Module>("cost");
@@ -56,14 +58,24 @@ export function BuildWorkspace({
   const [refreshKey, setRefreshKey] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const buildStage = draft.buildStage ?? 0;
-  const phaseNames = ["Initial layout", "Primary user journey", "Data and connections", "Review and handoff"];
-  const questionStage = (q: PromptStudioDraft["questions"][number]) => q.stage ?? (q.id === "data" ? 2 : 1);
+  const phaseNames = [
+    "Initial layout",
+    "Primary user journey",
+    "Data and connections",
+    "Review and handoff",
+  ];
+  const questionStage = (q: PromptStudioDraft["questions"][number]) =>
+    q.stage ?? (q.id === "data" ? 2 : 1);
   const next = draft.questions.find((q) => !q.answer?.trim() && questionStage(q) <= buildStage);
   useEffect(() => {
     if (paused || message.trim() || busy || next || buildStage >= 3 || error) return;
     const timer = setTimeout(() => {
       const updated = { ...draft, buildStage: buildStage + 1 };
-      if (draft.adapterMode === "openai") void onRefine(updated, `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`);
+      if (draft.adapterMode === "openai")
+        void onRefine(
+          updated,
+          `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`,
+        );
       else onChange(updated);
     }, 2200);
     return () => clearTimeout(timer);
@@ -91,10 +103,15 @@ export function BuildWorkspace({
     if (!text || busy) return;
     setLocalError("");
     if (draft.adapterMode === "openai") {
-      const proposed = next ? { ...draft, questions: draft.questions.map(q => q.id === next.id ? { ...q, answer: text } : q) } : draft;
+      const proposed = next
+        ? {
+            ...draft,
+            questions: draft.questions.map((q) => (q.id === next.id ? { ...q, answer: text } : q)),
+          }
+        : draft;
       if (await onRefine(proposed, text)) {
         setMessage("");
-        if (!next) setNotes(old => [...old, text]);
+        if (!next) setNotes((old) => [...old, text]);
       }
       return;
     }
@@ -142,7 +159,12 @@ export function BuildWorkspace({
         </button>
       </header>
       <nav className="provn-stage-path" aria-label="Build stages">
-        {['Brief', 'Estimate', 'Build', 'Deploy', 'Security review', 'Proof'].map((label, i) => <span key={label}>{String(i + 1).padStart(2, '0')} <b>{label}</b>{i < 5 && <i aria-hidden="true">→</i>}</span>)}
+        {["Brief", "Estimate", "Build", "Deploy", "Security review", "Proof"].map((label, i) => (
+          <span key={label}>
+            {String(i + 1).padStart(2, "0")} <b>{label}</b>
+            {i < 5 && <i aria-hidden="true">→</i>}
+          </span>
+        ))}
       </nav>
       <div className="build-split">
         <section className="build-conversation" aria-label="Agent conversation">
@@ -155,9 +177,7 @@ export function BuildWorkspace({
                 ≡ Brief & prompts
               </button>
             </div>
-            <span className="build-small-label">
-              {phaseNames[buildStage]}
-            </span>
+            <span className="build-small-label">{phaseNames[buildStage]}</span>
           </div>
           {(error || localError) && (
             <p role="alert" className="build-error">
@@ -170,7 +190,9 @@ export function BuildWorkspace({
             </p>
           )}
           {leftTab === "brief" ? (
-            <div className="build-brief-scroll" inert={busy}>{editor}</div>
+            <div className="build-brief-scroll" inert={busy}>
+              {editor}
+            </div>
           ) : (
             <>
               <div
@@ -191,17 +213,31 @@ export function BuildWorkspace({
                 <article className="build-message">
                   <div className="build-message-label">
                     <span className="build-avatar">✦</span>PROVN
-                    <span className="build-agent-tag">{draft.adapterMode === "openai" ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}</span>
+                    <span className="build-agent-tag">
+                      {draft.adapterMode === "openai" ? "GUIDE · LIVE AI" : "GUIDE · MOCK"}
+                    </span>
                   </div>
                   <p>
-                    I’m preparing your first layout from the idea you shared. I’ll ask for a decision only when the current stage needs it. You can change direction at any time.
+                    I’m preparing your first layout from the idea you shared. I’ll ask for a
+                    decision only when the current stage needs it. You can change direction at any
+                    time.
                   </p>
                   <div className="build-plan" role="status">
                     <span>CURRENT STAGE · {buildStage + 1}/4</span>
                     <div>{phaseNames[buildStage]}</div>
-                    <p>{next ? "This decision is needed for the current stage." : buildStage < 3 ? "Preparing the next part of your simulated preview…" : "Your staged brief is ready for review."}</p>
+                    <p>
+                      {next
+                        ? "This decision is needed for the current stage."
+                        : buildStage < 3
+                          ? "Preparing the next part of your simulated preview…"
+                          : "Your staged brief is ready for review."}
+                    </p>
                     <small>Preview simulation · real build engine not connected</small>
-                    {buildStage < 3 && <button className="build-inline-button" onClick={() => setPaused(!paused)}>{paused ? "Resume progression" : "Pause progression"}</button>}
+                    {buildStage < 3 && (
+                      <button className="build-inline-button" onClick={() => setPaused(!paused)}>
+                        {paused ? "Resume progression" : "Pause progression"}
+                      </button>
+                    )}
                   </div>
                 </article>
                 {draft.questions.map((q, i) => {
@@ -286,7 +322,11 @@ export function BuildWorkspace({
               >
                 <div className="build-composer-state">
                   <i />
-                  {next ? "Agent is waiting for your answer" : buildStage < 3 ? "Preview progressing · you can add direction" : "Your brief is ready to refine"}
+                  {next
+                    ? "Agent is waiting for your answer"
+                    : buildStage < 3
+                      ? "Preview progressing · you can add direction"
+                      : "Your brief is ready to refine"}
                 </div>
                 <label htmlFor="agent-message" className="sr-only">
                   Message PROVN
@@ -309,7 +349,11 @@ export function BuildWorkspace({
                   disabled={busy}
                 />
                 <div className="build-composer-actions">
-                  {busy && <button type="button" onClick={onCancel}>Cancel request</button>}
+                  {busy && (
+                    <button type="button" onClick={onCancel}>
+                      Cancel request
+                    </button>
+                  )}
                   <span>
                     ↵ Send <span>·</span> Shift + Enter for a new line
                   </span>
@@ -324,7 +368,11 @@ export function BuildWorkspace({
               </form>
               <div className="build-chat-footer">
                 <span>✦ Guided intake</span>
-                <span>{draft.adapterMode === "openai" ? "Live AI · provider usage applies" : "No model calls · No credits used"}</span>
+                <span>
+                  {draft.adapterMode === "openai"
+                    ? "Live AI · provider usage applies"
+                    : "No model calls · No credits used"}
+                </span>
               </div>
             </>
           )}
@@ -442,20 +490,22 @@ export function BuildWorkspace({
                       <h2>{draft.spec.summary}</h2>
                     </div>
                     <div className="scaffold-grid">
-                      {["Primary journey", "Your data", "Connections"].slice(0, buildStage === 0 ? 0 : buildStage === 1 ? 1 : 3).map((title, i) => (
-                        <div key={title}>
-                          <span>0{i + 1}</span>
-                          <h3>{title}</h3>
-                          <p>
-                            {i === 0
-                              ? draft.questions.find((q) => q.id === "journey")?.answer ||
-                                "Define this in the conversation."
-                              : i === 1
-                                ? `${draft.spec.entities.length} data entities defined in your brief.`
-                                : `${draft.spec.integrations.length} integrations defined in your brief.`}
-                          </p>
-                        </div>
-                      ))}
+                      {["Primary journey", "Your data", "Connections"]
+                        .slice(0, buildStage === 0 ? 0 : buildStage === 1 ? 1 : 3)
+                        .map((title, i) => (
+                          <div key={title}>
+                            <span>0{i + 1}</span>
+                            <h3>{title}</h3>
+                            <p>
+                              {i === 0
+                                ? draft.questions.find((q) => q.id === "journey")?.answer ||
+                                  "Define this in the conversation."
+                                : i === 1
+                                  ? `${draft.spec.entities.length} data entities defined in your brief.`
+                                  : `${draft.spec.integrations.length} integrations defined in your brief.`}
+                            </p>
+                          </div>
+                        ))}
                     </div>
                     <div className="scaffold-skeleton" aria-hidden="true">
                       <i />

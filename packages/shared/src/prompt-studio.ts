@@ -119,15 +119,18 @@ export class MockPromptStudioAdapter implements PromptStudioAdapter {
       adapterMode: this.mode,
       questions: [
         {
-          id: "audience", stage: 1,
+          id: "audience",
+          stage: 1,
           question: "Who will use this product, and what should each role be allowed to do?",
         },
         {
-          id: "journey", stage: 1,
+          id: "journey",
+          stage: 1,
           question: "What is the first complete task a user should be able to finish?",
         },
         {
-          id: "data", stage: 2,
+          id: "data",
+          stage: 2,
           question: "What information should be saved, and which services should it connect to?",
         },
       ],

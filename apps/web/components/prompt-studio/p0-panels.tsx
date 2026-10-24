@@ -474,7 +474,20 @@ export function P0Panels({
         <>
           <p className="p0-eyebrow">EVERY BUILD, PROVEN.</p>
           <h2>Your build’s proof record.</h2>
-          <div className="p0-table"><div><span>Project</span><b>{draft.spec.name}</b></div><div><span>Environment / evidence</span><b>Local demo / synthetic</b></div><div><span>Assessed build revision</span><b>No real build executed</b></div></div>
+          <div className="p0-table">
+            <div>
+              <span>Project</span>
+              <b>{draft.spec.name}</b>
+            </div>
+            <div>
+              <span>Environment / evidence</span>
+              <b>Local demo / synthetic</b>
+            </div>
+            <div>
+              <span>Assessed build revision</span>
+              <b>No real build executed</b>
+            </div>
+          </div>
           <p className="p0-description">
             {phase("proven")
               ? "Demo workflow complete. This is synthetic evidence, not a security certification or permission to release."
@@ -527,8 +540,15 @@ export function P0Panels({
             </div>
           </div>
           <h3>Checks and open items</h3>
-          <p>No real scans, application tests or attack workers have run. Deployment and signed build evidence are not connected.</p>
-          <p>{phase("proven") ? "The simulated review is complete. Real security verification and release authorization remain outstanding." : "Complete the demo security review and smoke check to finish this fixture."}</p>
+          <p>
+            No real scans, application tests or attack workers have run. Deployment and signed build
+            evidence are not connected.
+          </p>
+          <p>
+            {phase("proven")
+              ? "The simulated review is complete. Real security verification and release authorization remain outstanding."
+              : "Complete the demo security review and smoke check to finish this fixture."}
+          </p>
           <h3>Task routing record</h3>
           {c.routes.map((r) => (
             <p key={r.task}>
