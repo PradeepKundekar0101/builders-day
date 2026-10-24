@@ -1139,3 +1139,14 @@ body:has(.conduit-studio.is-welcome) {
     font-size: 32px;
   }
 }
+
+.conduit-studio.is-welcome .studio-hero-single h1 {
+  font-size: clamp(20px, 2.3vw, 32px);
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .conduit-studio.is-welcome .studio-hero-single h1 {
+    white-space: normal;
+  }
+}
