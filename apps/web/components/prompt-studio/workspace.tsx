@@ -1,4 +1,5 @@
 "use client";
+import { ProvnLogo } from "@/components/provn-logo";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptStudioDraft } from "@buildwise/shared";
 import "./workspace.css";
@@ -94,7 +95,7 @@ export function BuildWorkspace({
     <div className="conduit-build-workspace">
       <header className="build-topbar">
         <a href="/prompt-studio-demo" className="build-wordmark" aria-label="PROVN home">
-          P<span>PROVN</span>
+          <ProvnLogo />
         </a>
         <span className="build-top-divider" />
         <div className="build-project">

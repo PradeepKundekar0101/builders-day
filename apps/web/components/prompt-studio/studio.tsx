@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ProvnLogo } from "@/components/provn-logo";
 import { BuilderOnboarding } from "./onboarding";
 import { DEFAULT_PROFILE, type BuilderProfile } from "@/lib/provn-demo";
 import "./p0-panels.css";
@@ -558,20 +559,9 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
       <div className="studio-landscape" aria-hidden="true"></div>
       <nav className="studio-nav" aria-label="Prompt Studio navigation">
         <a href="/prompt-studio-demo" className="studio-brand" aria-label="PROVN home">
-          <svg width="26" height="27" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-            <path
-              d="M20 6C17 2 10 3 7 8L3 15c-3 6 5 10 8 5l4-7"
-              stroke="currentColor"
-              strokeWidth="5.5"
-              strokeLinecap="round"
-            />
-            <path d="m17 11 5 9" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-          </svg>
-          PROVN
+          <ProvnLogo />
         </a>
         <span className="studio-nav-divider" />
-        <a className="studio-nav-label" href="#how-it-works">How it works</a>
-        <a className="studio-nav-label" href="#sample-proof">Proof</a>
         <a className="studio-nav-label" href="/signin">Sign in</a>
         <a href="#idea" className="studio-nav-cta">
           Start a build
@@ -602,29 +592,8 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
             ? "A few thoughtful details. A brief that feels like you."
             : "Explore a guided path from idea to app—with a clear budget and security checks you can inspect."}
         </p>
-        <a className="orbit-hero-action" href="#idea"><span aria-hidden="true">↗</span> Shape your idea</a>
       </header>
       <div className="studio-content">
-        <ol className="studio-steps" aria-label="Your progress">
-          <li
-            className={!draft ? "is-current" : "is-complete"}
-            aria-current={!draft ? "step" : undefined}
-          >
-            <span>{draft ? <StudioIcon name="check" /> : "01"}</span>Your idea
-          </li>
-          <li
-            className={draft && !confirmed ? "is-current" : ""}
-            aria-current={draft && !confirmed ? "step" : undefined}
-          >
-            <span>02</span>A little clarity
-          </li>
-          <li
-            className={confirmed ? "is-current" : ""}
-            aria-current={confirmed ? "step" : undefined}
-          >
-            <span>03</span>Ready to build
-          </li>
-        </ol>
         {error && (
           <p role="alert" className="studio-alert">
             {error}
@@ -658,46 +627,10 @@ export function PromptStudio({ demo = false }: { demo?: boolean }) {
                 </button>
               </div>
             </div>
-            <a className="portal-sample-link" href="#sample-proof">Explore a sample proof report ↗</a>
-            <p className="studio-helper">
-              Start with at least 50 characters. ⌘ / Ctrl + Enter to shape your idea.
-            </p>
-            <details className="studio-privacy">
-              <summary>Voice & privacy</summary>
-              <p>
-                Voice uses your browser’s transcription service and may send audio to its provider.
-                Avoid passwords, personal data, and API keys.
-              </p>
-            </details>
-            <div className="studio-assurances">
-              <span>
-                <StudioIcon name="leaf" />
-                Space to think
-              </span>
-              <span>
-                <StudioIcon name="code" />
-                Every instruction, visible
-              </span>
-              <span>
-                <StudioIcon name="check" />
-                You’re in control
-              </span>
-            </div>
+            <p className="studio-helper">Describe your idea · ⌘ / Ctrl + Enter to begin · No credits used</p>
           </div>
         }
 
-        <section className="portal-story" id="how-it-works">
-          <p className="studio-eyebrow">A CLEAR PATH FORWARD</p><h2>From idea to evidence.</h2>
-          <div className="portal-story-grid">
-            <article><span>01 / DEFINE</span><h3>A brief you can shape.</h3><p>Describe the idea. Work through your users, screens and done criteria, then inspect the model instructions.</p></article>
-            <article><span>02 / APPROVE</span><h3>A budget you control.</h3><p>Review the estimate and set a hard cap before approving a run. Submitting an idea does not start paid work.</p></article>
-            <article><span>03 / INSPECT</span><h3>Evidence you can read.</h3><p>Follow deployment, checks and human review separately. See unresolved items before considering release.</p></article>
-          </div>
-        </section>
-        <section className="portal-proof" id="sample-proof">
-          <div><p className="studio-eyebrow">ILLUSTRATIVE SAMPLE · NO CHECKS EXECUTED</p><h2>A record for every build.</h2><p>Inspect the cost, checks and decisions behind a build. An incomplete review stays visible.</p><a className="studio-nav-cta" href="#idea">Start with your idea ↗</a></div>
-          <div className="portal-proof-record"><p>BUILD RECORD / SAMPLE 001</p><dl><div><dt>Estimated credits</dt><dd>180 · example</dd></div><div><dt>Budget cap</dt><dd>200 · example</dd></div><div><dt>Actual spend</dt><dd>Not incurred</dd></div><div><dt>Deployment</dt><dd>Not connected</dd></div><div><dt>Security checks</dt><dd>Not performed</dd></div><div><dt>Human review</dt><dd>Not requested</dd></div><div><dt>Open items</dt><dd>Build, deploy and verify</dd></div></dl></div>
-        </section>
         <footer className="studio-footer">
           <span>
             <span className="studio-status-dot" />

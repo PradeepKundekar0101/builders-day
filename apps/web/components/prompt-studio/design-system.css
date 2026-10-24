@@ -152,3 +152,49 @@ body:has(.conduit-studio),body:has(.conduit-build-workspace) {background:var(--p
  .conduit-studio.is-welcome .studio-hero{height:560px;padding-top:40px}.conduit-studio.is-welcome .studio-hero h1{font-size:46px;letter-spacing:-1.7px}.conduit-studio .studio-hero .studio-eyebrow{font-size:10px;letter-spacing:1px}
  .conduit-studio .studio-landscape{inset:0 0 auto;height:690px;background-position:center top;opacity:1}.conduit-studio .studio-subtitle{font-size:14px}.conduit-studio .provn-onboard{padding:26px}.conduit-studio .provn-onboard h2{font-size:28px}
 }
+/* One-screen launch interface. The scene stays visible below the composer. */
+body:has(.conduit-studio.is-welcome) {height:100svh;overflow:hidden}
+.conduit-studio.is-welcome {height:100svh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:24px 48px}
+.conduit-studio.is-welcome .studio-nav {flex-shrink:0;min-height:44px;gap:24px}
+.conduit-studio .studio-brand .provn-logo-mark {display:block;color:#e5bd8b;width:38px;height:38px}
+.provn-logo-word {letter-spacing:4px;font-size:20px;font-weight:400}
+.build-wordmark .provn-logo-mark {width:32px;height:32px}
+.conduit-studio.is-welcome .studio-landscape {height:100svh;inset:0;background-size:cover;background-position:center 30%;background-image:linear-gradient(180deg,#151c2422,transparent 55%,#151c2422),url('/images/provn-orbit.jpg')}
+.conduit-studio.is-welcome .studio-landscape::after {background:linear-gradient(180deg,#151c2455,transparent 70%)}
+.conduit-studio.is-welcome .studio-hero {height:auto;padding:22px 0 20px;flex-shrink:0;width:100%}
+.conduit-studio.is-welcome .studio-hero h1 {font-size:clamp(38px,4.4vw,60px);margin:10px 0 12px;line-height:1.04}
+.conduit-studio.is-welcome .studio-hero h1 br {display:none}
+.conduit-studio.is-welcome .studio-hero h1 em:before {content:' '}
+.conduit-studio.is-welcome .studio-hero .studio-eyebrow {font-size:10px}
+.conduit-studio.is-welcome .studio-subtitle {max-width:550px;font-size:13px;line-height:1.5}
+.conduit-studio.is-welcome .studio-content {width:100%;max-width:1280px;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center}
+.conduit-studio.is-welcome .studio-welcome {width:min(660px,100%);margin:0 auto}
+.conduit-studio.is-welcome .studio-input-panel {background:#18222ce8;box-shadow:0 16px 60px #0003;backdrop-filter:blur(18px);border-color:#e5bd8b70}
+.conduit-studio.is-welcome .portal-input-label {padding:15px 18px 0;font-size:13px}
+.conduit-studio.is-welcome .studio-input-panel .studio-composer {padding:10px 18px 14px}
+.conduit-studio.is-welcome .studio-input-panel .studio-composer>textarea {min-height:58px;height:58px;max-height:90px;resize:none;font-size:15px;line-height:1.5}
+.conduit-studio.is-welcome .studio-input-panel .studio-examples {padding:10px 18px;gap:8px}
+.conduit-studio.is-welcome .studio-input-panel .studio-examples>span {display:none}
+.conduit-studio.is-welcome .studio-input-panel .studio-examples button {font-size:12px;min-height:34px;padding:6px 12px;background:#27323e90}
+.conduit-studio.is-welcome .studio-helper {font-size:11px;color:#f3f0e9;margin:10px auto;text-shadow:0 1px 6px #000}
+.conduit-studio.is-welcome .studio-footer {margin-top:auto;width:100%;padding:8px 0 0;border:0}
+.conduit-studio.is-welcome .studio-footer>span {color:#f3f0e9;font-size:11px;text-shadow:0 1px 6px #000}
+@media(max-width:760px){
+ .conduit-studio.is-welcome{padding:16px 20px}.conduit-studio.is-welcome .studio-nav{gap:12px}.conduit-studio .studio-brand{gap:6px}.provn-logo-word{font-size:16px;letter-spacing:3px}
+ .conduit-studio.is-welcome .studio-hero{padding:24px 0 18px}.conduit-studio.is-welcome .studio-hero h1{font-size:38px}.conduit-studio.is-welcome .studio-subtitle{font-size:12px}
+ .conduit-studio.is-welcome .studio-landscape{background-position:50% 35%}.conduit-studio.is-welcome .studio-composer-bottom{flex-wrap:nowrap;gap:8px}.conduit-studio.is-welcome .studio-count{display:none}
+ .conduit-studio.is-welcome .studio-footer{justify-content:center}.conduit-studio.is-welcome .studio-footer>span:last-child{display:none}
+}
+@media(max-height:650px){
+ .conduit-studio.is-welcome{padding-top:12px;padding-bottom:12px}.conduit-studio.is-welcome .studio-hero{padding:8px 0 12px}.conduit-studio.is-welcome .studio-hero h1{font-size:34px}.conduit-studio.is-welcome .studio-hero .studio-eyebrow{display:none}.conduit-studio.is-welcome .studio-input-panel .studio-examples{display:none}
+}
+/* Warm light falls across the prompt surface without reducing text contrast. */
+.conduit-studio.is-welcome .studio-input-panel {
+ background:linear-gradient(125deg,#17232ff5 0%,#27313bf2 46%,#514338ed 100%);
+ border:1px solid #e5bd8b88;
+ box-shadow:inset 0 1px 0 #ffe2bf30,0 18px 65px #070c1644,0 0 35px #e5bd8b0c;
+}
+.conduit-studio.is-welcome .studio-input-panel .studio-examples {background:linear-gradient(90deg,#151c2440,#e5bd8b0c);border-top-color:#e5bd8b28}
+.conduit-studio.is-welcome .studio-button {background:linear-gradient(115deg,#f3d7ae,#d5a876);box-shadow:inset 0 1px 0 #fff5;color:#171d25}
+.conduit-studio.is-welcome .studio-button:hover:not(:disabled) {background:linear-gradient(115deg,#ffe5c0,#e5bd8b)}
+.conduit-studio .provn-onboard {background:linear-gradient(140deg,#17232ff7 0%,#222c36f7 65%,#3b332ef7 100%)}
