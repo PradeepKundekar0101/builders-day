@@ -477,7 +477,7 @@ body:has(.conduit-build-workspace) {
     gap: 12px;
   }
   .conduit-studio .studio-nav-label {
-    display: none;
+    display: inline-flex;
   }
   .conduit-studio .studio-brand {
     font-size: 20px;
