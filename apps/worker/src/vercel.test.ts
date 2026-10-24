@@ -100,6 +100,18 @@ it("reuses the project of a retried build", async () => {
     calls.some((c) => c.url.includes("/v10/projects/prj_old/env?upsert=true&teamId=team_1")),
   ).toBe(true);
 });
+it("accepts a team slug", async () => {
+  const { calls, fetcher } = fakeVercel(["READY"]);
+  await deployToVercel({
+    directory: await product(),
+    name: "bw-abc",
+    config: { token: "t", teamId: "conch-s-team" },
+    signal: new AbortController().signal,
+    fetcher,
+    pollMs: 1,
+  });
+  expect(calls.every((c) => c.url.includes("slug=conch-s-team"))).toBe(true);
+});
 it("reports a failed Vercel build", async () => {
   const { fetcher } = fakeVercel(["BUILDING", "ERROR"]);
   await expect(

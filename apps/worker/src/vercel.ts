@@ -57,7 +57,10 @@ export async function deployToVercel(input: {
 }) {
   const config = VercelConfig.parse(input.config),
     fetcher = input.fetcher ?? fetch;
-  const qs = config.teamId ? `?teamId=${encodeURIComponent(config.teamId)}` : "";
+  // VERCEL_TEAM_ID may be a team id (team_...) or a team slug.
+  const qs = config.teamId
+    ? `?${config.teamId.startsWith("team_") ? "teamId" : "slug"}=${encodeURIComponent(config.teamId)}`
+    : "";
   async function call(path: string, init: RequestInit & { allow?: number[] } = {}) {
     const response = await fetcher(
       `${API}${path}${path.includes("?") ? qs.replace("?", "&") : qs}`,
