@@ -1,13 +1,15 @@
 // Shared by /api/route and /api/chat: analyse the task and run the router with
 // what this deployment actually has connected.
-import { route } from '../public/core/router.js';
-import { byoToModel } from '../public/core/catalog.js';
-import { classify } from '../public/core/classify.js';
-import { classifyWithLLM } from './llm-classifier.js';
-import { connectedRuntimes, byoFromEnv, settings } from './env.js';
+import { route } from "../public/core/router.js";
+import { byoToModel } from "../public/core/catalog.js";
+import { classify } from "../public/core/classify.js";
+import { classifyWithLLM } from "./llm-classifier.js";
+import { connectedRuntimes, byoFromEnv, settings } from "./env.js";
 
 export function collectByo(bodyByo = []) {
-  const defs = [...byoFromEnv(), ...(Array.isArray(bodyByo) ? bodyByo : [])].filter(d => d && d.baseURL && d.model);
+  const defs = [...byoFromEnv(), ...(Array.isArray(bodyByo) ? bodyByo : [])].filter(
+    (d) => d && d.baseURL && d.model,
+  );
   const creds = {};
   for (const d of defs) {
     const m = byoToModel(d);
@@ -20,16 +22,20 @@ export function collectByo(bodyByo = []) {
 
 export async function decide({ prompt, contextTokens = 0, mode, override, byo }) {
   const cfg = settings();
-  const analysis = cfg.classifier === 'llm'
-    ? await classifyWithLLM(prompt, { contextTokens })
-    : classify(prompt, { contextTokens });
+  const analysis =
+    cfg.classifier === "llm"
+      ? await classifyWithLLM(prompt, { contextTokens })
+      : classify(prompt, { contextTokens });
   const { defs, creds } = collectByo(byo);
-  const decision = route({ prompt, contextTokens }, {
-    mode: mode || cfg.defaultMode,
-    override,
-    available: connectedRuntimes(),
-    byo: defs,
-    analysis,
-  });
+  const decision = route(
+    { prompt, contextTokens },
+    {
+      mode: mode || cfg.defaultMode,
+      override,
+      available: connectedRuntimes(),
+      byo: defs,
+      analysis,
+    },
+  );
   return { decision, byoDefs: defs, byoCreds: creds };
 }

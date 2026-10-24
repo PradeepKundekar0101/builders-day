@@ -90,12 +90,12 @@ Then add keys under Project → Settings → Environment Variables (names in `.e
 
 ## API
 
-| Endpoint | Body | Returns |
-|---|---|---|
-| `GET /api/catalog` | | models, tiers, modes, which providers are connected |
-| `POST /api/route` | `{ prompt, mode?, override?: { model? , tier? }, contextTokens?, byo? }` | decision only |
-| `POST /api/chat` | `{ messages: [{role, content}], mode?, override?, byo?, demo? }` | `{ decision, reply, attempts }` |
-| `GET /api/health` | | `{ ok, connected }` |
+| Endpoint           | Body                                                                     | Returns                                             |
+| ------------------ | ------------------------------------------------------------------------ | --------------------------------------------------- |
+| `GET /api/catalog` |                                                                          | models, tiers, modes, which providers are connected |
+| `POST /api/route`  | `{ prompt, mode?, override?: { model? , tier? }, contextTokens?, byo? }` | decision only                                       |
+| `POST /api/chat`   | `{ messages: [{role, content}], mode?, override?, byo?, demo? }`         | `{ decision, reply, attempts }`                     |
+| `GET /api/health`  |                                                                          | `{ ok, connected }`                                 |
 
 Key decision fields: `chosen` (what the user or router picked), `recommended` (router's pick), `executing` (what actually runs), `reasons[]`, `guardrails[]`, `fallbacks[]`, `cost.{estimate, baseline, savedPct}`, `analysis.{category, effort, impact, pii}`, `alternatives[]` (every model with score or exclusion reasons), `execution.{systemPrompt, anthropicEffort, maxOutputTokens}`.
 

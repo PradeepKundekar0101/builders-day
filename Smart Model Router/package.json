@@ -4,7 +4,9 @@
   "private": true,
   "description": "Provn Route: smart model router across frontier APIs, Hugging Face SLMs and local LLMs",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node server.mjs",
     "test": "node --test test/*.test.mjs"
