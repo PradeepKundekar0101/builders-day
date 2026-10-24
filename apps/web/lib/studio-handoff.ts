@@ -38,7 +38,7 @@ export function readHandoff(
     raw = storage.getItem(key);
   if (!raw)
     throw new Error(
-      "Draft not found in this tab. Return to the original tab or import your exported brief.",
+      "Draft not found in this browser. Open the link in the browser where you started your draft.",
     );
   const value = HandoffSchema.parse(JSON.parse(raw));
   if (now - value.createdAt > 24 * 60 * 60 * 1000 || value.createdAt > now + 60000) {

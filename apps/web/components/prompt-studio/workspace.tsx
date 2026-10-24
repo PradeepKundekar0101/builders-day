@@ -124,7 +124,7 @@ export function BuildWorkspace({
     const timer = setTimeout(
       () => {
         const updated = { ...draft, buildStage: buildStage + 1 };
-        if (draft.adapterMode === "openai")
+        if (!buildConnection && draft.adapterMode === "openai")
           void onRefine(
             updated,
             `Continue to build stage ${buildStage + 1}. Ask only a blocking question for this stage; otherwise proceed with explicit assumptions.`,

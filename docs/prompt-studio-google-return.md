@@ -1,3 +1,5 @@
+> Updated 24 October: email links are the selected login route. See [current flow status](provn-live-flow-status.md). Recovery now uses same-origin localStorage to support new tabs; the historical same-tab details below describe the initial implementation.
+
 # Google login and Prompt Studio draft return
 
 This change reuses the existing Supabase Google OAuth flow. It does not introduce a new identity provider or change hosted authentication configuration.

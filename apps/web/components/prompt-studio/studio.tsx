@@ -115,7 +115,10 @@ export function PromptStudio({
     if (!resumeId || resumed.current === resumeId) return;
     resumed.current = resumeId;
     try {
-      const value = readHandoff(sessionStorage, resumeId);
+      const value = readHandoff(
+        localStorage.getItem(handoffKey(resumeId)) ? localStorage : sessionStorage,
+        resumeId,
+      );
       // Hydrate tab-local recovery data after mount; storage is unavailable during SSR.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIdea(value.idea);
@@ -141,7 +144,7 @@ export function PromptStudio({
     event?.preventDefault();
     try {
       const id = crypto.randomUUID();
-      writeHandoff(sessionStorage, id, {
+      writeHandoff(localStorage, id, {
         version: 1,
         createdAt: Date.now(),
         pendingMessage,
@@ -353,6 +356,7 @@ export function PromptStudio({
       setSession({ id, revision: data.revision });
       if (resumeId) {
         try {
+          localStorage.removeItem(handoffKey(resumeId));
           sessionStorage.removeItem(handoffKey(resumeId));
         } catch {
           /* Saved server copy is authoritative. */

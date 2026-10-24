@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
-const m = vi.hoisted(() => ({ exchange: vi.fn(), claims: vi.fn() }));
+const m = vi.hoisted(() => ({ exchange: vi.fn(), claims: vi.fn(), verify: vi.fn() }));
 vi.mock("@/lib/public-env", () => ({
   publicEnv: {
     supabaseUrl: "https://supabase.test",
@@ -9,10 +9,13 @@ vi.mock("@/lib/public-env", () => ({
   },
 }));
 vi.mock("@/lib/supabase/server", () => ({
-  createSupabaseServerClient: async () => ({ auth: { exchangeCodeForSession: m.exchange } }),
+  createSupabaseServerClient: async () => ({
+    auth: { exchangeCodeForSession: m.exchange, verifyOtp: m.verify },
+  }),
 }));
 vi.mock("@supabase/ssr", () => ({ createServerClient: () => ({ auth: { getClaims: m.claims } }) }));
 import { GET } from "../app/auth/callback/route";
+import { GET as confirmEmail } from "../app/auth/confirm/route";
 import { updateSession } from "./supabase/session";
 const next = "/apps/new?resume=00000000-0000-4000-8000-000000000001";
 beforeEach(() => {
@@ -56,4 +59,27 @@ test("callback rejects an external redirect", async () => {
     new NextRequest("https://provn.test/auth/callback?code=test&next=https://evil.test"),
   );
   expect(response.headers.get("location")).toBe("https://provn.test/apps");
+});
+
+test("email token confirmation returns to the draft and preserves next on expiry", async () => {
+  for (const error of [null, { message: "expired" }]) {
+    m.verify.mockResolvedValue({ error });
+    const response = await confirmEmail(
+      new NextRequest(
+        `https://provn.test/auth/confirm?token_hash=test-only&type=email&next=${encodeURIComponent(next)}`,
+      ),
+    );
+    const location = new URL(response.headers.get("location")!);
+    expect(error ? location.searchParams.get("next") : location.pathname + location.search).toBe(
+      next,
+    );
+  }
+});
+test("default email PKCE template returns to the draft", async () => {
+  const response = await confirmEmail(
+    new NextRequest(
+      `https://provn.test/auth/confirm?code=test-code&next=${encodeURIComponent(next)}`,
+    ),
+  );
+  expect(response.headers.get("location")).toBe(`https://provn.test${next}`);
 });

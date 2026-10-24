@@ -4,20 +4,26 @@ import type { Database } from "@buildwise/db";
 import { publicEnv } from "@/lib/public-env";
 
 import { safeNext } from "@/lib/safe-next";
+const PROTECTED_PREFIXES = ["/apps", "/new", "/ideas", "/admin"];
 
-const PROTECTED_PREFIX = "/apps";
+const isProtected = (pathname: string) =>
+  PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
 /** Refreshes the Supabase session cookie and applies the optimistic auth redirects. */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
+  let cacheHeaders: Record<string, string> = {};
 
   const supabase = createServerClient<Database>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (toSet) => {
+      setAll: (toSet, headers) => {
         toSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         toSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        // Keeps a CDN from serving one user's refreshed session cookie to another user.
+        cacheHeaders = { ...cacheHeaders, ...headers };
+        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
       },
     },
   });
@@ -29,10 +35,11 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const redirectTo = (path: string) => {
     const redirect = NextResponse.redirect(new URL(path, request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    Object.entries(cacheHeaders).forEach(([key, value]) => redirect.headers.set(key, value));
     return redirect;
   };
 
-  if (!signedIn && (pathname === PROTECTED_PREFIX || pathname.startsWith(`${PROTECTED_PREFIX}/`))) {
+  if (!signedIn && isProtected(pathname)) {
     return redirectTo(`/signin?next=${encodeURIComponent(pathname + search)}`);
   }
   if (signedIn && pathname === "/signin") {
