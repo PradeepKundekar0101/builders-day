@@ -6,6 +6,7 @@ import { bearerMatches, errorResponse, isSameOrigin } from "./http";
 describe("errorResponse", () => {
   test.each([
     ["invalid_idea", 400],
+    ["invalid_selection", 400],
     ["not_found", 404],
     ["question_limit", 409],
     ["wrong_state", 409],

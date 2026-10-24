@@ -66,14 +66,32 @@ test("idea to a priced estimate with questions and live toggles", async ({ page 
   await expectNoHorizontalScroll(page);
 });
 
-test("turning every feature off still prices the deploy, never NaN", async ({ page }) => {
+test("core features stay on while extras switch on and off", async ({ page }) => {
   const ideaId = await submitIdea(page);
   await new FakeAgent(page.request).submitSpec(ideaId, CLEAN_SPEC);
   for (const name of [/^Home/, /^Order/, /Sign-in/]) {
-    await page.getByRole("checkbox", { name }).uncheck();
+    await expect(page.getByRole("checkbox", { name })).toBeChecked();
+    await expect(page.getByRole("checkbox", { name })).toBeDisabled();
   }
-  await expect(page.getByTestId("price")).toHaveText("$1.00");
-  await expect(page.getByText("no build time")).toBeVisible();
+  const email = page.getByRole("checkbox", { name: /Email notifications/ });
+  await email.check();
+  await expect(page.getByTestId("price")).toHaveText("$2.74");
+  await email.uncheck();
+  await expect(page.getByTestId("price")).toHaveText("$2.38");
+});
+
+test("the server refuses to drop a core feature", async ({ page }) => {
+  const ideaId = await submitIdea(page);
+  await new FakeAgent(page.request).submitSpec(ideaId, CLEAN_SPEC);
+  const shareUrl = await page.getByLabel("Share link").inputValue();
+  expect(shareUrl).toContain("/e/");
+  const view = await (await page.request.get(`/api/ideas/${ideaId}`)).json();
+  const response = await page.request.patch(`/api/quotes/${view.estimate.quote.id}`, {
+    headers: { origin: new URL(page.url()).origin },
+    data: { selection: { pages: [], entities: [], auth: false, integrations: [] } },
+  });
+  expect(response.status()).toBe(400);
+  expect(await response.json()).toMatchObject({ error: "invalid_selection" });
 });
 
 test("the share link shows only the headline, signed out", async ({ page, browser }) => {

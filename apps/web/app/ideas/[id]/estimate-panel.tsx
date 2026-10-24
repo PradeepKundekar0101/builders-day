@@ -158,7 +158,7 @@ export function EstimatePanel({ spec, quote }: { spec: Spec; quote: QuoteRecord 
         </p>
       </div>
       <p className="mt-1 text-sm text-slate">
-        Switch extras off to fit your budget. The price updates as you go.
+        Core features are always included. Switch extras on or off to fit your budget.
       </p>
 
       {toggles(spec, selection).map((group) => (
@@ -169,12 +169,15 @@ export function EstimatePanel({ spec, quote }: { spec: Spec; quote: QuoteRecord 
           <ul className="mt-2 divide-y divide-rule rounded-xl border border-rule bg-surface">
             {group.items.map((item) => (
               <li key={item.id}>
-                <label className="flex cursor-pointer items-start gap-3 p-4 hover:bg-paper">
+                <label
+                  className={`flex items-start gap-3 p-4 ${item.core ? "" : "cursor-pointer hover:bg-paper"}`}
+                >
                   <input
                     type="checkbox"
-                    checked={item.on}
+                    checked={item.core || item.on}
+                    disabled={item.core}
                     onChange={() => change(item.flip(selection))}
-                    className="mt-1 h-5 w-5 shrink-0 accent-go"
+                    className="mt-1 h-5 w-5 shrink-0 accent-go disabled:opacity-60"
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2 font-medium">

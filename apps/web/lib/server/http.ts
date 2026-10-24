@@ -5,6 +5,7 @@ import { IntakeError, type IntakeErrorCode } from "./intake/service";
 
 const STATUS: Record<IntakeErrorCode, number> = {
   invalid_idea: 400,
+  invalid_selection: 400,
   not_found: 404,
   question_limit: 409,
   wrong_state: 409,

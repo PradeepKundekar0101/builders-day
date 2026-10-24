@@ -78,13 +78,17 @@ describe("SupabaseIntakeRepo through IntakeService", () => {
     view = await service.ideaView(userId, idea.id);
     expect(view.estimate?.quote).toMatchObject({ costUsd: 3.34, status: "draft" });
 
-    const updated = await service.updateSelection(userId, view.estimate!.quote.id, {
-      pages: ["Home"],
-      entities: [],
-      auth: false,
-      integrations: [],
-    });
-    expect(updated.costUsd).toBe(1.18);
+    const quoteId = view.estimate!.quote.id;
+    await expect(
+      service.updateSelection(userId, quoteId, {
+        pages: ["Home"],
+        entities: [],
+        auth: false,
+        integrations: [],
+      }),
+    ).rejects.toMatchObject({ code: "invalid_selection" });
+    const updated = await service.updateSelection(userId, quoteId, view.estimate!.quote.selection);
+    expect(updated).toMatchObject({ costUsd: 3.34, costCredits: 334 });
   });
 
   test("one unreadable mask map does not block the agent's queue", async () => {

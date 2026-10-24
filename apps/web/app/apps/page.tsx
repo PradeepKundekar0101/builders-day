@@ -8,7 +8,7 @@ import { intakeService } from "@/lib/server/intake/instance";
 import type { IdeaSummary } from "@/lib/server/intake/service";
 import { sessionUser } from "@/lib/server/session-user";
 
-export const metadata: Metadata = { title: "My apps - Buildwise" };
+export const metadata: Metadata = { title: "My apps - PROVN" };
 
 function statusText(idea: IdeaSummary) {
   if (idea.review === "rejected") return "Not approved";

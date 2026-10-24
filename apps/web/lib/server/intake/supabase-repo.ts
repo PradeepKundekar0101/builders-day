@@ -4,6 +4,7 @@ import type { FlagReason, Spec } from "@buildwise/shared";
 import type { Selection } from "@buildwise/estimator";
 import type { MaskMap } from "@buildwise/masker";
 import { decryptJson, encryptJson } from "../crypto";
+import { creditsFromUsd } from "./service";
 import type {
   ApprovalRecord,
   IdeaRecord,
@@ -252,6 +253,9 @@ export class SupabaseIntakeRepo implements IntakeRepo {
       userId: row.user_id,
       selection: row.selected_features as Selection,
       costUsd: Number(row.cost_usd),
+      costCredits: creditsFromUsd(Number(row.cost_usd)),
+      lowCredits: creditsFromUsd(Number(row.low_usd)),
+      highCredits: creditsFromUsd(Number(row.high_usd)),
       lowUsd: Number(row.low_usd),
       highUsd: Number(row.high_usd),
       hours: Number(row.hours),

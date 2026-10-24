@@ -7,7 +7,7 @@ export function SiteHeader() {
     <header className="border-b border-rule bg-surface">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="text-lg font-bold tracking-tight">
-          Buildwise
+          PROVN
         </Link>
         <Suspense fallback={<span aria-hidden="true" className="h-8 w-20" />}>
           <HeaderAccount />

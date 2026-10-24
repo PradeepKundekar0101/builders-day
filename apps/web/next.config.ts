@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     "@buildwise/shared",
     "@buildwise/db",
     "@buildwise/estimator",
+    "@buildwise/cost-guard",
     "@buildwise/masker",
   ],
   cacheComponents: true,

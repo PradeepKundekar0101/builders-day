@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, test } from "vitest";
+import type { Json } from "../src";
 import { anonClient, createUserClient, IDEA_TEXT, serviceClient, type Client } from "./helpers";
 
 let owner: { client: Client; userId: string };
@@ -76,7 +77,7 @@ describe("intake_messages.kind", () => {
 });
 
 describe("shared_estimate", () => {
-  async function seedQuote(spec: object) {
+  async function seedQuote(spec: NonNullable<Json>) {
     const db = serviceClient();
     const ideaId = await newIdea(owner.userId);
     const specRow = await db

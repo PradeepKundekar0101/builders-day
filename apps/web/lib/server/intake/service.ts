@@ -11,7 +11,7 @@ import {
 import {
   defaultSelection,
   estimate,
-  inputFromSelection,
+  validatedInputFromSelection as inputFromSelection,
   type Estimate,
   type Selection,
 } from "@buildwise/estimator";
@@ -22,7 +22,12 @@ import type { IdeaStatus, IntakeRepo, QuoteRecord, SpecRecord } from "./repo";
 export const MAX_QUESTIONS = 4;
 
 export type IntakeErrorCode =
-  "invalid_idea" | "question_limit" | "not_found" | "invalid_spec" | "wrong_state";
+  | "invalid_idea"
+  | "invalid_selection"
+  | "question_limit"
+  | "not_found"
+  | "invalid_spec"
+  | "wrong_state";
 
 export class IntakeError extends Error {
   constructor(
@@ -74,6 +79,9 @@ export type PendingApproval = {
 
 const randomSlug = () => randomBytes(9).toString("base64url");
 
+/** One credit is one US cent. */
+export const creditsFromUsd = (usd: number) => Math.round(usd * 100);
+
 const quoteNumbers = (result: Estimate) => ({
   costUsd: result.costUsd,
   lowUsd: result.lowUsd,
@@ -81,6 +89,9 @@ const quoteNumbers = (result: Estimate) => ({
   hours: result.hours,
   modelBudgetUsd: result.modelBudgetUsd,
   weightsVersion: result.version,
+  costCredits: creditsFromUsd(result.costUsd),
+  lowCredits: creditsFromUsd(result.lowUsd),
+  highCredits: creditsFromUsd(result.highUsd),
 });
 
 /** The intake flow: idea, up to four agent questions, a validated spec and a draft quote. */
@@ -182,8 +193,14 @@ export class IntakeService {
     if (!priceVisible(spec)) {
       throw new IntakeError("wrong_state", "This estimate is waiting for review.");
     }
-    const result = estimate(inputFromSelection(spec.spec, selection));
-    return this.repo.updateQuote(quoteId, { selection, ...quoteNumbers(result) });
+    let input;
+    try {
+      input = inputFromSelection(spec.spec, selection);
+    } catch (error) {
+      // Core features cannot be switched off, and names must exist in the spec.
+      throw new IntakeError("invalid_selection", (error as Error).message);
+    }
+    return this.repo.updateQuote(quoteId, { selection, ...quoteNumbers(estimate(input)) });
   }
 
   /** For the agent: submitted ideas, masked. */
