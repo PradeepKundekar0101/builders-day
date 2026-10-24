@@ -61,7 +61,7 @@ export default function Home() {
                   <span className="bg-marker px-1 [box-decoration-break:clone]">$4.96</span>
                 </p>
               </div>
-              <p className="text-right text-sm text-slate">
+              <p className="text-sm text-slate sm:text-right">
                 about 4 to 5 hours
                 <br />
                 range $3.47 to $6.45

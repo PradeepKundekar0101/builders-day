@@ -128,7 +128,7 @@ export function EstimatePanel({ spec, quote }: { spec: Spec; quote: QuoteRecord 
               </span>
             </p>
           </div>
-          <p className="text-right text-sm text-slate">
+          <p className="text-sm text-slate sm:text-right">
             {hoursText(result.hours)}
             <br />
             range {usd(result.lowUsd)} to {usd(result.highUsd)}
@@ -136,12 +136,14 @@ export function EstimatePanel({ spec, quote }: { spec: Spec; quote: QuoteRecord 
         </div>
 
         <dl className="mt-6 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 border-t border-dashed border-rule pt-4 text-sm">
-          {result.drivers.map((driver) => (
-            <div key={driver.key} className="contents">
-              <dt className="text-slate">{driver.label}</dt>
-              <dd className="text-right tabular-nums">{usd(driver.usd)}</dd>
-            </div>
-          ))}
+          {result.drivers
+            .filter((driver) => driver.key !== "integrations" || driver.usd > 0)
+            .map((driver) => (
+              <div key={driver.key} className="contents">
+                <dt className="text-slate">{driver.label}</dt>
+                <dd className="text-right">{usd(driver.usd)}</dd>
+              </div>
+            ))}
         </dl>
       </div>
 

@@ -52,7 +52,7 @@ async function SharedEstimate({ params }: Pick<PageProps<"/e/[slug]">, "params">
               <span className="bg-marker px-1">{usd(shared.cost_usd)}</span>
             </p>
           </div>
-          <p className="text-right text-sm text-slate">
+          <p className="text-sm text-slate sm:text-right">
             {hoursText(shared.hours)}
             <br />
             range {usd(shared.low_usd)} to {usd(shared.high_usd)}

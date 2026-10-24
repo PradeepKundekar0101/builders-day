@@ -41,10 +41,12 @@ export function IntakeView({ initial }: { initial: IdeaView }) {
                   : "ml-10 rounded-xl rounded-tr-sm bg-ink p-4 text-white"
               }
             >
-              <p className={message.role === "agent" ? "text-xs font-semibold text-go" : "sr-only"}>
-                {message.role === "agent" ? "Buildwise asks" : "You answered"}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap leading-relaxed">{message.content}</p>
+              {message.role === "agent" ? (
+                <p className="mb-1 text-xs font-semibold text-go">Buildwise asks</p>
+              ) : (
+                <p className="sr-only">You answered</p>
+              )}
+              <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
             </li>
           ))}
         </ol>
