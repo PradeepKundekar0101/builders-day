@@ -1162,3 +1162,143 @@ body:has(.conduit-build-workspace) > header {
 .conduit-build-workspace .terminal-red {
   color: #ef9b99;
 }
+
+/* Simple journey card: estimate, build, attack, fix. */
+.provn-build-journey h3 {
+  margin-top: 8px;
+  font-size: 18px;
+}
+.provn-journey-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.provn-journey-numbers div {
+  border: 1px solid #3c4855;
+  border-radius: 10px;
+  padding: 10px;
+}
+.provn-journey-numbers span {
+  display: block;
+  font-size: 11px;
+  color: #bbc3cc;
+}
+.provn-journey-numbers strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 16px;
+  white-space: nowrap;
+  color: #e5bd8b;
+}
+.provn-journey-lines {
+  margin-top: 12px;
+  border-top: 1px solid #3c4855;
+  font-size: 13px;
+}
+.provn-journey-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #3c4855;
+}
+.provn-journey-lines li span:last-child {
+  color: #bbc3cc;
+  white-space: nowrap;
+}
+.provn-journey-lines li.is-found span {
+  color: #ef9b99;
+}
+.provn-journey-primary,
+.provn-journey-danger {
+  margin-top: 14px;
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.provn-journey-primary {
+  background: #e5bd8b;
+  color: #151c24;
+}
+.provn-journey-primary:hover {
+  background: #f2cf9f;
+}
+.provn-journey-danger {
+  background: #ef9b99;
+  color: #151c24;
+}
+.provn-journey-status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #bbc3cc;
+}
+.provn-journey-status.is-pass {
+  color: #9bc8b1;
+  font-weight: 600;
+}
+
+/* Suggested answers for the guide's questions. */
+.build-answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.build-answer-options button {
+  text-align: left;
+  padding: 9px 12px;
+  border: 1px solid #3c4855;
+  border-radius: 10px;
+  background: #1d2630;
+  color: #f3f0e9;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.build-answer-options button:hover:not(:disabled) {
+  border-color: #e5bd8b;
+  background: #232e39;
+}
+.build-answer-options button:disabled {
+  opacity: 0.5;
+}
+
+/* AgenticOrg security review inside the journey card. */
+.provn-agent-review {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #3c4855;
+  border-radius: 10px;
+  background: #151c24;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.provn-agent-review-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e5bd8b;
+}
+.provn-agent-review-label b {
+  text-transform: capitalize;
+}
+.provn-agent-review-label b.is-high {
+  color: #ef9b99;
+}
+.provn-agent-review-label b.is-medium {
+  color: #e4bd76;
+}
+.provn-agent-review-label b.is-low {
+  color: #9bc8b1;
+}
+.provn-agent-review ol {
+  margin-top: 8px;
+  padding-left: 18px;
+  list-style: decimal;
+  color: #bbc3cc;
+}

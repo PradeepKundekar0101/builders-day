@@ -12,6 +12,8 @@ export default tseslint.config(
       "**/database.types.ts",
       "apps/web/**",
       ".superpowers/**",
+      "Pine Labs Credits/**",
+      "Smart Model Router/**",
     ],
   },
   js.configs.recommended,

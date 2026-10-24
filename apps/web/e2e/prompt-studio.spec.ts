@@ -38,11 +38,11 @@ test("saved studio versions resume, restore safely, and remain owner-scoped", as
   await page.goto("/apps");
   await page.getByRole("link", { name: `Resume draft ${id.slice(0, 8)} · version 2` }).click();
   await expect(page.getByRole("button", { name: "Resume progression" })).toBeVisible();
-  await page.getByRole("button", { name: /Brief & prompts/ }).click();
+  await page.getByRole("button", { name: "≡ Brief & prompts", exact: true }).click();
   await page.getByText("Saved versions & prompt history (2)", { exact: true }).click();
   await page.getByText(/Version 1 · draft ·/).click();
   await page.getByRole("button", { name: "Restore version 1 as draft" }).click();
-  await page.getByRole("button", { name: /Brief & prompts/ }).click();
+  await page.getByRole("button", { name: "≡ Brief & prompts", exact: true }).click();
   await expect(page.getByLabel("Product name", { exact: true })).toHaveValue("My product");
   const stored = await page.request.get(`/api/prompt-studio/sessions/${id}`);
   expect((await stored.json()).revision).toBe(2);

@@ -22,7 +22,13 @@ export function SitePreview({
   const accent = accentFor(plan.name);
   const pages = plan.pages.slice(0, revealed);
   const style = { "--accent": accent } as CSSProperties;
-  const first = plan.idea.split(/(?<=[.!?])\s/)[0]!.replace(/^an?\s+/i, "");
+  const first = plan.idea
+    .split(/(?<=[.!?])\s/)[0]!
+    .replace(
+      /^\s*(?:i\s+(?:want|need|would like)\s+)?(?:to\s+)?(?:build|create|make|develop|design)\s+/i,
+      "",
+    )
+    .replace(/^an?\s+/i, "");
   const tagline = first.charAt(0).toUpperCase() + first.slice(1);
   const highlights = [
     ...plan.entities.map((entity) => ({

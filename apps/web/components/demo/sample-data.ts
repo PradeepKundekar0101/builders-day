@@ -50,6 +50,22 @@ export const SAMPLE: Record<string, { columns: string[]; rows: string[][] }> = {
       ["Fatima Z.", "Orbit Co.", "Branding", "1 week ago"],
     ],
   },
+  Projects: {
+    columns: ["Project", "Client", "Progress", "Status"],
+    rows: [
+      ["Spring campaign", "Bloom Studio", "70%", "In review"],
+      ["App redesign", "Kite Labs", "45%", "In progress"],
+      ["Brand refresh", "Orbit Co.", "100%", "Approved"],
+    ],
+  },
+  Designs: {
+    columns: ["Design", "Version", "Project", "Approval"],
+    rows: [
+      ["Homepage hero", "v3", "Spring campaign", "Awaiting client"],
+      ["Logo lockup", "v2", "Brand refresh", "Approved"],
+      ["Checkout flow", "v1", "App redesign", "Changes requested"],
+    ],
+  },
   Tasks: {
     columns: ["Task", "Owner", "Due", "Status"],
     rows: [
