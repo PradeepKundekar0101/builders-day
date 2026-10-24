@@ -129,3 +129,20 @@ describe("shared_estimate", () => {
     expect(data ?? []).toEqual([]);
   });
 });
+
+describe("approvals follow their spec", () => {
+  test("deleting a spec removes its flagged_spec approval", async () => {
+    const db = serviceClient();
+    const ideaId = await newIdea(owner.userId);
+    const spec = await db
+      .from("specs")
+      .insert({ idea_id: ideaId, user_id: owner.userId, spec: {} })
+      .select("id")
+      .single();
+    await db.from("approvals").insert({ kind: "flagged_spec", subject_id: spec.data!.id });
+
+    await db.from("specs").delete().eq("id", spec.data!.id);
+    const { data } = await db.from("approvals").select("id").eq("subject_id", spec.data!.id);
+    expect(data).toEqual([]);
+  });
+});

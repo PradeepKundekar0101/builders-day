@@ -239,4 +239,10 @@ describe("IntakeService", () => {
     expect(list[1]!.title.length).toBeLessThanOrEqual(80);
     expect(list[1]).toMatchObject({ status: "submitted", costUsd: null });
   });
+
+  test("the operator queue skips approvals whose spec is gone", async () => {
+    const { repo, service } = setup();
+    await repo.createApproval({ kind: "flagged_spec", subjectId: "missing-spec" });
+    expect(await service.pendingApprovals()).toEqual([]);
+  });
 });

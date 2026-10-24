@@ -14,6 +14,8 @@ const baseURL = remote ?? "http://localhost:3100";
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/global-setup.ts",
+  // A deployment adds real network round trips to every step; local runs keep the tight budget.
+  timeout: remote ? 60_000 : 30_000,
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",

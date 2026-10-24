@@ -443,7 +443,10 @@ additional_redirect_urls = [
 ]
 
 [remotes.production.auth.rate_limit]
-email_sent = 30
+# An event venue puts everyone behind one IP address, so the per-IP limits must cover a room.
+email_sent = 100
+sign_in_sign_ups = 150
+token_verifications = 150
 
 [remotes.production.auth.email]
 enable_confirmations = true

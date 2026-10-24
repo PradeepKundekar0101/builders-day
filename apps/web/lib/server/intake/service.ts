@@ -247,20 +247,22 @@ export class IntakeService {
 
   async pendingApprovals(): Promise<PendingApproval[]> {
     const approvals = await this.repo.listPendingApprovals();
-    return Promise.all(
-      approvals.map(async (approval) => {
+    const rows = await Promise.all(
+      approvals.map(async (approval): Promise<PendingApproval | null> => {
         const spec = await this.repo.getSpec(approval.subjectId);
-        const quote = spec ? await this.repo.getQuoteForSpec(spec.id) : null;
+        if (!spec) return null;
+        const quote = await this.repo.getQuoteForSpec(spec.id);
         return {
           id: approval.id,
           requestedAt: approval.requestedAt,
-          ideaId: spec?.ideaId ?? "",
-          specName: spec?.spec.name ?? "Unknown spec",
-          flagReasons: spec?.flagReasons ?? [],
+          ideaId: spec.ideaId,
+          specName: spec.spec.name,
+          flagReasons: spec.flagReasons,
           costUsd: quote?.costUsd ?? null,
         };
       }),
     );
+    return rows.filter((row) => row !== null);
   }
 
   /** Operator decision on a flagged spec; each approval is decided once. */
