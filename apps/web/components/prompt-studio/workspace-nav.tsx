@@ -44,7 +44,7 @@ export function WorkspaceNav({
   onSelect,
   project,
 }: {
-  active: WorkspaceView;
+  active?: WorkspaceView;
   onSelect: (view: WorkspaceView) => void;
   project: string;
 }) {

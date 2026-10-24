@@ -1105,3 +1105,37 @@ body:has(.conduit-studio.is-welcome) {
   line-height: 1.4;
   color: #bbc3cc;
 }
+
+/* Shared navigation frames the home artwork without adding page scrolling. */
+.provn-home-shell {
+  display: flex;
+  height: 100svh;
+  overflow: hidden;
+  background: #10161d;
+  color: #e9e8e2;
+}
+.provn-home-shell > .provn-left-nav {
+  position: relative;
+  z-index: 2;
+  height: 100svh;
+}
+.provn-home-shell > .conduit-studio {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.provn-home-shell .studio-nav .studio-brand,
+.provn-home-shell .studio-nav-divider {
+  display: none;
+}
+.provn-home-shell .studio-nav {
+  justify-content: flex-end;
+}
+@media (max-width: 700px) {
+  .provn-home-shell > .conduit-studio.is-welcome {
+    padding: 12px;
+  }
+  .provn-home-shell .studio-hero h1 {
+    font-size: 32px;
+  }
+}
