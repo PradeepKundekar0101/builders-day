@@ -1,3 +1,5 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import {
   PromptStudioDraftSchema,
@@ -53,6 +55,8 @@ export function prepareInterpretation(raw: unknown) {
   });
   return { body, base, input, instructions, context };
 }
+export const DEFAULT_PROMPT_STUDIO_MODEL = "claude-opus-5-5";
+const TIMEOUT_MS = 45000;
 export async function interpretWithModel(
   raw: unknown,
   config: { apiKey: string; model: string },
@@ -60,36 +64,53 @@ export async function interpretWithModel(
   fetcher: typeof fetch = fetch,
 ) {
   const p = prepareInterpretation(raw);
-  const response = await fetcher("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-    signal: signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(45000)])
-      : AbortSignal.timeout(45000),
-    body: JSON.stringify({
-      model: config.model,
-      store: false,
-      instructions: p.instructions,
-      input: p.context,
-      text: { format: { type: "json_object" } },
-      max_output_tokens: 5000,
-    }),
-  });
-  if (!response.ok)
+  const timeout = AbortSignal.timeout(TIMEOUT_MS);
+  const client = new Anthropic({ apiKey: config.apiKey, fetch: fetcher, maxRetries: 0 });
+  let result: Anthropic.Beta.BetaMessage;
+  try {
+    result = await client.beta.messages.create(
+      {
+        model: config.model,
+        max_tokens: 16000,
+        system: p.instructions,
+        messages: [{ role: "user", content: p.context }],
+        output_config: { effort: "medium", format: betaZodOutputFormat(Output) },
+        // Retries a policy decline on the server-defined fallback model; a no-op on models without one.
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+      },
+      { signal: signal ? AbortSignal.any([signal, timeout]) : timeout },
+    );
+  } catch (error) {
+    if (error instanceof Anthropic.APIUserAbortError)
+      throw new DOMException(
+        "Model request aborted.",
+        timeout.aborted ? "TimeoutError" : "AbortError",
+      );
+    // Status, type and request id only: enough to diagnose billing or quota failures without logging content.
+    console.error("Prompt Studio model request failed", {
+      status: error instanceof Anthropic.APIError ? error.status : undefined,
+      type: error instanceof Anthropic.APIError ? error.type : undefined,
+      requestId: error instanceof Anthropic.APIError ? error.requestID : undefined,
+    });
     throw new StudioHttpError(
-      response.status === 429 ? 429 : 502,
+      error instanceof Anthropic.RateLimitError ? 429 : 502,
       "The model request failed. Your brief is preserved. Retry manually; provider usage may still apply.",
     );
-  const result = await response.json();
-  if (result.status !== "completed")
+  }
+  if (result.stop_reason === "refusal")
+    throw new StudioHttpError(
+      502,
+      "The model declined this request. Your brief is preserved; rephrase the idea or edit the brief manually.",
+    );
+  if (result.stop_reason !== "end_turn")
     throw new StudioHttpError(
       502,
       "The model did not complete its response. Your brief is preserved.",
     );
-  const text = result.output
-    ?.flatMap((item: { content?: { type: string; text?: string }[] }) => item.content ?? [])
-    .filter((item: { type: string }) => item.type === "output_text")
-    .map((item: { text: string }) => item.text)
+  const text = result.content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
     .join("");
   let output: z.infer<typeof Output>;
   try {
@@ -112,7 +133,7 @@ export async function interpretWithModel(
       revision: (p.base?.revision ?? 0) + 1,
       input: p.input,
       onboarding: p.base?.onboarding ?? p.body.profile,
-      adapterMode: "openai",
+      adapterMode: "claude",
       spec: output.spec,
       questions: [...prior.filter((q) => q.answer), ...unanswered, ...additions].slice(0, 4),
       acceptanceCriteria: output.acceptanceCriteria,
@@ -123,8 +144,8 @@ export async function interpretWithModel(
     draft,
     changeSummary: maskStudioText(output.changeSummary),
     trace: {
-      provider: "OpenAI",
-      model: config.model,
+      provider: "Anthropic",
+      model: result.model,
       instructions: p.instructions,
       input: p.context,
       responseId: result.id,
